@@ -1,0 +1,276 @@
+---
+title: "Brad PT"
+author: "Jason"
+created: "16/03/2020"
+modified: "3/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r ---> Libraries}
+library(readxl) # This is used to import data from excel
+library(tidyverse)
+library(doBy)
+library(fuzzyjoin)
+library(reshape2)
+library(varhandle)
+library(here)
+here()
+dr_here(show_reason = FALSE)
+
+
+# library(ez) Not working for some reason March 17, 2020
+# library(readr)		# ALREADY IN TIDYVERSE
+# library(ggplot2)		# ALREADY IN TIDYVERSE
+# library(dplyr) 		# ALREADY IN TIDYVERSE
+```
+
+
+```{r ---> Clean data}
+#		GROUPS
+data %>%
+	count(group)
+
+dat1  <- filter(data, group != 0) 
+
+dat1 %>%
+	count(group)
+
+dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
+
+levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE)
+
+dat1 %>%
+	count(group.factor)
+
+# # import data:
+# dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE)
+```
+
+```{r ---> Factors}
+
+dat.factors  <- select_if(dat1, is.factor)
+colnames(dat.factors)
+levels(dat.factors$condition.factor)
+
+class(dat1$group.factor)
+levels(dat1$group.factor)
+
+
+
+
+
+```
+
+
+
+##		EXAMINE DATA: 3 GROUPS
+
+
+
+##	Subgroup Analysis
+```{r ---> Subgroups}
+#	PDI
+# dat.pdi  <- grep("pdi", colnames(data), value = TRUE) 
+dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
+view(dat.bdi)
+
+dat1.smry1  <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		avg.pdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE),
+		sd.pdi.tot = sd(bdi_total, na.rm = TRUE)
+	)
+view(dat1.smry1)
+
+plot(dat1.smry1)
+
+
+
+
+
+
+
+
+dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
+view(dat.totals)
+
+```
+
+
+
+```{r ---> ANOVA}
+#		COMPUTE ANOVA OF BDI  and TOTAL SCORES
+model1 = aov(bdi_total, ~ group.factor, data = dat1)
+print(model1)
+
+model2 = aov(bdi_total + pdi_total ~ group.factor, data = dat1, na.rm = TRUE)
+print(model2)
+
+#		SUMMARY OF THE ANALYSES
+summary(model1)
+TukeyHSD(model1)
+library(multcomp)
+summary(glht(model1, linfct = mcp(group.factor = "Tukey")))
+
+summary(model2)
+TukeyHSD(model2)
+library(multcomp)
+summary(glht(model2, linfct = mcp(group.factor = "Tukey")))
+
+# 	1. Homogeniety of variances
+plot(model1, 1)
+plot(model2, 1)
+
+
+#	Levene's Test
+library(car)
+leveneTest(bdi_total ~ group.factor, data = dat1)
+
+#	2. Normality
+plot(model1, 2)
+plot(model2, 2)
+
+
+
+#	EXTRACT RESIDUALS
+aov_residuals  <- residuals(object = model1)
+
+#	RUN Shapiro-Wilk normality test
+shapiro.test(x = aov_residuals)
+
+aggregate(group.factor, data.frame(dat1), mean, na.rm = TRUE)
+
+```
+
+
+##		PLOTS
+```{R ---> Bar chart by Group}
+dat1.gp.BDI  <- ggplot(data = dat1,
+						aes(x = group.factor,
+							y = bdi_total, pdi_total,
+							fill = group.factor)) +
+	geom_bar(color = "black", stat = "identity",
+			 position = position_dodge(),
+			 size = .3) +
+	scale_fill_hue(name = "group") +
+	xlab("Subjects groups") +
+	ylab("BDI total") +
+	ggtitle("BDI by group analysis")
+
+print(dat1.gp.BDI)
+
+```
+
+
+```{r ---> Box plots}
+ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+	geom_boxplot()
+
+ggplot(data = dat1) +
+	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total))
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r ---> Scrap}
+
+
+
+
+
+##  bdi_total
+
+dat.pdi  <- data[c(1:2,grep("pdi", colnames(data)))]
+
+dat.pain  <- data[c(1:2,grep("pain", colnames(data)))]
+
+
+
+
+# dat.bdi2  <- select(dat.bdi,
+# 					ends_with(!= "factor"))
+
+
+
+
+# {r ---> Jon: creating new variables}
+# This works
+# library(dplyr)
+# data1 %>% 
+#   mutate_at(
+#     vars(starts_with("pos"), starts_with("neg")),
+#     ~as.numeric(as.character(.))
+#   ) %>% 
+#   rowwise() %>% 
+#   mutate(
+#     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE)
+#   ) %>% 
+#   ungroup()
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
