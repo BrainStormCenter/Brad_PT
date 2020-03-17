@@ -61,8 +61,9 @@ dat1 %>% count(group.factor)
 ```
 
 
-##		EXAMINE DATA: 3 GROUPS
+##	EXAMINE DATA
 
+###	BDI
 ```{r ---> BDI Summary}
 #		BDI VARIABLES
 dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
@@ -78,7 +79,6 @@ bdi.smry1  <- dat1 %>%
 		# sd.pdi.tot = sd(pdi_total, na.rm = TRUE)
 	)
 view(bdi.smry1)
-
 
 #		BAR CHART
 bdi.smry2  <- ggplot(data = dat1,
@@ -106,41 +106,24 @@ ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
 ```
 
 
-
-
-```{r ---> ANOVA 1}
+```{r ---> ANOVA BDI}
 #		COMPUTE ANOVA OF BDI 
-model1 = aov(bdi_total, ~ group.factor, data = dat1)
+model1 = aov(bdi_total ~ group.factor, data=dat1)
 print(model1)
-
-model2 = aov(bdi_total + pdi_total ~ group.factor, data = dat1, na.rm = TRUE)
-print(model2)
 
 #		SUMMARY OF THE ANALYSES
 summary(model1)
 TukeyHSD(model1)
-library(multcomp)
 summary(glht(model1, linfct = mcp(group.factor = "Tukey")))
-
-summary(model2)
-TukeyHSD(model2)
-library(multcomp)
-summary(glht(model2, linfct = mcp(group.factor = "Tukey")))
 
 # 	1. Homogeniety of variances
 plot(model1, 1)
-plot(model2, 1)
-
 
 #	Levene's Test
-library(car)
 leveneTest(bdi_total ~ group.factor, data = dat1)
 
 #	2. Normality
 plot(model1, 2)
-plot(model2, 2)
-
-
 
 #	EXTRACT RESIDUALS
 aov_residuals  <- residuals(object = model1)
