@@ -12,13 +12,16 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r ---> Libraries}
 library(readxl) # This is used to import data from excel
-library(tidyverse)
 library(doBy)
 library(fuzzyjoin)
 library(reshape2)
 library(varhandle)
 library(multcomp)
 library(car)
+library(lattice)
+library(Formula)
+library(Hmisc)
+library(tidyverse)
 library(here)
 here()
 dr_here(show_reason = FALSE)
@@ -40,70 +43,45 @@ source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
 
 ```{r ---> Clean data}
 #		GROUPS
-data %>%
-	count(group)
+data %>% count(group)
 
 dat1  <- filter(data, group != 0) 
 
-dat1 %>%
-	count(group)
+dat1 %>% count(group)
 
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
 
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE)
 
-#	RENAME VARIABLES
-# df = dataframe
-# old.var.name = The name you don't like anymore
-# new.var.name = The name you want to get
 names(dat1)[names(dat1) == 'participant_id'] <- 'ID'
 
-
-#		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
-# dat2 <- arrange(dat1, ID, group.factor, sex)
-# arrange(dat2, ID, group.factor, sex)
-
-dat1 %>%
-	count(group.factor)
+dat1 %>% count(group.factor)
 
 #		DONE AS OF March 17, 2020
 ```
-
-```{r ---> Factors}
-dat.factors  <- select_if(dat1, is.factor)
-colnames(dat.factors)
-
-levels(dat.factors$condition.factor)
-
-class(dat1$group.factor)
-levels(dat1$group.factor)
-#		DONE AS OF March 17, 2020
-
-```
-
-
-
 
 
 ##		EXAMINE DATA: 3 GROUPS
 
-```{r ---> Subgroups}
+```{r ---> BDI Summary}
 #		BDI VARIABLES
 dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
 view(dat.bdi)
 
-dat1.smry1  <- dat1 %>%
+bdi.smry1  <- dat1 %>%
 	group_by(group.factor) %>%
 	summarise(
 		count = n(),
 		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
-		avg.pdi.tot = mean(bdi_total, na.rm = TRUE),
-		sd.bdi.tot = sd(bdi_total, na.rm = TRUE),
-		sd.pdi.tot = sd(bdi_total, na.rm = TRUE)
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		# avg.pdi.tot = mean(bdi_total, na.rm = TRUE),
+		# sd.pdi.tot = sd(pdi_total, na.rm = TRUE)
 	)
-view(dat1.smry1)
+view(bdi.smry1)
 
-dat1.gp.BDI  <- ggplot(data = dat1,
+
+#		BAR CHART
+bdi.smry2  <- ggplot(data = dat1,
 					   aes(x = group.factor,
 					   	y = bdi_total,
 					   	fill = group.factor)) +
@@ -113,26 +91,18 @@ dat1.gp.BDI  <- ggplot(data = dat1,
 	scale_fill_hue(name = "Groups") +
 	xlab("Subjects groups") +
 	ylab("BDI total") +
-	ggtitle("BDI by group analysis")
+	ggtitle("BDI by group")
 
-print(dat1.gp.BDI)
-
-dat1.smry2  <- dat1 %>%
-	group_by(group.factor) %>%
-	summarise(
-		count = n(),
-		mean = mean(bdi_total, na.rm = TRUE),
-		sd = sd(bdi_total, na.rm = TRUE)
-	)
-view(dat1.smry2)
+print(bdi.smry2) # I'm not sure what values are used in the graph
 
 #		BOX PLOT
 ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
 	geom_boxplot()
 
-dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
-view(dat.totals)
+# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
+# view(dat.totals)
 
+#		DONE AS OF March 17, 2020
 ```
 
 
@@ -333,6 +303,16 @@ ggplot(data = dat1) +
 
 ```{r ---> Scrap}
 
+#		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
+# dat2 <- arrange(dat1, ID, group.factor, sex)
+# arrange(dat2, ID, group.factor, sex)
+
+#	RENAME VARIABLES
+# df = dataframe
+# old.var.name = The name you don't like anymore
+# new.var.name = The name you want to get
+
+
 
 #dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
 # dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE)
@@ -374,6 +354,19 @@ dat.pain  <- data[c(1:2,grep("pain", colnames(data)))]
 ```
 
 
+
+
+```{r ---> Factors}
+# dat.factors  <- select_if(dat1, is.factor)
+# colnames(dat.factors)
+
+# levels(dat.factors$condition.factor)
+
+class(dat1$group.factor)
+levels(dat1$group.factor)
+#		DONE AS OF March 17, 2020
+
+```
 
 
 
