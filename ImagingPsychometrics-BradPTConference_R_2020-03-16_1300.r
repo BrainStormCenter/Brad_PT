@@ -7,9 +7,9 @@ library(Hmisc)
 data=read.csv('ImagingPsychometrics-BradPTConference_DATA_2020-03-16_1300.csv')
 #Setting Labels
 
-label(data$participant_id)="Participant ID"
+label(data$participant_id)="ID"
 label(data$redcap_event_name)="Event Name"
-label(data$sex)="Biological Sex"
+label(data$sex)="Sex"
 label(data$demo_dob)="Date of Birth"
 label(data$race___1)="Race: (choice=White)"
 label(data$race___2)="Race: (choice=Black or African American)"

@@ -52,6 +52,17 @@ dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
 
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE)
 
+#	RENAME VARIABLES
+# df = dataframe
+# old.var.name = The name you don't like anymore
+# new.var.name = The name you want to get
+names(dat1)[names(dat1) == 'participant_id'] <- 'ID'
+
+
+#		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
+# dat2 <- arrange(dat1, ID, group.factor, sex)
+# arrange(dat2, ID, group.factor, sex)
+
 dat1 %>%
 	count(group.factor)
 
@@ -59,21 +70,25 @@ dat1 %>%
 ```
 
 ```{r ---> Factors}
-
 dat.factors  <- select_if(dat1, is.factor)
 colnames(dat.factors)
+
 levels(dat.factors$condition.factor)
 
 class(dat1$group.factor)
 levels(dat1$group.factor)
+#		DONE AS OF March 17, 2020
 
 ```
+
+
+
 
 
 ##		EXAMINE DATA: 3 GROUPS
 
 ```{r ---> Subgroups}
-#		BDI
+#		BDI VARIABLES
 dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
 view(dat.bdi)
 
@@ -88,7 +103,7 @@ dat1.smry1  <- dat1 %>%
 	)
 view(dat1.smry1)
 
-dat1.gp.BDI  <- ggplot(data = dat1.smry1,
+dat1.gp.BDI  <- ggplot(data = dat1,
 					   aes(x = group.factor,
 					   	y = bdi_total,
 					   	fill = group.factor)) +
@@ -109,6 +124,7 @@ dat1.smry2  <- dat1 %>%
 		mean = mean(bdi_total, na.rm = TRUE),
 		sd = sd(bdi_total, na.rm = TRUE)
 	)
+view(dat1.smry2)
 
 #		BOX PLOT
 ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
@@ -121,8 +137,9 @@ view(dat.totals)
 
 
 
+
 ```{r ---> ANOVA 1}
-#		COMPUTE ANOVA OF BDI  and TOTAL SCORES
+#		COMPUTE ANOVA OF BDI 
 model1 = aov(bdi_total, ~ group.factor, data = dat1)
 print(model1)
 
@@ -166,7 +183,30 @@ aggregate(group.factor, data.frame(dat1), mean, na.rm = TRUE)
 ```
 
 ```{r ---> ANOVA 2}
-#		COMPUTE ANOVA OF BDI TOTAL
+
+
+dat2  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "pdi_total", "pill_total", "stait_total")
+
+
+
+
+
+
+t_tests_base <- lapply(
+	dat1[resp_vars],
+	function(x) { t.test(x ~ group.factor, data = dat1) }
+	)
+
+t_tests_base$disp
+
+
+```
+
+
+
+```{r ---> ANOVA 2b}
+
+#		COMPUTE ANOVA OF MULTIPLE VARIABLES
 model1 = aov(bdi_total ~ group.factor, data = dat1)
 print(model1)
 
