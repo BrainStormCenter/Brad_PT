@@ -1,5 +1,9 @@
 #Clear existing data and graphics
-rm(list=ls())
+# rm(list=ls())
+
+#	Don’t start with rm(list = ls()).
+#	It is anti-social to clobber other people’s workspaces.
+
 graphics.off()
 #Load Hmisc library
 library(Hmisc)
