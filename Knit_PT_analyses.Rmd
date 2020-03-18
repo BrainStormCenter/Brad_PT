@@ -13,6 +13,18 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+
+```{r  ---> Knit issues}
+library(doBy)
+library(multcomp)
+library(tidyverse)
+library(reprex)
+library(knitr)
+library(here)
+here()
+dr_here(show_reason = FALSE)
+```
+
 ```{r ---> Libraries}
 library(doBy)
 library(fuzzyjoin)
@@ -35,8 +47,9 @@ dr_here(show_reason = FALSE)
 ```
 
 ```{r ---> Import data}
-# import data:
-#	This reads the files created by RedCap
+# Small dataset
+# data <- read.csv(url('https://github.com/BrainStormCenter/Brad_PT/blob/master/smData_v1.csv'), header = TRUE)
+
 source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
 
 ```
@@ -60,6 +73,7 @@ dat1 %>% count(group.factor)
 
 #		DONE AS OF March 17, 2020
 ```
+
 ##	EXAMINE DATA
 
 ###	BDI
@@ -79,6 +93,52 @@ bdi.smry1  <- dat1 %>%
 	)
 view(bdi.smry1)
 ```
+
+```{r ---> ANOVA BDI}
+#		COMPUTE ANOVA OF BDI 
+bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
+# print(bdi.aov)
+
+#		SUMMARY OF THE ANALYSES
+summary(bdi.aov)
+TukeyHSD(bdi.aov)
+summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH")
+
+# 	1. Homogeniety of variances
+# plot(bdi.aov, 1)
+
+#	Levene's Test
+leveneTest(bdi_total ~ group.factor, data = dat1)
+
+
+
+
+#	Relaxing the homogeneity of variance assumption
+oneway.test(bdi_total ~ group.factor, data = dat1)
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH",
+				pool.sd = FALSE)
+
+#	2. Normality
+#	plot(bdi.aov, 2) #	Produces errors
+
+#	EXTRACT RESIDUALS
+bdi.aov.resid <- residuals(object = bdi.aov)
+
+#	RUN Shapiro-Wilk normality test
+shapiro.test(x = bdi.aov.resid)
+
+#	Non-parametric alternative to one-way ANOVA test
+kruskal.test(bdi_total ~ group.factor, data = dat1)
+
+#		DONE AS OF March 17, 2020
+```
+
+
 ```{r ---> BDI Plots}
 # #		BAR CHART
 # bdi.smry2  <- ggplot(data = dat1,
@@ -144,13 +204,15 @@ view(bdi.smry1)
 #		DONE AS OF March 17, 2020
 ```
 
-```{r ---> ANOVA BDI}
-#		COMPUTE ANOVA OF BDI 
-bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
-# print(bdi.aov)
+```{r ---> boxplot}
+#		BOX PLOT
+# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+# 	geom_boxplot()
 
-#		SUMMARY OF THE ANALYSES
-summary(bdi.aov)
+```
+
+
+```{r ---> ANOVA 2}
 TukeyHSD(bdi.aov)
 summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
 
@@ -162,9 +224,6 @@ pairwise.t.test(dat1$bdi_total, dat1$group.factor,
 
 #	Levene's Test
 leveneTest(bdi_total ~ group.factor, data = dat1)
-
-
-
 
 #	Relaxing the homogeneity of variance assumption
 oneway.test(bdi_total ~ group.factor, data = dat1)
@@ -185,12 +244,10 @@ shapiro.test(x = bdi.aov.resid)
 #	Non-parametric alternative to one-way ANOVA test
 kruskal.test(bdi_total ~ group.factor, data = dat1)
 
-#		DONE AS OF March 17, 2020
-```
 
-```{r ---> boxplot}
-#		BOX PLOT
-# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-# 	geom_boxplot()
+ggplot(data = dat1) +
+	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total))
+#		DONE AS OF March 17, 2020
+
 
 ```

@@ -1,0 +1,66 @@
+---
+title: "Knit for RStudio forum"
+author: "Jason"
+date: "3/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r  ---> Knit issues}
+library(doBy)
+library(ggpubr)
+library(tidyverse)
+library(reprex)
+library(knitr)
+library(here)
+here()
+dr_here(show_reason = FALSE)
+```
+
+
+```{r}
+# Small dataset
+sm.dat <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/Brad_PT/master/smData_v1.csv'), header = TRUE)
+
+##	EXAMINE DATA
+#		BDI
+sm.bdi.smry  <- sm.dat %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		)
+# view(sm.bdi.smry)
+
+#		COMPUTE ANOVA OF BDI 
+bdi.aov = aov(bdi_total ~ group.factor, data=sm.dat)
+summary(bdi.aov)
+#		KNIT WORKS UP TO THIS POINT
+
+plot(bdi.aov, 1) #	Produces errors
+
+plot(bdi.aov, 2) #	Produces errors
+
+#		UNCOMMENT LAST 2 LINES TO PRODUCE ERRORS
+#		BOX PLOT
+ ggplot(data = sm.dat, mapping = aes(x = group.factor, 
+ 									y = bdi_total)) +
+ 	 	geom_boxplot()
+ 
+ ggplot(data = sm.dat) +
+	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total))
+
+```
+
+
+```{r ---> line plot}
+# library(ggpubr)
+# ggline(sm.dat, x = "group.factor", y = "bdi_total",
+#        add = c("mean_se", "jitter"),
+#        order = c("FM", "CLBP", "HC"),
+#        ylab = "BDI Total", xlab = "Group")
+
+```
