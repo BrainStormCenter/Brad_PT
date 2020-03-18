@@ -1,0 +1,732 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage[]{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\PassOptionsToPackage{hyphens}{url} % url is loaded by hyperref
+\usepackage[unicode=true]{hyperref}
+\hypersetup{
+            pdftitle={Run PT analyses},
+            pdfauthor={Jason},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+% set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+
+\title{Run PT analyses}
+\author{Jason}
+\date{!r Sys.Date()}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(readxl) }\CommentTok{# This is used to import data from excel}
+\KeywordTok{library}\NormalTok{(doBy)}
+\KeywordTok{library}\NormalTok{(fuzzyjoin)}
+\KeywordTok{library}\NormalTok{(reshape2)}
+\KeywordTok{library}\NormalTok{(varhandle)}
+\KeywordTok{library}\NormalTok{(multcomp)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: mvtnorm
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: survival
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: TH.data
+\end{verbatim}
+
+\begin{verbatim}
+## Loading required package: MASS
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'TH.data'
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from 'package:MASS':
+## 
+##     geyser
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(car)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: carData
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(lattice)}
+\KeywordTok{library}\NormalTok{(Formula)}
+\KeywordTok{library}\NormalTok{(Hmisc)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: ggplot2
+\end{verbatim}
+
+\begin{verbatim}
+## 
+## Attaching package: 'Hmisc'
+\end{verbatim}
+
+\begin{verbatim}
+## The following objects are masked from 'package:base':
+## 
+##     format.pval, units
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(ggpubr)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Loading required package: magrittr
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## -- Attaching packages --------------------------------------------- tidyverse 1.3.0 --
+\end{verbatim}
+
+\begin{verbatim}
+## v tibble  2.1.3     v dplyr   0.8.4
+## v tidyr   1.0.2     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.4.0
+## v purrr   0.3.3
+\end{verbatim}
+
+\begin{verbatim}
+## -- Conflicts ------------------------------------------------ tidyverse_conflicts() --
+## x tidyr::extract()   masks magrittr::extract()
+## x dplyr::filter()    masks stats::filter()
+## x dplyr::lag()       masks stats::lag()
+## x dplyr::recode()    masks car::recode()
+## x dplyr::select()    masks MASS::select()
+## x purrr::set_names() masks magrittr::set_names()
+## x purrr::some()      masks car::some()
+## x dplyr::src()       masks Hmisc::src()
+## x dplyr::summarize() masks Hmisc::summarize()
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{library}\NormalTok{(here)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## here() starts at /Users/jcraggs/Documents/GitHub/Brad_PT
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{here}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "/Users/jcraggs/Documents/GitHub/Brad_PT"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{dr_here}\NormalTok{(}\DataTypeTok{show_reason =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## here() starts at /Users/jcraggs/Documents/GitHub/Brad_PT
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# library(ez) Not working for some reason March 17, 2020}
+\CommentTok{# library(readr)        # ALREADY IN TIDYVERSE}
+\CommentTok{# library(ggplot2)      # ALREADY IN TIDYVERSE}
+\CommentTok{# library(dplyr)        # ALREADY IN TIDYVERSE}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# import data:}
+\CommentTok{#   This reads the files created by RedCap}
+\KeywordTok{source}\NormalTok{(}\StringTok{'ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r'}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       GROUPS}
+\NormalTok{data }\OperatorTok{%>%}\StringTok{ }\KeywordTok{count}\NormalTok{(group)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 5 x 2
+##   group          n
+##   <labelled> <int>
+## 1  0             1
+## 2  1            53
+## 3  2            80
+## 4  3            52
+## 5 NA             2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat1  <-}\StringTok{ }\KeywordTok{filter}\NormalTok{(data, group }\OperatorTok{!=}\StringTok{ }\DecValTok{0}\NormalTok{) }
+
+\NormalTok{dat1 }\OperatorTok{%>%}\StringTok{ }\KeywordTok{count}\NormalTok{(group)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 3 x 2
+##   group          n
+##   <labelled> <int>
+## 1 1             53
+## 2 2             80
+## 3 3             52
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dat1}\OperatorTok{$}\NormalTok{group.factor =}\StringTok{ }\KeywordTok{factor}\NormalTok{(dat1}\OperatorTok{$}\NormalTok{group,}\DataTypeTok{levels=}\KeywordTok{c}\NormalTok{(}\StringTok{"1"}\NormalTok{,}\StringTok{"2"}\NormalTok{,}\StringTok{"3"}\NormalTok{))}
+
+\KeywordTok{levels}\NormalTok{(dat1}\OperatorTok{$}\NormalTok{group.factor)=}\KeywordTok{c}\NormalTok{(}\StringTok{"HC"}\NormalTok{,}\StringTok{"CLBP"}\NormalTok{,}\StringTok{"FM"}\NormalTok{, }\DataTypeTok{na.rm =} \OtherTok{FALSE}\NormalTok{)}
+
+\KeywordTok{names}\NormalTok{(dat1)[}\KeywordTok{names}\NormalTok{(dat1) }\OperatorTok{==}\StringTok{ 'participant_id'}\NormalTok{] <-}\StringTok{ 'ID'}
+
+\NormalTok{dat1 }\OperatorTok{%>%}\StringTok{ }\KeywordTok{count}\NormalTok{(group.factor)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 3 x 2
+##   group.factor     n
+##   <fct>        <int>
+## 1 HC              53
+## 2 CLBP            80
+## 3 FM              52
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       DONE AS OF March 17, 2020}
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{EXAMINE DATA}\label{examine-data}
+
+\subsubsection{BDI}\label{bdi}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       BDI VARIABLES}
+\NormalTok{dat.bdi <-}\StringTok{ }\NormalTok{dat1[}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{2}\NormalTok{,}\KeywordTok{grep}\NormalTok{(}\StringTok{"bdi"}\NormalTok{, }\KeywordTok{colnames}\NormalTok{(dat1)))]}
+\KeywordTok{view}\NormalTok{(dat.bdi)}
+
+\NormalTok{bdi.smry1  <-}\StringTok{ }\NormalTok{dat1 }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{group_by}\NormalTok{(group.factor) }\OperatorTok{%>%}
+\StringTok{    }\KeywordTok{summarise}\NormalTok{(}
+        \DataTypeTok{count =} \KeywordTok{n}\NormalTok{(),}
+        \DataTypeTok{avg.bdi.tot =} \KeywordTok{mean}\NormalTok{(bdi_total, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{),}
+        \DataTypeTok{sd.bdi.tot =} \KeywordTok{sd}\NormalTok{(bdi_total, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+        \CommentTok{# avg.pdi.tot = mean(bdi_total, na.rm = TRUE),}
+        \CommentTok{# sd.pdi.tot = sd(pdi_total, na.rm = TRUE)}
+\NormalTok{    )}
+\KeywordTok{view}\NormalTok{(bdi.smry1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       BAR CHART}
+\NormalTok{bdi.smry2  <-}\StringTok{ }\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ dat1,}
+                       \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ group.factor,}
+                        \DataTypeTok{y =}\NormalTok{ bdi_total,}
+                        \DataTypeTok{fill =}\NormalTok{ group.factor)) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{color =} \StringTok{"black"}\NormalTok{, }\DataTypeTok{stat =} \StringTok{"identity"}\NormalTok{,}
+             \DataTypeTok{position =} \KeywordTok{position_dodge}\NormalTok{(),}
+             \DataTypeTok{size =}\NormalTok{ .}\DecValTok{3}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{scale_fill_hue}\NormalTok{(}\DataTypeTok{name =} \StringTok{"Groups"}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{xlab}\NormalTok{(}\StringTok{"Subjects groups"}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{ylab}\NormalTok{(}\StringTok{"BDI total"}\NormalTok{) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{ggtitle}\NormalTok{(}\StringTok{"BDI by group"}\NormalTok{)}
+
+\KeywordTok{print}\NormalTok{(bdi.smry2) }\CommentTok{# I'm not sure what values are used in the graph}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing missing values (geom_bar).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       BOX PLOT}
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ dat1, }\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ group.factor, }\DataTypeTok{y =}\NormalTok{ bdi_total)) }\OperatorTok{+}
+\StringTok{    }\KeywordTok{geom_boxplot}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_boxplot).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggboxplot}\NormalTok{(dat1, }\DataTypeTok{x =} \StringTok{"group"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"bdi_total"}\NormalTok{,}
+          \DataTypeTok{add =} \StringTok{"dotplot"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_boxplot).
+\end{verbatim}
+
+\begin{verbatim}
+## `stat_bindot()` using `bins = 30`. Pick better value with `binwidth`.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_bindot).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-3.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggboxplot}\NormalTok{(dat1, }\DataTypeTok{x =} \StringTok{"group.factor"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"bdi_total"}\NormalTok{,}
+          \DataTypeTok{add =} \StringTok{"jitter"}\NormalTok{, }\DataTypeTok{shape =} \StringTok{"group.factor"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_boxplot).
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing missing values (geom_point).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-4.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggboxplot}\NormalTok{(dat1, }\DataTypeTok{x =} \StringTok{"group.factor"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"bdi_total"}\NormalTok{,}
+          \DataTypeTok{order =} \KeywordTok{c}\NormalTok{(}\StringTok{"FM"}\NormalTok{, }\StringTok{"CLBP"}\NormalTok{, }\StringTok{"HC"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_boxplot).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-5.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggboxplot}\NormalTok{(dat1, }\DataTypeTok{x =} \StringTok{"group.factor"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"bdi_total"}\NormalTok{,}
+          \DataTypeTok{color =} \StringTok{"red"}\NormalTok{, }\DataTypeTok{fill =} \StringTok{"darkblue"}\NormalTok{,}
+          \DataTypeTok{order =} \KeywordTok{c}\NormalTok{(}\StringTok{"FM"}\NormalTok{, }\StringTok{"CLBP"}\NormalTok{, }\StringTok{"HC"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_boxplot).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-6.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Mean plots}
+\CommentTok{# ++++++++++++++++++++}
+\CommentTok{# Plot weight by group}
+\CommentTok{# Add error bars: mean_se}
+\CommentTok{# (other values include: mean_sd, mean_ci, median_iqr, ....)}
+\KeywordTok{ggline}\NormalTok{(dat1, }\DataTypeTok{x =} \StringTok{"group.factor"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"bdi_total"}\NormalTok{, }
+       \DataTypeTok{add =} \KeywordTok{c}\NormalTok{(}\StringTok{"mean_se"}\NormalTok{, }\StringTok{"jitter"}\NormalTok{), }
+       \DataTypeTok{order =} \KeywordTok{c}\NormalTok{(}\StringTok{"FM"}\NormalTok{, }\StringTok{"CLBP"}\NormalTok{, }\StringTok{"HC"}\NormalTok{),}
+       \DataTypeTok{ylab =} \StringTok{"BDI Total"}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Group"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in bind_rows_(x, .id): Vectorizing 'labelled' elements may not preserve
+## their attributes
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in bind_rows_(x, .id): Vectorizing 'labelled' elements may not preserve
+## their attributes
+\end{verbatim}
+
+\begin{verbatim}
+## Don't know how to automatically pick scale for object of type labelled/integer. Defaulting to continuous.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing non-finite values (stat_summary).
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: Removed 26 rows containing missing values (geom_point).
+\end{verbatim}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} BDI Plots-7.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# Box plots -   NOTY WORKING}
+\CommentTok{# ++++++++++++++++++++}
+\CommentTok{# Plot BDI by group and color by group}
+\CommentTok{# bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total, }
+\CommentTok{#                                        fill = group.factor)) +}
+\CommentTok{#   geom_boxplot()}
+
+    
+\CommentTok{#         color = "black", fill = }
+\CommentTok{#         order = c("HC", "CLBP", "FM"),}
+\CommentTok{#           ylab = "BDI", xlab = "Group")}
+
+\CommentTok{# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]}
+\CommentTok{# view(dat.totals)}
+
+\CommentTok{#       DONE AS OF March 17, 2020}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       COMPUTE ANOVA OF BDI }
+\NormalTok{bdi.aov =}\StringTok{ }\KeywordTok{aov}\NormalTok{(bdi_total }\OperatorTok{~}\StringTok{ }\NormalTok{group.factor, }\DataTypeTok{data=}\NormalTok{dat1)}
+\CommentTok{# print(bdi.aov)}
+
+\CommentTok{#       SUMMARY OF THE ANALYSES}
+\KeywordTok{summary}\NormalTok{(bdi.aov)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##               Df Sum Sq Mean Sq F value   Pr(>F)    
+## group.factor   2   3909    1954   32.59 1.49e-12 ***
+## Residuals    156   9354      60                     
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 26 observations deleted due to missingness
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{TukeyHSD}\NormalTok{(bdi.aov)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   Tukey multiple comparisons of means
+##     95% family-wise confidence level
+## 
+## Fit: aov(formula = bdi_total ~ group.factor, data = dat1)
+## 
+## $group.factor
+##              diff      lwr       upr   p adj
+## CLBP-HC  7.063077 3.616252 10.509902 8.9e-06
+## FM-HC   12.853636 9.066032 16.641241 0.0e+00
+## FM-CLBP  5.790559 2.213367  9.367752 5.4e-04
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{summary}\NormalTok{(}\KeywordTok{glht}\NormalTok{(bdi.aov, }\DataTypeTok{linfct =} \KeywordTok{mcp}\NormalTok{(}\DataTypeTok{group.factor =} \StringTok{"Tukey"}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##   Simultaneous Tests for General Linear Hypotheses
+## 
+## Multiple Comparisons of Means: Tukey Contrasts
+## 
+## 
+## Fit: aov(formula = bdi_total ~ group.factor, data = dat1)
+## 
+## Linear Hypotheses:
+##                Estimate Std. Error t value Pr(>|t|)    
+## CLBP - HC == 0    7.063      1.457   4.849  < 1e-04 ***
+## FM - HC == 0     12.854      1.601   8.030  < 1e-04 ***
+## FM - CLBP == 0    5.791      1.512   3.830 0.000569 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## (Adjusted p values reported -- single-step method)
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pairwise.t.test}\NormalTok{(dat1}\OperatorTok{$}\NormalTok{bdi_total, dat1}\OperatorTok{$}\NormalTok{group.factor,}
+                \DataTypeTok{p.adjust.method =} \StringTok{"BH"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  dat1$bdi_total and dat1$group.factor 
+## 
+##      HC      CLBP   
+## CLBP 4.5e-06 -      
+## FM   6.6e-13 0.00018
+## 
+## P value adjustment method: BH
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#   1. Homogeniety of variances}
+\KeywordTok{plot}\NormalTok{(bdi.aov, }\DecValTok{1}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Knit_PT_analyses_files/figure-latex/---\textgreater{} ANOVA BDI-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#   Levene's Test}
+\KeywordTok{leveneTest}\NormalTok{(bdi_total }\OperatorTok{~}\StringTok{ }\NormalTok{group.factor, }\DataTypeTok{data =}\NormalTok{ dat1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Levene's Test for Homogeneity of Variance (center = median)
+##        Df F value    Pr(>F)    
+## group   2   11.86 1.604e-05 ***
+##       156                      
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#   Relaxing the homogeneity of variance assumption}
+\KeywordTok{oneway.test}\NormalTok{(bdi_total }\OperatorTok{~}\StringTok{ }\NormalTok{group.factor, }\DataTypeTok{data =}\NormalTok{ dat1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  One-way analysis of means (not assuming equal variances)
+## 
+## data:  bdi_total and group.factor
+## F = 45.125, num df = 2.000, denom df = 87.973, p-value = 3.259e-14
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{pairwise.t.test}\NormalTok{(dat1}\OperatorTok{$}\NormalTok{bdi_total, dat1}\OperatorTok{$}\NormalTok{group.factor,}
+                \DataTypeTok{p.adjust.method =} \StringTok{"BH"}\NormalTok{,}
+                \DataTypeTok{pool.sd =} \OtherTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Pairwise comparisons using t tests with non-pooled SD 
+## 
+## data:  dat1$bdi_total and dat1$group.factor 
+## 
+##      HC      CLBP  
+## CLBP 1.3e-07 -     
+## FM   3.3e-11 0.0015
+## 
+## P value adjustment method: BH
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#   2. Normality}
+\CommentTok{#   plot(bdi.aov, 2) #  Produces errors}
+
+\CommentTok{#   EXTRACT RESIDUALS}
+\NormalTok{bdi.aov.resid <-}\StringTok{ }\KeywordTok{residuals}\NormalTok{(}\DataTypeTok{object =}\NormalTok{ bdi.aov)}
+
+\CommentTok{#   RUN Shapiro-Wilk normality test}
+\KeywordTok{shapiro.test}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ bdi.aov.resid)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Shapiro-Wilk normality test
+## 
+## data:  bdi.aov.resid
+## W = 0.95426, p-value = 4.508e-05
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#   Non-parametric alternative to one-way ANOVA test}
+\KeywordTok{kruskal.test}\NormalTok{(bdi_total }\OperatorTok{~}\StringTok{ }\NormalTok{group.factor, }\DataTypeTok{data =}\NormalTok{ dat1)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+##  Kruskal-Wallis rank sum test
+## 
+## data:  bdi_total by group.factor
+## Kruskal-Wallis chi-squared = 54.056, df = 2, p-value = 1.828e-12
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#       DONE AS OF March 17, 2020}
+\end{Highlighting}
+\end{Shaded}
+
+\end{document}
