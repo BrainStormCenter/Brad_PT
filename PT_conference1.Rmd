@@ -167,17 +167,29 @@ plot(bdi.aov, 1)
 #	Levene's Test
 leveneTest(bdi_total ~ group.factor, data = dat1)
 
+
+
+
+#	Relaxing the homogeneity of variance assumption
+oneway.test(bdi_total ~ group.factor, data = dat1)
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH",
+				pool.sd = FALSE)
+
 #	2. Normality
-plot(model1, 2)
+plot(bdi.aov, 2) #	Produces errors
 
 #	EXTRACT RESIDUALS
-aov_residuals  <- residuals(object = model1)
+bdi.aov.resid <- residuals(object = bdi.aov)
 
 #	RUN Shapiro-Wilk normality test
-shapiro.test(x = aov_residuals)
+shapiro.test(x = bdi.aov.resid)
 
-aggregate(group.factor, data.frame(dat1), mean, na.rm = TRUE)
+#	Non-parametric alternative to one-way ANOVA test
+kruskal.test(bdi_total ~ group.factor, data = dat1)
 
+#		DONE AS OF March 17, 2020
 ```
 
 ```{r ---> ANOVA 2}
