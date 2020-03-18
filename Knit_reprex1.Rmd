@@ -10,36 +10,49 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
+```{r ---> Libraries}
+library(doBy)
+library(fuzzyjoin)
+library(reshape2)
+library(varhandle)
+library(multcomp)
+library(car)
+library(lattice)
+library(Formula)
+library(Hmisc)
+library(ggpubr)
+library(tidyverse)
+library(reprex)
+library(knitr)
+library(pander)
+library(here)
+here()
+dr_here(show_reason = FALSE)
+#		DONE AS OF March 17, 2020
+```
+
 ```{r ---> Import data}
 # Small dataset
+sm.dat <- read.csv(url('https://github.com/BrainStormCenter/Brad_PT/smData_v1.csv'), 
+				   header = TRUE)
 
-smallData <- select(dat1, ID, group.factor, bdi_total)
-
-write_tsv(smallData,
-		  '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv',
-		  na = "NA", append = FALSE,
-		  col_names = TRUE, quote_escape = "double")	
 ```
 
+##	EXAMINE DATA
 
+###	BDI
+```{r ---> BDI Summary}
+#		BDI VARIABLES
+sm.dat.bdi <- sm.dat[c(1:2,grep("bdi", colnames(dat1)))]
+view(dat.bdi)
 
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+sm.bdi.smry1  <- sm.dat %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		# avg.pdi.tot = mean(bdi_total, na.rm = TRUE),
+		# sd.pdi.tot = sd(pdi_total, na.rm = TRUE)
+	)
+view(bdi.smry1)

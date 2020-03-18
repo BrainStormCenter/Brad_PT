@@ -341,9 +341,14 @@ ggplot(data = dat1) +
 
 
 
-
+##	SCRAP
 ```{r ---> Scrap}
+smallData <- select(dat1, ID, group.factor, bdi_total)
 
+write_tsv(smallData,
+		  '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv',
+		  na = "NA", append = FALSE,
+		  col_names = TRUE, quote_escape = "double")	
 #		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
 # dat2 <- arrange(dat1, ID, group.factor, sex)
 # arrange(dat2, ID, group.factor, sex)
