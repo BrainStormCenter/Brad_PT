@@ -1,0 +1,52 @@
+---
+title: "MANOVA"
+author: "Jason"
+date: "3/18/2020"
+output: html_document
+---
+
+```{r ---> import data}
+#		RAW DATA ON GITHUB
+# data <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/ASQ_pilot/master/ASQ_pilot_raw_2019_04_17.csv'), header = TRUE)
+# 
+# source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
+
+```
+
+
+
+```{r ---> MANOVA test}
+data(mtcars)
+head(mtcars)
+# help(manova)
+
+model1 <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars)
+summary(model1)
+model1
+
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
