@@ -11,17 +11,23 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r ---> Libraries}
-library(readxl) # This is used to import data from excel
-# library(doBy)
+# library(readxl) # This is used to import data from excel
+library(doBy)
+library(psych)
+library(corrplot)
+library(colorspace)
+library(ez)
+library(Hmisc)
+library(modelr)
 # library(fuzzyjoin)
 # library(reshape2)
 library(varhandle)
-# library(multcomp)
+library(multcomp)
 library(car)
 # library(lattice)
 # library(Formula)
 # library(Hmisc)
-# library(ggpubr)
+library(ggpubr)
 library(tidyverse)
 library(reprex)
 library(here)
@@ -42,34 +48,24 @@ source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
 
 ```
 
-
 ```{r ---> Clean data}
 #		GROUPS
 data %>% count(group)
-
 dat1  <- filter(data, group != 0) 
-
 dat1 %>% count(group)
-
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
-
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE)
-
 names(dat1)[names(dat1) == 'participant_id'] <- 'ID'
-
 dat1 %>% count(group.factor)
-
 #		DONE AS OF March 17, 2020
 ```
 
-
 ##	EXAMINE DATA
-
 ###	BDI
 ```{r ---> BDI Summary}
 #		BDI VARIABLES
-dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
-view(dat.bdi)
+# dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
+# view(dat.bdi)
 
 bdi.smry1  <- dat1 %>%
 	group_by(group.factor) %>%
@@ -77,44 +73,31 @@ bdi.smry1  <- dat1 %>%
 		count = n(),
 		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
 		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
-		# avg.pdi.tot = mean(bdi_total, na.rm = TRUE),
-		# sd.pdi.tot = sd(pdi_total, na.rm = TRUE)
-	)
+		)
 view(bdi.smry1)
 ```
 
-```{r ---> line plot}
-library(ggpubr)
-ggline(dat1, x = "group.factor", y = "bdi_total", 
-       add = c("mean_se", "jitter"),
-       order = c("FM", "CLBP", "HC"),
-       ylab = "BDI Total", xlab = "Group")
-
-```
-
-
 ```{r ---> ANOVA BDI}
+library(gplots)
 #		COMPUTE ANOVA OF BDI 
 bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
-# print(bdi.aov)
+ print(bdi.aov)
 
 #		SUMMARY OF THE ANALYSES
 summary(bdi.aov)
 TukeyHSD(bdi.aov)
-library(multcomp)
 summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
 
 pairwise.t.test(dat1$bdi_total, dat1$group.factor,
 				p.adjust.method = "BH")
 
 # 	1. Homogeniety of variances
-# plot(bdi.aov, 1)
+ plot(bdi.aov, 1)
 
+ 
+ library(car)
 #	Levene's Test
 leveneTest(bdi_total ~ group.factor, data = dat1)
-
-
-
 
 #	Relaxing the homogeneity of variance assumption
 oneway.test(bdi_total ~ group.factor, data = dat1)
@@ -139,76 +122,122 @@ kruskal.test(bdi_total ~ group.factor, data = dat1)
 ```
 
 
+### BDI & ESS
+```{r ---> Correlations 1, echo=TRUE}
 
-```{r ---> BDI Plots}
-#		BAR CHART
-# bdi.smry2  <- ggplot(data = dat1,
-# 					   aes(x = group.factor,
-# 					   	y = bdi_total,
-# 					   	fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "Groups") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group")
-# 
-# print(bdi.smry2) # I'm not sure what values are used in the graph
-# 
-# #		BOX PLOT
-# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-# 	geom_boxplot()
-# 
-# 
-# ggboxplot(dat1, x = "group", y = "bdi_total",
-# 		  add = "dotplot")
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  add = "jitter", shape = "group.factor")
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  order = c("FM", "CLBP", "HC"))
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  color = "red", fill = "darkblue",
-# 		  order = c("FM", "CLBP", "HC"))
-# 
+library(tidyverse)
+library(psych)
 
+gp.cor <- iris %>%
+  split(.$Species) %>%  
+  map(~corr.test(x = .x %>% select(Petal.Width, Sepal.Width),
+                 use = "everything",
+                 method = "spearman",
+                 adjust = "none",
+                 alpha = 0.05,
+                 ci = TRUE, minlength = 5)
+  )
 
-# Mean plots
-# ++++++++++++++++++++
-# Plot weight by group
-# Add error bars: mean_se
-# (other values include: mean_sd, mean_ci, median_iqr, ....)
-# ggline(dat1, x = "group.factor", y = "bdi_total", 
-#        add = c("mean_se", "jitter"), 
-#        order = c("FM", "CLBP", "HC"),
-#        ylab = "BDI Total", xlab = "Group")
+# If you want the correlations between all numeric columns and your data has columns that are not numeric, you can exclude the non-numeric columns (which you need to do to avoid an error from corr.test) as follows (where I've used the default corr.test arguments to shorten the code):
+# gp.cor <- iris %>%
+#   # Add another non-numeric column
+#   mutate(new.group = sample(LETTERS, 150, replace=TRUE)) %>% 
+#   split(.$Species) %>%  
+#   map(~corr.test(x = .x %>% select_if(is.numeric))
+#   )
+
+gp.cor.r <- map(gp.cor, ~.x$r)
+gp.cor.p <- map(gp.cor, ~.x$p)
+print(x = gp.cor.r, short = TRUE)
+print(x = gp.cor.p, short = TRUE)
+
+#		TRYING THE ABOVE WITH MY OWN DATA
+dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+
+gp.cor2 <- dat2 %>%
+	split(.$group.factor) %>%
+	map(~corr.test(x = .x %>% select(ess_total, bdi_total),
+					  use = "everything",
+					  method = "spearman",
+					  adjust = "none",
+					  alpha = 0.05,
+					  ci = TRUE, minlength = 5)
+	)
 
 
-# Box plots - 	NOTY WORKING
-# ++++++++++++++++++++
-# Plot BDI by group and color by group
-# bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total, 
-# 										 fill = group.factor)) +
-# 	geom_boxplot()
 
+cor.mtrx <- cor(dat2[3:4], use = "complete.obs", method = "pearson")
+corrplot(cor.mtrx, method = ("number"))
+
+
+#		CORRELATIONS
+"Use Pairwise and Spearman"
+cor.bdi.ess <- corr.test(x = dat2[3:4],
+						 y = NULL, 
+						 use = "pairwise", # available: pairwise, complete
+						 method = "spearman",
+						 # available: pearson, spearman, kendall
+						 adjust = "none",
+						 # available: holm, hochberg, hommel, 
+						 # bonferroni, BH, BY, fd, none
+						 alpha = 0.05,
+						 ci = TRUE,minlength = 5
+					  )
+
+# gp.cor <- dat2 %>%
+# 	group_by(group.factor) %>%
+cor.mtrx3 <- 	corr.test(x = dat2[3:4],
+			  y = NULL, 
+			  use = "everything", # available: pairwise, complete
+			  method = "spearman",
+			  # available: pearson, spearman, kendall
+			  adjust = "none",
+			  # available: holm, hochberg, hommel, 
+			  # bonferroni, BH, BY, fd, none
+			  alpha = 0.05,
+			  ci = TRUE,minlength = 5
+	)
+
+
+
+
+
+print(x = cor.mtrx, short = TRUE)
+print(x = cor.mtrx, short = FALSE)
+
+cor.mtrx2 <- ezCor(
+  data = dat2[,c(3:4)],
+  r_size_lims = c(4,4),
+  label_size = 3
+)
+print(cor.mtrx2)
+print(cor.mtrx3)
+
+
+# dat2 %>%
+# 	group_by(group.factor) %>%
 	
-# 		  color = "black", fill = 
-# 		  order = c("HC", "CLBP", "FM"),
-#           ylab = "BDI", xlab = "Group")
+	
+# gp.cor <- dat2 %>%
+# 	group_by(group.factor) %>%
+# 	cor.mtrx3 <- 	corr.test(x = dat2[3:4],
+# 							y = NULL,
+# 							use = "everything", # available: pairwise, complete
+# 							method = "spearman",
+# 							# available: pearson, spearman, kendall
+# 							adjust = "none",
+# 							# available: holm, hochberg, hommel,
+# 							# bonferroni, BH, BY, fd, none
+# 							alpha = 0.05,
+# 							ci = TRUE,minlength = 5
+# 	)
 
-# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
-# view(dat.totals)
 
-#		DONE AS OF March 17, 2020
-```
+# corr.p(corr_matrix,158,adjust = "none",alpha = .05,minlength = 5,ci=TRUE)
 
+#corr_matrix
 
 
-```{r ---> ANOVA 2}
-# dat2  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "pdi_total", "pill_total", "stait_total")
 # 
 # t_tests_base <- lapply(
 # 	dat1[resp_vars],
@@ -218,6 +247,66 @@ kruskal.test(bdi_total ~ group.factor, data = dat1)
 # t_tests_base$disp
 
 ```
+
+```{r ---> Correlations 2}
+#		FOLLOWING YOOUTUBE VIDEO ABOUT CORRELATIONS
+#		Will have to create dummy variables to look 
+#		at the correlations of factor variables
+dat3 <- dat2
+# dat3$group.factor
+dat3  <- select(dat2, na.rm = TRUE) 
+
+dat3 %>% count(group.factor)
+
+
+
+# url: https://amunategui.github.io/Exploring-Your-Data-Set/
+
+library(caret)
+dmy <- dummyVars(" ~ .", data = dat3)
+
+dat3Trsf <- data.frame(predict(dmy, newdata = dat3))
+
+# dat4Trsf <- dat3Trsf
+
+cor.prob <- function(X, dfr = nrow(X) - 2) {
+	 R <- cor(X, use = "pairwise.complete.obs")
+	 above <- row(R) < col(R)
+	 r2 <- R[above]^2
+	 Fstat <- r2 * dfr / (1 - r2)
+	 R[above] <- 1 - pf(Fstat, 1, dfr)
+	 R
+}
+
+corMasterlist <- flattenSquareMatrix(cor.prob(dat3Trsf))
+dim(corMasterlist)
+head(corMasterlist)
+
+corList <- corMasterlist[order(-abs(corMasterlist$cor)),]
+print(head(corList))
+
+
+ 
+
+
+#	END
+```
+
+```{r ---> Epsworth}
+ess.dat  <- dat1[c(1:2,grep("ess", colnames(dat1)))]
+view(ess.dat)
+```
+
+
+
+```{r ---> PSQI}
+psqi.dat  <- dat1[c(1:2,grep("psqi", colnames(dat1)))]
+view(dat.psqi)
+
+```
+
+
+
 
 
 
@@ -297,6 +386,116 @@ kruskal.test(bdi_total ~ group.factor, data = dat1)
 
 
 
+
+
+
+
+
+
+
+
+```{r ---> MANOVA}
+# data(mtcars)
+# head(mtcars)
+# help(manova)
+# model1 <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars)
+# summary(model1)
+# model1
+
+#		TRYING THE ABOVE WITH MY OWN DATA
+# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+
+
+gp.manova1 <- manova(cbind(ess_total, bdi_total,
+							mcgill_total) ~ group.factor,
+					  data = dat2)
+summary(gp.manova1)
+## Dufferent tests for the MANOVA
+summary(gp.manova1, test = "Hotelling-Lawley")
+summary(gp.manova1, test = "Roy")
+summary(gp.manova1, test = "Pillai")
+summary(gp.manova1, test = "Wilks")
+
+## LOOK TO SEE WHICH DIFFER
+summary.aov(gp.manova1)
+
+
+
+
+```
+
+```{r ---> BDI Plots}
+#		BAR CHART
+# bdi.smry2  <- ggplot(data = dat1,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group")
+# 
+# print(bdi.smry2) # I'm not sure what values are used in the graph
+# 
+# #		BOX PLOT
+# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+# 	geom_boxplot()
+# 
+# 
+# ggboxplot(dat1, x = "group", y = "bdi_total",
+# 		  add = "dotplot")
+# 
+# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
+# 		  add = "jitter", shape = "group.factor")
+# 
+# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
+# 		  order = c("FM", "CLBP", "HC"))
+# 
+# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
+# 		  color = "red", fill = "darkblue",
+# 		  order = c("FM", "CLBP", "HC"))
+# 
+
+
+# Mean plots
+# ++++++++++++++++++++
+# Plot weight by group
+# Add error bars: mean_se
+# (other values include: mean_sd, mean_ci, median_iqr, ....)
+# ggline(dat1, x = "group.factor", y = "bdi_total", 
+#        add = c("mean_se", "jitter"), 
+#        order = c("FM", "CLBP", "HC"),
+#        ylab = "BDI Total", xlab = "Group")
+
+
+# Box plots - 	NOTY WORKING
+# ++++++++++++++++++++
+# Plot BDI by group and color by group
+# bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total, 
+# 										 fill = group.factor)) +
+# 	geom_boxplot()
+
+	
+# 		  color = "black", fill = 
+# 		  order = c("HC", "CLBP", "FM"),
+#           ylab = "BDI", xlab = "Group")
+
+# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
+# view(dat.totals)
+
+#		DONE AS OF March 17, 2020
+```
+
+```{r ---> line plot}
+ggline(dat1, x = "group.factor", y = "bdi_total", 
+       add = c("mean_se", "jitter"),
+       order = c("FM", "CLBP", "HC"),
+       ylab = "BDI Total", xlab = "Group")
+
+```
 
 
 
