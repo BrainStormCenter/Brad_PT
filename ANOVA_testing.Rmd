@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ## ANOVA
 url:https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
 
-```{r ---> ANOVA}
+```{r ---> ANOVA working code}
 #	Trying code from the web
 dat <- iris
 
@@ -49,14 +49,46 @@ for (i in y) {
 }
 
 
-
-
-
 ```
 
 
 
+```{r ---> ANOVA testing}
 
+dat <- dat3
+
+# Edit from here
+x <- which(names(dat) == "group.factor") # name of grouping variable
+y <- which(names(dat) == "ess_total" # names of variables to test
+| names(dat) == "bdi_total"
+| names(dat) == "mcgill_total")
+# | names(dat) == "Petal.Width")
+method1 <- "anova" # one of "anova" or "kruskal.test"
+method2 <- "t.test" # one of "wilcox.test" or "t.test"
+my_comparisons <- list(c("HC", "CLBP"), c("HC", "FM"), c("CLBP", "FM")) # comparisons for post-hoc tests
+# Edit until here
+
+
+# Edit at your own risk
+for (i in y) {
+  for (j in x) {
+    p <- ggboxplot(dat,
+      x = colnames(dat[j]), y = colnames(dat[i]),
+      color = colnames(dat[j]),
+      legend = "none",
+      palette = "npg",
+      add = "jitter"
+    )
+    print(
+      p + stat_compare_means(aes(label = paste0(..method.., ", p-value = ", ..p.format.., " (", ifelse(..p.adj.. > 0.05, "not significant", ..p.signif..), ")")),
+        method = method1, label.y = max(dat[, i], na.rm = TRUE)
+      )
+      + stat_compare_means(comparisons = my_comparisons, method = method2, label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
+    )
+  }
+}
+
+```
 
 
 

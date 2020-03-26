@@ -285,8 +285,14 @@ head(corMasterlist)
 corList <- corMasterlist[order(-abs(corMasterlist$cor)),]
 print(head(corList))
 
+selectedSub <- subset(corList, (abs(cor) > 0.2 & j == 'mcgill_total'))
+print(selectedSub) 
 
- 
+bestSub  <- as.character(selectedSub$i)
+
+library(psych)
+pairs.panels(dat3Trsf[c(bestSub, 'mcgill_total')])
+
 
 
 #	END
