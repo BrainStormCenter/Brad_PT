@@ -45,22 +45,79 @@ dr_here(show_reason = FALSE)
 # import data:
 #	This reads the files created by RedCap
 source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
+names(data)[names(data) == 'participant_id'] <- 'ID'
 
 ```
 
 ```{r ---> Clean data}
-#		GROUPS
+#		CLEANING AND PRESERVING ORIGINAL DATA
 data %>% count(group)
-dat1  <- filter(data, group != 0) 
-dat1 %>% count(group)
+dat1  <- filter(data, group != 0, group != "NA", data$bdi1 != "NA")
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
-levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE)
-names(dat1)[names(dat1) == 'participant_id'] <- 'ID'
+levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = TRUE)
 dat1 %>% count(group.factor)
-#		DONE AS OF March 17, 2020
+
+#		REPLACE HC McGILL TOTAL "NA" WITH 0
+dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
+
+
+#		CREATING SMALL DATASET
+datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
+
+# datSM3 <- datSM2 
+
+
+write_csv(datSM1, "datSM1.csv",
+		  na = "NA", append = FALSE,
+		  col_names = TRUE, quote_escape = "double")
+
+#		NOT ALL SUBJECTS HAVE COMPLETE DATA
+#		DONE AS OF March 30, 2020
 ```
 
 ##	EXAMINE DATA
+
+```{r ---> Cor ANOVA}
+
+dat <- dat3
+
+# Edit from here
+x <- which(names(dat) == "group.factor") # name of grouping variable
+y <- which(names(dat) == "ess_total" # names of variables to test
+| names(dat) == "bdi_total"
+| names(dat) == "mcgill_total")
+# | names(dat) == "Petal.Width")
+method1 <- "anova" # one of "anova" or "kruskal.test"
+method2 <- "t.test" # one of "wilcox.test" or "t.test"
+my_comparisons <- list(c("HC", "CLBP"), c("HC", "FM"), c("CLBP", "FM")) # comparisons for post-hoc tests
+# Edit until here
+
+
+# Edit at your own risk
+for (i in y) {
+  for (j in x) {
+    p <- ggboxplot(dat,
+      x = colnames(dat[j]), y = colnames(dat[i]),
+      color = colnames(dat[j]),
+      legend = "none",
+      palette = "npg",
+      add = "jitter"
+    )
+    print(
+      p + stat_compare_means(aes(label = paste0(..method.., ", p-value = ", ..p.format.., " (", ifelse(..p.adj.. > 0.05, "not significant", ..p.signif..), ")")),
+        method = method1, label.y = max(dat[, i], na.rm = TRUE)
+      )
+      + stat_compare_means(comparisons = my_comparisons, method = method2, label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
+    )
+  }
+}
+
+```
+
+
+
+
+
 ###	BDI
 ```{r ---> BDI Summary}
 #		BDI VARIABLES
@@ -166,7 +223,7 @@ gp.cor2 <- dat2 %>%
 
 
 
-cor.mtrx <- cor(dat2[3:4], use = "complete.obs", method = "pearson")
+cor.mtrx <- cor(dat2[3:5], use = "complete.obs", method = "pearson")
 corrplot(cor.mtrx, method = ("number"))
 
 
@@ -258,7 +315,9 @@ dat3  <- select(dat2, na.rm = TRUE)
 
 dat3 %>% count(group.factor)
 
+```
 
+```{r  ---> NEEDS WORK MANOVA}
 
 # url: https://amunategui.github.io/Exploring-Your-Data-Set/
 
@@ -278,6 +337,15 @@ cor.prob <- function(X, dfr = nrow(X) - 2) {
 	 R
 }
 
+flattenSquareMatrix <- function(m) {
+	if( (class(m) != "matrix") | (nrow(m) != ncol(m))) stop("Must be a square matrix.")
+	if(!identical(rownames(m), colnames(m))) stop("Row and column names must be equal.")
+	ut <- upper.tri(m)
+	data.frame(i = rownames(m)[row(m)[ut]],
+			   j = rownames(m)[col(m)[ut]],
+			   cor=t(m)[ut],
+			   p=m[ut])
+}
 corMasterlist <- flattenSquareMatrix(cor.prob(dat3Trsf))
 dim(corMasterlist)
 head(corMasterlist)
@@ -629,24 +697,3 @@ ggline(dat1, x = "group.factor", y = "bdi_total",
 
 
 
-
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
