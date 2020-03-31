@@ -9,6 +9,10 @@ graphics.off()
 library(Hmisc)
 #Read Data
 data=read.csv('ImagingPsychometrics-BradPTConference_DATA_2020-03-16_1300.csv')
+
+# data=read_csv('ImagingPsychometrics-BradPTConference_DATA_2020-03-16_1300.csv')
+
+
 #Setting Labels
 
 label(data$participant_id)="ID"

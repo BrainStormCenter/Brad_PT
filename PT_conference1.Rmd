@@ -27,7 +27,9 @@ library(car)
 # library(lattice)
 # library(Formula)
 # library(Hmisc)
+library(readr)
 library(ggpubr)
+library(skimr)
 library(tidyverse)
 library(reprex)
 library(here)
@@ -45,6 +47,7 @@ dr_here(show_reason = FALSE)
 # import data:
 #	This reads the files created by RedCap
 source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
+data <- as_tibble(data)
 names(data)[names(data) == 'participant_id'] <- 'ID'
 
 ```
@@ -60,26 +63,32 @@ dat1 %>% count(group.factor)
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
 
-
 #		CREATING SMALL DATASET
-datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
+# datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
+datSM1  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+datSM1   <- filter(datSM1, ess_total != "NA")
 
-# datSM3 <- datSM2 
-
-
+#		WRITE SMALL DATASET
 write_csv(datSM1, "datSM1.csv",
 		  na = "NA", append = FALSE,
 		  col_names = TRUE, quote_escape = "double")
 
 #		NOT ALL SUBJECTS HAVE COMPLETE DATA
-#		DONE AS OF March 30, 2020
+#		DONE AS OF March 31, 2020
 ```
 
 ##	EXAMINE DATA
 
-```{r ---> Cor ANOVA}
 
-dat <- dat3
+
+
+
+```{r ---> Cor ANOVA}
+#	TAKEN FROM
+# https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
+
+#		PRESERVE ORIGINAL DATA
+dat <- datSM1
 
 # Edit from here
 x <- which(names(dat) == "group.factor") # name of grouping variable
@@ -107,7 +116,9 @@ for (i in y) {
       p + stat_compare_means(aes(label = paste0(..method.., ", p-value = ", ..p.format.., " (", ifelse(..p.adj.. > 0.05, "not significant", ..p.signif..), ")")),
         method = method1, label.y = max(dat[, i], na.rm = TRUE)
       )
-      + stat_compare_means(comparisons = my_comparisons, method = method2, label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
+      + stat_compare_means(comparisons = my_comparisons, method = method2, 
+      					 label.sep = ",",
+      					 label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
     )
   }
 }
@@ -149,7 +160,7 @@ pairwise.t.test(dat1$bdi_total, dat1$group.factor,
 				p.adjust.method = "BH")
 
 # 	1. Homogeniety of variances
- plot(bdi.aov, 1)
+plot(bdi.aov, 1)
 
  
  library(car)
@@ -186,6 +197,7 @@ library(tidyverse)
 library(psych)
 
 gp.cor <- iris %>%
+	# mutate(new.group = sample(LETTERS, 150, replace=TRUE)) %>% 
   split(.$Species) %>%  
   map(~corr.test(x = .x %>% select(Petal.Width, Sepal.Width),
                  use = "everything",
@@ -195,6 +207,43 @@ gp.cor <- iris %>%
                  ci = TRUE, minlength = 5)
   )
 
+print(gp.cor)
+gp.cor.r <- map(gp.cor, ~.x$r)
+gp.cor.p <- map(gp.cor, ~.x$p)
+print(x = gp.cor.r, short = TRUE)
+print(x = gp.cor.p, short = TRUE)
+
+
+gp.cor3 <- datSM2 %>%
+  split(datSM2$group.factor) %>%  
+  map(~corr.test(datSM2 %>% select(ess_total, bdi_total),
+                 use = "everything",
+                 method = "spearman",
+                 adjust = "none",
+                 alpha = 0.05,
+                 ci = TRUE, minlength = 5)
+  )
+
+print(gp.cor3)
+
+gp.cor3.r <- map(gp.cor3, ~.x$r)
+gp.cor3.p <- map(gp.cor3, ~.x$p)
+print(x = gp.cor3.r, short = TRUE)
+print(x = gp.cor3.p, short = TRUE)
+
+
+datSM2 %>% count(group.factor)
+mean(datSM2$ess_total)
+datSM2 %>% count(ess_total)
+
+
+summarise(datSM2,
+		  maxESS = max(ess_total, na.rm = TRUE),
+		  avgESS = mean(ess_total, na.rm = TRUE)
+)
+
+
+
 # If you want the correlations between all numeric columns and your data has columns that are not numeric, you can exclude the non-numeric columns (which you need to do to avoid an error from corr.test) as follows (where I've used the default corr.test arguments to shorten the code):
 # gp.cor <- iris %>%
 #   # Add another non-numeric column
@@ -203,10 +252,9 @@ gp.cor <- iris %>%
 #   map(~corr.test(x = .x %>% select_if(is.numeric))
 #   )
 
-gp.cor.r <- map(gp.cor, ~.x$r)
-gp.cor.p <- map(gp.cor, ~.x$p)
-print(x = gp.cor.r, short = TRUE)
-print(x = gp.cor.p, short = TRUE)
+
+
+
 
 #		TRYING THE ABOVE WITH MY OWN DATA
 dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
@@ -607,6 +655,27 @@ ggline(dat1, x = "group.factor", y = "bdi_total",
 
 ##	SCRAP
 ```{r ---> Scrap}
+
+# data <- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE)
+
+# spec_csv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
+
+# " col_names = TRUE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # smallData <- select(dat1, ID, group.factor, bdi_total)
 # 
 # write_csv(smallData,
@@ -624,7 +693,7 @@ ggline(dat1, x = "group.factor", y = "bdi_total",
 
 
 
-#dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
+# dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
 # dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE)
 #	THIS WORKS AS OF March 15, 2020
 #a1_Ctr3_voi1_2020_03_12_for_R <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt", col_names = TRUE)
@@ -679,6 +748,13 @@ ggline(dat1, x = "group.factor", y = "bdi_total",
 ```
 
 
+
+
+```{r ---> skimr}
+
+skimr::skim(datSM1)
+
+```
 
 
 
