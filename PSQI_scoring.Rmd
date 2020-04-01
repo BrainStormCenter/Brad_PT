@@ -1,0 +1,154 @@
+---
+title: "PSQI scoring"
+author: "Jason"
+date: "3/31/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Meredith's original syntax
+```{r ---> Score PSQI}
+require(lubridate)
+
+##### retain Baseline data only: ####
+dat.bl <- dat1[dat1$redcap_event_name == "baseline_data_arm_1",]
+colnames(dat.bl) # Baseline data
+
+#		RECREATING MEREDITH'S PROCESS FOR CREATING A SMALLER DATASET: USEFUL???
+dat.rc.scored  <- dat.bl[,c(1,3,408:422,425,769)]
+colnames(dat.rc.scored)
+view(dat.rc.scored)
+
+
+#### Score Variables ####
+
+#### PSQI #### 
+# gather psqi variables into separate spreadsheet:
+dat.psqi <- dat.bl[,c(1,425,769,
+					  grep("pittsburgh", colnames(dat.bl)),
+					  grep("psqi", colnames(dat.bl)))]
+#grep("timestamp", colnames(dat.raw))
+
+colnames(dat.psqi)
+label(dat.psqi)
+view(dat.psqi)
+
+#	REORGANIZE VARIABLES
+dat.psqi <- dat.psqi %>% select(1:7,43,everything())
+dat.psqi <- dat.psqi %>% select(1:11,44,everything())
+dat.psqi <- dat.psqi %>% select(1:14,45,everything())
+dat.psqi <- dat.psqi %>% select(1:16,46,everything())
+dat.psqi <- dat.psqi %>% select(1:18,47,everything())
+dat.psqi <- dat.psqi %>% select(1:20,48,everything())
+dat.psqi <- dat.psqi %>% select(1:22,49,everything())
+dat.psqi <- dat.psqi %>% select(1:24,50,everything())
+dat.psqi <- dat.psqi %>% select(1:26,51,everything())
+dat.psqi <- dat.psqi %>% select(1:28,52,everything())
+dat.psqi <- dat.psqi %>% select(1:30,53,everything())
+dat.psqi <- dat.psqi %>% select(1:32,54,everything())
+dat.psqi <- dat.psqi %>% select(1:35,55,everything())
+dat.psqi <- dat.psqi %>% select(1:37,56,everything())
+dat.psqi <- dat.psqi %>% select(1:39,57,everything())
+
+dat.psqi <- dat.psqi %>% select(1:41,psqi_8b.factor,
+								psqi_9, psqi_9.factor,
+								everything())
+
+dat.psqi <- dat.psqi %>% select(1:45,
+								psqi_10.factor,
+								psqi_10a, psqi_10a.factor,
+								psqi_10b, psqi_10b.factor,
+								psqi_10c, psqi_10c.factor,
+								psqi_10d, psqi_10d.factor,
+								psqi_10e, 
+								psqi_10e1, psqi_10e1.factor,
+								everything())
+
+dat.psqi <- dat.psqi %>% select(1:2,group.factor,everything())
+
+colnames(dat.psqi)
+
+
+write.csv(dat.psqi, "PSQI_rawData_March2020.csv", row.names = FALSE)
+
+
+#		CALCULATE BEDTIMES
+#Time in bed calculation:
+dat.time <- data.frame("bedtime" = dat.psqi$psqi_1,
+					   "bt.sleep"= dat.psqi$psqi_1a.factor,
+					   "waketime" = dat.psqi$psqi_3,
+					   "wt.wake" = dat.psqi$psqi_3a.factor)
+
+head(dat.time)
+class(dat.time$bedtime)
+class(dat.time$bt.sleep)
+class(dat.time$waketime)
+class(dat.time$wt.wake)
+
+
+
+# minuteave$minutes <- ymd_hms(minuteave$minutes)
+
+dat.time$bedtime2  <- as.character(dat.time$bedtime)
+
+dat.time$bedtime3 <- as.POSIXct(dat.time$bedtime2,
+                       format = '%H:%M')
+
+dat.time$bedtime5 <- as.POSIXct(dat.time$bedtime3,
+                       format = '%H:%M')
+
+
+view(dat.time)
+
+
+dat.time$bedtime4  <- hms(dat.time$bedtime3)
+
+dat.time$bedtime3  <- as_date(dat.time$bedtime2)
+	
+	
+	
+library(chron)
+x <- chron(times=time)
+
+library(anytime)
+# R> anytime(as.factor("2013-06-01 08:07:00"))
+# [1] "2013-06-01 08:07:00 CDT"
+dat.time$bedtime4  <- anytime(dat.time$bedtime3)
+
+
+dat.time$bedtime3 <- chron(dat.time$bedtime2)
+
+# dat.time$btAM <- grepl("AM", dat.time$bedtime)
+# dat.time$wtAM <- grepl("AM", dat.time$waketime)
+
+
+if (dat.time$bt.sleep = "P.M.") {
+	dat.time$bedtime2 = (dat.time$bedtime + 12)
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#####PSQI scoring. Make a new dataframe to put all the PSQI variables into. ####
+psqi <- dat.bl[,c(1,3)]
+
+# Sleep Quality: This is scored so that higher score = higher quality sleep.
+psqi$SQ <- 3-dat.bl$psqi_9
+
+```

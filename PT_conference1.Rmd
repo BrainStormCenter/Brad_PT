@@ -79,10 +79,6 @@ write_csv(datSM1, "datSM1.csv",
 
 ##	EXAMINE DATA
 
-
-
-
-
 ```{r ---> Cor ANOVA}
 #	TAKEN FROM
 # https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
