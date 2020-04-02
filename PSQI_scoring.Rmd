@@ -14,22 +14,22 @@ knitr::opts_chunk$set(echo = TRUE)
 require(lubridate)
 
 ##### retain Baseline data only: ####
-dat.bl <- dat1[dat1$redcap_event_name == "baseline_data_arm_1",]
-colnames(dat.bl) # Baseline data
+# dat.bl <- dat1[dat1$redcap_event_name == "baseline_data_arm_1",]
+# colnames(dat.bl) # Baseline data
 
 #		RECREATING MEREDITH'S PROCESS FOR CREATING A SMALLER DATASET: USEFUL???
-dat.rc.scored  <- dat.bl[,c(1,3,408:422,425,769)]
-colnames(dat.rc.scored)
-view(dat.rc.scored)
+# dat.rc.scored  <- dat.bl[,c(1,3,408:422,425,769)]
+# colnames(dat.rc.scored)
+# view(dat.rc.scored)
 
 
 #### Score Variables ####
 
 #### PSQI #### 
 # gather psqi variables into separate spreadsheet:
-dat.psqi <- dat.bl[,c(1,425,769,
-					  grep("pittsburgh", colnames(dat.bl)),
-					  grep("psqi", colnames(dat.bl)))]
+dat.psqi <- dat1[,c(1,425,769,
+					  grep("pittsburgh", colnames(dat1)),
+					  grep("psqi", colnames(dat1)))]
 #grep("timestamp", colnames(dat.raw))
 
 colnames(dat.psqi)
@@ -52,11 +52,9 @@ dat.psqi <- dat.psqi %>% select(1:32,54,everything())
 dat.psqi <- dat.psqi %>% select(1:35,55,everything())
 dat.psqi <- dat.psqi %>% select(1:37,56,everything())
 dat.psqi <- dat.psqi %>% select(1:39,57,everything())
-
 dat.psqi <- dat.psqi %>% select(1:41,psqi_8b.factor,
 								psqi_9, psqi_9.factor,
 								everything())
-
 dat.psqi <- dat.psqi %>% select(1:45,
 								psqi_10.factor,
 								psqi_10a, psqi_10a.factor,
@@ -75,12 +73,40 @@ colnames(dat.psqi)
 write.csv(dat.psqi, "PSQI_rawData_March2020.csv", row.names = FALSE)
 
 
+
 #		CALCULATE BEDTIMES
 #Time in bed calculation:
 dat.time <- data.frame("bedtime" = dat.psqi$psqi_1,
 					   "bt.sleep"= dat.psqi$psqi_1a.factor,
 					   "waketime" = dat.psqi$psqi_3,
 					   "wt.wake" = dat.psqi$psqi_3a.factor)
+
+#		FOR FORUM HELP
+# dput(head(dat.time, 3))
+
+dat.time <- dat.time %>%
+	mutate_all(.funs = as.character) %>%
+	mutate_at(.vars = c("bt.sleep", "wt.wake"),
+			  .funs = ~ gsub(pattern = ".",
+			  			   replacement = "",
+			  			   x = .x,
+			  			   fixed = TRUE)) %>%
+	mutate(Sleep = as.POSIXct(x = paste(bedtime, bt.sleep),
+							  format = "%I:%M %p"),
+		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
+		   				  format = "%I:%M %p") + as.difftime(tim = 1,
+		   				  								   units = "days"),
+		   `Time in bed` = Wake - Sleep)
+
+
+dput(head(dat.time, 20))
+
+
+
+
+
+
+
 
 head(dat.time)
 class(dat.time$bedtime)

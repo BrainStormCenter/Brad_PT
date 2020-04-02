@@ -48,6 +48,7 @@ dr_here(show_reason = FALSE)
 #	This reads the files created by RedCap
 source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
 data <- as_tibble(data)
+#		RENAME VARIABLE
 names(data)[names(data) == 'participant_id'] <- 'ID'
 
 ```
@@ -63,23 +64,40 @@ dat1 %>% count(group.factor)
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
 
-#		CREATING SMALL DATASET
+#		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
 datSM1  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
 datSM1   <- filter(datSM1, ess_total != "NA")
+
+
+dat.HC <- datSM1 %>% 
+	filter(group.factor == "HC")
+dat.FM <- datSM1 %>% 
+	filter(group.factor == "FM")
+dat.CLBP <- datSM1 %>% 
+	filter(group.factor == "CLBP")
 
 #		WRITE SMALL DATASET
 write_csv(datSM1, "datSM1.csv",
 		  na = "NA", append = FALSE,
 		  col_names = TRUE, quote_escape = "double")
 
+
+#		TO RECREATE A DATASET
+dput(head(dat.time, 20))
+dput(datSM1)
 #		NOT ALL SUBJECTS HAVE COMPLETE DATA
 #		DONE AS OF March 31, 2020
 ```
 
 ##	EXAMINE DATA
+```{r ---> Summarize small dataset}
+datSM1.smry <- by(datSM1, datSM1$group.factor, summary)
 
-```{r ---> Cor ANOVA}
+```
+
+
+```{r ---> Plot ANOVA}
 #	TAKEN FROM
 # https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
 
@@ -109,13 +127,19 @@ for (i in y) {
       add = "jitter"
     )
     print(
-      p + stat_compare_means(aes(label = paste0(..method.., ", p-value = ", ..p.format.., " (", ifelse(..p.adj.. > 0.05, "not significant", ..p.signif..), ")")),
-        method = method1, label.y = max(dat[, i], na.rm = TRUE)
+      p + stat_compare_means(aes(label = paste0(..method..,
+      										  ", p-value = ", ..p.format..,
+      										  " (", ifelse(..p.adj.. > 0.05, 
+      										  			 "not significant",
+      										  			 ..p.signif..), ")")),
+      					   method = method1, 
+      					   label.y = max(dat[, i], na.rm = TRUE)
       )
       + stat_compare_means(comparisons = my_comparisons, method = method2, 
-      					 label.sep = ",",
+      					 hide.ns = FALSE, # JC added
+      					 label.sep = ", ",
       					 label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
-    )
+      )
   }
 }
 
@@ -123,76 +147,12 @@ for (i in y) {
 
 
 
-
-
-###	BDI
-```{r ---> BDI Summary}
-#		BDI VARIABLES
-# dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
-# view(dat.bdi)
-
-bdi.smry1  <- dat1 %>%
-	group_by(group.factor) %>%
-	summarise(
-		count = n(),
-		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
-		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
-		)
-view(bdi.smry1)
-```
-
-```{r ---> ANOVA BDI}
-library(gplots)
-#		COMPUTE ANOVA OF BDI 
-bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
- print(bdi.aov)
-
-#		SUMMARY OF THE ANALYSES
-summary(bdi.aov)
-TukeyHSD(bdi.aov)
-summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH")
-
-# 	1. Homogeniety of variances
-plot(bdi.aov, 1)
-
- 
- library(car)
-#	Levene's Test
-leveneTest(bdi_total ~ group.factor, data = dat1)
-
-#	Relaxing the homogeneity of variance assumption
-oneway.test(bdi_total ~ group.factor, data = dat1)
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH",
-				pool.sd = FALSE)
-
-#	2. Normality
-# plot(bdi.aov, 2) #	Produces errors
-
-#	EXTRACT RESIDUALS
-bdi.aov.resid <- residuals(object = bdi.aov)
-
-#	RUN Shapiro-Wilk normality test
-shapiro.test(x = bdi.aov.resid)
-
-#	Non-parametric alternative to one-way ANOVA test
-kruskal.test(bdi_total ~ group.factor, data = dat1)
-
-#		DONE AS OF March 17, 2020
-```
-
-
-### BDI & ESS
 ```{r ---> Correlations 1, echo=TRUE}
 
 library(tidyverse)
 library(psych)
 
-gp.cor <- iris %>%
+iris.cor <- iris %>%
 	# mutate(new.group = sample(LETTERS, 150, replace=TRUE)) %>% 
   split(.$Species) %>%  
   map(~corr.test(x = .x %>% select(Petal.Width, Sepal.Width),
@@ -203,40 +163,34 @@ gp.cor <- iris %>%
                  ci = TRUE, minlength = 5)
   )
 
-print(gp.cor)
-gp.cor.r <- map(gp.cor, ~.x$r)
-gp.cor.p <- map(gp.cor, ~.x$p)
-print(x = gp.cor.r, short = TRUE)
-print(x = gp.cor.p, short = TRUE)
+print(iris.cor)
+iris.cor.r <- map(iris.cor, ~.x$r)
+iris.cor.p <- map(iris.cor, ~.x$p)
+print(x = iris.cor.r, short = TRUE)
+print(x = iris.cor.p, short = TRUE)
 
 
-gp.cor3 <- datSM2 %>%
-  split(datSM2$group.factor) %>%  
-  map(~corr.test(datSM2 %>% select(ess_total, bdi_total),
-                 use = "everything",
+gp.cor1 <- datSM1 %>%
+  split(datSM1$group.factor) %>%  
+  map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+                 use = "pairwise",
                  method = "spearman",
                  adjust = "none",
                  alpha = 0.05,
                  ci = TRUE, minlength = 5)
   )
 
-print(gp.cor3)
+print(gp.cor1)
 
-gp.cor3.r <- map(gp.cor3, ~.x$r)
-gp.cor3.p <- map(gp.cor3, ~.x$p)
-print(x = gp.cor3.r, short = TRUE)
-print(x = gp.cor3.p, short = TRUE)
-
-
-datSM2 %>% count(group.factor)
-mean(datSM2$ess_total)
-datSM2 %>% count(ess_total)
+gp.cor1.r <- map(gp.cor1, ~.x$r)
+gp.cor1.p <- map(gp.cor1, ~.x$p)
+print(x = gp.cor1.r, short = TRUE)
+print(x = gp.cor1.p, short = TRUE)
 
 
-summarise(datSM2,
-		  maxESS = max(ess_total, na.rm = TRUE),
-		  avgESS = mean(ess_total, na.rm = TRUE)
-)
+```
+
+```{r ---> Correlations 1a}
 
 
 
@@ -248,22 +202,91 @@ summarise(datSM2,
 #   map(~corr.test(x = .x %>% select_if(is.numeric))
 #   )
 
+"Use Pairwise and Spearman"
+# corr.hc.mtrx <- dat.HC %>%
+	
+	# map(~
+corr.hc.mtrx <- corr.test(dat.HC %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.hc.mtrx, short = TRUE)
 
 
 
 
-#		TRYING THE ABOVE WITH MY OWN DATA
-dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
 
-gp.cor2 <- dat2 %>%
-	split(.$group.factor) %>%
-	map(~corr.test(x = .x %>% select(ess_total, bdi_total),
-					  use = "everything",
-					  method = "spearman",
-					  adjust = "none",
-					  alpha = 0.05,
-					  ci = TRUE, minlength = 5)
+
+
+
+
+
+corr.hc.mtrx2  <- dat.HC[, c(2:4)]
+round(cor(corr.hc.mtrx2), 2)
+
+corr.clbp.mtrx <- corr.test(dat.CLBP %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.clbp.mtrx, short = TRUE)
+
+corr.fm.mtrx <- corr.test(dat.FM %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.fm.mtrx, short = TRUE)
+
+
+
+
+
+#		TRYING TO TEST THE CORRELATIONS BETWEEN GROUPS
+# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+
+gp.cor2 <- datSM1 %>%
+	split(datSM1$group.factor) %>%
+	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
 	)
+
+print(gp.cor2)
+
+
+gp.cor3 <- datSM1 %>%
+	split(datSM1$group.factor) %>%
+	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
+
+
+print(gp.cor3)
+
 
 
 
@@ -348,6 +371,71 @@ print(cor.mtrx3)
 # t_tests_base$disp
 
 ```
+
+
+
+###	BDI
+```{r ---> BDI Summary}
+#		BDI VARIABLES
+# dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
+# view(dat.bdi)
+
+bdi.smry1  <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		)
+view(bdi.smry1)
+```
+
+```{r ---> ANOVA BDI}
+library(gplots)
+#		COMPUTE ANOVA OF BDI 
+bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
+ print(bdi.aov)
+
+#		SUMMARY OF THE ANALYSES
+summary(bdi.aov)
+TukeyHSD(bdi.aov)
+summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH")
+
+# 	1. Homogeniety of variances
+plot(bdi.aov, 1)
+
+ 
+ library(car)
+#	Levene's Test
+leveneTest(bdi_total ~ group.factor, data = dat1)
+
+#	Relaxing the homogeneity of variance assumption
+oneway.test(bdi_total ~ group.factor, data = dat1)
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH",
+				pool.sd = FALSE)
+
+#	2. Normality
+# plot(bdi.aov, 2) #	Produces errors
+
+#	EXTRACT RESIDUALS
+bdi.aov.resid <- residuals(object = bdi.aov)
+
+#	RUN Shapiro-Wilk normality test
+shapiro.test(x = bdi.aov.resid)
+
+#	Non-parametric alternative to one-way ANOVA test
+kruskal.test(bdi_total ~ group.factor, data = dat1)
+
+#		DONE AS OF March 17, 2020
+```
+
+
+### BDI & ESS
 
 ```{r ---> Correlations 2}
 #		FOLLOWING YOOUTUBE VIDEO ABOUT CORRELATIONS
@@ -659,6 +747,15 @@ ggline(dat1, x = "group.factor", y = "bdi_total",
 # " col_names = TRUE)
 
 
+datSM2 %>% count(group.factor)
+mean(datSM2$ess_total)
+datSM2 %>% count(ess_total)
+
+
+# summarise(datSM2,
+# 		  maxESS = max(ess_total, na.rm = TRUE),
+# 		  avgESS = mean(ess_total, na.rm = TRUE)
+# )
 
 
 
