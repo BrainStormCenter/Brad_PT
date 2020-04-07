@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r ---> Libraries}
 # library(readxl) # This is used to import data from excel
 library(doBy)
+library(lubridate)
 library(psych)
 library(corrplot)
 library(colorspace)
@@ -50,6 +51,11 @@ source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
 data <- as_tibble(data)
 #		RENAME VARIABLE
 names(data)[names(data) == 'participant_id'] <- 'ID'
+# names(data)[names(data) == 'psqi_1']  <- 'psqi.bedtime'
+# names(data)[names(data) == 'psqi_1a.factor'] <- 'psqi.bt.sleep'
+# names(data)[names(data) == 'psqi_3'] <- 'psqi.waketime'
+# names(data)[names(data) == 'psqi_3a.factor'] <- 'psqi.wt.wake'
+
 
 ```
 
@@ -63,6 +69,12 @@ dat1 %>% count(group.factor)
 
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
+
+#		CLEAN ESS BY REMOVING "NA"
+dat1   <- filter(dat1, ess_total != "NA")
+```
+
+```{r ---> Small datasets}
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
@@ -84,8 +96,8 @@ write_csv(datSM1, "datSM1.csv",
 
 
 #		TO RECREATE A DATASET
-dput(head(dat.time, 20))
-dput(datSM1)
+# dput(head(dat.time, 20))
+# dput(datSM1)
 #		NOT ALL SUBJECTS HAVE COMPLETE DATA
 #		DONE AS OF March 31, 2020
 ```

@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Meredith's original syntax
-```{r ---> Score PSQI}
+```{r ---> Create PSQI dataset}
 require(lubridate)
 
 ##### retain Baseline data only: ####
@@ -37,10 +37,10 @@ label(dat.psqi)
 view(dat.psqi)
 
 #	REORGANIZE VARIABLES
-dat.psqi <- dat.psqi %>% select(1:7,43,everything())
-dat.psqi <- dat.psqi %>% select(1:11,44,everything())
-dat.psqi <- dat.psqi %>% select(1:14,45,everything())
-dat.psqi <- dat.psqi %>% select(1:16,46,everything())
+dat.psqi <- dat.psqi %>% select(1:7,43,everything()) 
+dat.psqi <- dat.psqi %>% select(1:11,44,everything()) 
+dat.psqi <- dat.psqi %>% select(1:14,45,everything()) 
+dat.psqi <- dat.psqi %>% select(1:16,46,everything()) 
 dat.psqi <- dat.psqi %>% select(1:18,47,everything())
 dat.psqi <- dat.psqi %>% select(1:20,48,everything())
 dat.psqi <- dat.psqi %>% select(1:22,49,everything())
@@ -70,20 +70,50 @@ dat.psqi <- dat.psqi %>% select(1:2,group.factor,everything())
 colnames(dat.psqi)
 
 
-write.csv(dat.psqi, "PSQI_rawData_March2020.csv", row.names = FALSE)
+write.csv(dat.psqi, "PSQI_rawData_April2020.csv", row.names = FALSE)
 
 
+```
+
+# TIME VARIABLES
+```{r ---> TIME IN BED}
 
 #		CALCULATE BEDTIMES
 #Time in bed calculation:
-dat.time <- data.frame("bedtime" = dat.psqi$psqi_1,
-					   "bt.sleep"= dat.psqi$psqi_1a.factor,
-					   "waketime" = dat.psqi$psqi_3,
-					   "wt.wake" = dat.psqi$psqi_3a.factor)
+# names(data)[names(data) == 'participant_id'] <- 'ID'
 
-#		FOR FORUM HELP
-# dput(head(dat.time, 3))
+dat.time <- tibble("bedtime" = dat.psqi$psqi_1,
+				   "bt.sleep"= dat.psqi$psqi_1a.factor,
+				   "waketime" = dat.psqi$psqi_3,
+				   "wt.wake" = dat.psqi$psqi_3a.factor)
 
+# dat.psqi$bedtime  <- dat.psqi$psqi_1
+# dat.psqi$bt.sleep <- dat.psqi$psqi_1a.factor
+# dat.psqi$waketime <- dat.psqi$psqi_3
+# dat.psqi$wt.wake <- dat.psqi$psqi_3a.factor
+
+
+#		VERSION #2 FROM THE FORUMS
+library(dplyr, warn.conflicts = FALSE)
+#> Warning: package 'dplyr' was built under R version 3.6.3
+dat.time <- dat.time %>%
+	mutate(Sleep = if_else(bt.sleep == "PM",
+						   true = as.POSIXct(x = paste(bedtime, bt.sleep), 
+						   				  format = "%I:%M %p"), # time in current date
+						   false = as.POSIXct(x = paste(bedtime, bt.sleep),
+						   				   format = "%I:%M %p") + 
+						   	as.difftime(tim = 1, 
+						   				units = "days")), # consider next day for times at/after midnight
+		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
+		   				  format = "%I:%M %p") + 
+		   	as.difftime(tim = 1, units = "days"), # time in current date plus one day, equivalently time in next day
+		   `Time Difference` = difftime(time1 = Wake,
+		   							 time2 = Sleep,
+		   							 units = "hours")) %>%  # difference of the two times, guaranteed to be in [0, 24)
+	print(width = Inf)
+
+#		FOR FORUM HELP VERSION #1
+#		GOING TO SLEEP AND WAKING UP ON THE SAME DAY RESULTS IN 24+ HOURS
 dat.time <- dat.time %>%
 	mutate_all(.funs = as.character) %>%
 	mutate_at(.vars = c("bt.sleep", "wt.wake"),
@@ -94,12 +124,180 @@ dat.time <- dat.time %>%
 	mutate(Sleep = as.POSIXct(x = paste(bedtime, bt.sleep),
 							  format = "%I:%M %p"),
 		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
-		   				  format = "%I:%M %p") + as.difftime(tim = 1,
-		   				  								   units = "days"),
-		   `Time in bed` = Wake - Sleep)
+		   				  format = "%I:%M %p") +
+		   	as.difftime(tim = 1, units = "days"),
+		   `Time in bed2` = Wake - Sleep)
+
+#		CRUDE FIX FOR THE 24+ HOUR ISSUE
+dat.time$TIB  <- dat.time$`Time in bed2`
+round(dat.time$TIB  <- if_else(dat.time$TIB < 24,
+					  dat.time$TIB,
+					  dat.time$TIB - 24), 2)
 
 
-dput(head(dat.time, 20))
+write.csv(dat.psqi, "PSQI_rawData_April2020.csv", row.names = FALSE)
+
+```
+
+
+```{r ---> TIME IN BED #2}
+
+#		CALCULATE BEDTIMES
+#Time in bed calculation:
+# names(data)[names(data) == 'participant_id'] <- 'ID'
+
+# dat.time <- tibble("bedtime" = dat.psqi$psqi_1,
+# 				   "bt.sleep"= dat.psqi$psqi_1a.factor,
+# 				   "waketime" = dat.psqi$psqi_3,
+# 				   "wt.wake" = dat.psqi$psqi_3a.factor)
+
+dat.psqiORIG  <- dat.psqi
+
+dat.psqi$bedtime  <- dat.psqi$psqi_1
+dat.psqi$bt.sleep <- dat.psqi$psqi_1a.factor
+dat.psqi$waketime <- dat.psqi$psqi_3
+dat.psqi$wt.wake <- dat.psqi$psqi_3a.factor
+
+
+#		VERSION #2 FROM THE FORUMS
+library(dplyr, warn.conflicts = FALSE)
+#> Warning: package 'dplyr' was built under R version 3.6.3
+dat.time <- dat.time %>%
+	mutate(Sleep = if_else(bt.sleep == "PM",
+						   true = as.POSIXct(x = paste(bedtime, bt.sleep), 
+						   				  format = "%I:%M %p"), # time in current date
+						   false = as.POSIXct(x = paste(bedtime, bt.sleep),
+						   				   format = "%I:%M %p") + 
+						   	as.difftime(tim = 1, 
+						   				units = "days")), # consider next day for times at/after midnight
+		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
+		   				  format = "%I:%M %p") + 
+		   	as.difftime(tim = 1, units = "days"), # time in current date plus one day, equivalently time in next day
+		   `Time Difference` = difftime(time1 = Wake,
+		   							 time2 = Sleep,
+		   							 units = "hours")) %>%  # difference of the two times, guaranteed to be in [0, 24)
+	print(width = Inf)
+
+#		FOR FORUM HELP VERSION #1
+#		GOING TO SLEEP AND WAKING UP ON THE SAME DAY RESULTS IN 24+ HOURS
+dat.psqi <- dat.psqi %>%
+	mutate_all(.funs = as.character) %>%
+	mutate_at(.vars = c("bt.sleep", "wt.wake"),
+			  .funs = ~ gsub(pattern = ".",
+			  			   replacement = "",
+			  			   x = .x,
+			  			   fixed = TRUE)) %>%
+	mutate(Sleep = as.POSIXct(x = paste(bedtime, bt.sleep),
+							  format = "%I:%M %p"),
+		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
+		   				  format = "%I:%M %p") +
+		   	as.difftime(tim = 1, units = "days"),
+		   `Time in bed2` = Wake - Sleep)
+
+#		CRUDE FIX FOR THE 24+ HOUR ISSUE
+dat.psqi$TIB  <- dat.psqi$`Time in bed2`
+round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
+					  dat.psqi$TIB,
+					  dat.psqi$TIB - 24), 2)
+
+
+write.csv(dat.psqi, "PSQI_rawData_April2020.csv", row.names = FALSE)
+
+```
+
+
+```{r ---> PSQI Comp 1}
+#		COMPONENT 1 = QUESTION 9
+
+```
+
+```{r ---> Component 2}
+
+dat.psqi.comps <- tibble("ID" = dat.psqi$ID,
+						 # "Q9" = dat.psqi$psqi_9,
+						 "Comp1" = dat.psqi$psqi_component1,
+						 "Q2" = dat.psqi$psqi_2,
+						 #"Q2score" = dat.psqi$psqi_calcforcomponent2,
+						 "Q5a" = dat.psqi$psqi_5a,
+						 "Q4" = dat.psqi$psqi_4)
+						 # "Comp2" = dat.psqi$psqi_component2)
+
+
+dat.psqi.comps  <- dat.psqi.comps %>%
+	mutate(
+		Q2score1 = case_when(
+			Q2 <= 15 ~ 0,
+			Q2 >= 16 & Q2 <= 30 ~ 1,
+			Q2 >= 31 & Q2 <= 60 ~ 2,
+			Q2 > 60 ~ 3,
+			TRUE ~ as.numeric(Q2)
+		)
+	)
+
+dat.psqi.comps <- dat.psqi.comps %>% 
+	mutate(
+		Q5aScore1 = case_when(
+			Q5a == 1 ~ 0,
+			Q5a == 2 ~ 1,
+			Q5a == 3 ~ 2,
+			Q5a == 4 ~ 3,
+			TRUE ~ as.numeric(Q5a)
+		)
+	)
+
+
+dat.psqi.comps  <- dat.psqi.comps %>%
+	rowwise() %>%
+	mutate(
+		Q2and5 = sum(c(Q2score1, Q5aScore1), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+dat.psqi.comps <- dat.psqi.comps %>% 
+	mutate(
+		Comp2 = case_when(
+			Q2and5 == 0 ~ 0,
+			Q2and5 >= 1 & Q2and5 <= 2 ~ 1,
+			Q2and5 >= 3 & Q2and5 <= 4 ~ 2,
+			Q2and5 >= 5 & Q2and5 <= 6 ~ 3,
+			TRUE ~ as.numeric(Q2and5)
+		)
+	)
+
+```
+
+```{r ---> Component 3}
+dat.psqi.comps <- dat.psqi.comps %>% select(1:4,6:9,5,everything())
+
+dat.psqi.comps  <- dat.psqi.comps %>%
+	mutate(
+		Comp3 = case_when(
+			Q4 > 7 ~ 0,
+			Q4 >= 6 & Q4 <= 7 ~ 1,
+			Q4 >= 5 & Q4 < 6 ~ 2,
+			Q4 < 5 ~ 3,
+			TRUE ~ as.numeric(Q2)
+		)
+	)
+
+```
+
+
+```{r ---> Component 4}
+
+```
+
+
+
+
+
+
+
+
+```{r ---> SCRAP}
+
+
+#dput(head(dat.time, 20))
 
 
 
@@ -166,7 +364,7 @@ if (dat.time$bt.sleep = "P.M.") {
 
 
 
-
+# dput(head(dat.time, 3))
 
 
 
@@ -177,4 +375,15 @@ psqi <- dat.bl[,c(1,3)]
 # Sleep Quality: This is scored so that higher score = higher quality sleep.
 psqi$SQ <- 3-dat.bl$psqi_9
 
+
+
+
+
+
+
+
+
+
 ```
+
+
