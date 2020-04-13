@@ -54,15 +54,15 @@ dr_here(show_reason = FALSE)
 # # names(data)[names(data) == 'psqi_1a.factor'] <- 'psqi.bt.sleep'
 # # names(data)[names(data) == 'psqi_3'] <- 'psqi.waketime'
 # # names(data)[names(data) == 'psqi_3a.factor'] <- 'psqi.wt.wake'
-# 
+# # 
 # #		WRITE NEW DATASET
 # write_csv(data, "PT_data_13042020.csv",
 # 		  na = "NA", append = FALSE,
 # 		  col_names = TRUE, quote_escape = "double")
+
 # 
 # 
-# 
-# data0 <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/ASQ_pilot/master/ASQ_pain_pilot_2019_04_19_v2.csv'), header = TRUE)
+
 
 ```
 
@@ -171,6 +171,13 @@ dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
 # PSQI SCORING
 The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
 
+```{r ---> pqsi sanity check}
+
+# z <- dat1[which(dat1$TIB == 19, ]
+z <- data[which(dat.psqi$TIB == 19, ) ]
+
+```
+
 ```{r ---> Time in bed}
 dat.psqi$bedtime  <- dat.psqi$psqi_1
 dat.psqi$bt.sleep <- dat.psqi$psqi_1a.factor
@@ -208,7 +215,7 @@ colnames(dat.psqi)
 
 ```{r ---> COMP 1}
 #		COMPONENT 1 = QUESTION 9
-dat.psqi$psqi_Comp1 <- dat.psqi$psqi_component1
+dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 
 #		SCORE QUESTION 1
 # Component 1: Subjective sleep quality—question 9
@@ -274,7 +281,7 @@ dat.psqi <- dat.psqi %>%
 ```{r ---> COMP 3}
 # Component 3: Sleep duration—question 4
 
-dat.psqi$Q4 <- dat.psqi$psqi_4
+dat.psqi$Q4 <- as.numeric(dat.psqi$psqi_4)
 
 dat.psqi  <- dat.psqi %>%
 	mutate(
@@ -343,8 +350,8 @@ dat.psqi <- dat.psqi %>% relocate(psqi_5j, .before = psqi_Comp1)
 
 #		RESCORE THE RESPONSES - ORIG = 1-4; NEW = 0-3
 #		THIS REPLACES THE VALUES IN THE ORIGINAL VARIABLES
-dat.psqi <- dat.psqi %>% 
-	mutate_at(vars(matches("psqi_5[b-i]$")), ~ . - 1)
+# dat.psqi <- dat.psqi %>% 
+# 	mutate_at(vars(matches("psqi_5[b-i]$")), ~ . - 1)
 
 #		RESCORING THE LONG WAY
 dat.psqi$Q5b <- dat.psqi$psqi_5b -1
@@ -465,7 +472,7 @@ MERGE BACK INTO MAIN DATASET
 #		COMBINING 2 DATASETS
 
 #		CREATING SMALL PSQI DATASET
-psqiSM  <- dat.psqi %>% dplyr::select("ID","psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
 									  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
 									  "psqi_Comp7", "psqi_Global")
 
@@ -476,51 +483,27 @@ dat1 <- merge(dat1, psqiSM, by = "ID")
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```{r ---> Small datasets}
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
-datSM1  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
-datSM1   <- filter(datSM1, ess_total != "NA")
+dat.SM  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total",
+								  "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+								  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+								  "psqi_Comp7", "psqi_Global")
+
+# datSM1   <- filter(datSM1, ess_total != "NA")
 
 
-dat.HC <- datSM1 %>% 
+dat.HC <- dat.SM %>%
 	filter(group.factor == "HC")
-dat.FM <- datSM1 %>% 
+dat.FM <- dat.SM %>%
 	filter(group.factor == "FM")
-dat.CLBP <- datSM1 %>% 
+dat.CLBP <- dat.SM %>%
 	filter(group.factor == "CLBP")
 
 #		WRITE SMALL DATASET
-write_csv(datSM1, "datSM1.csv",
+write_csv(dat.SM, "dat.SM.csv",
 		  na = "NA", append = FALSE,
 		  col_names = TRUE, quote_escape = "double")
 
@@ -534,108 +517,40 @@ write_csv(datSM1, "datSM1.csv",
 
 ##	EXAMINE DATA
 ```{r ---> Summarize small dataset}
-datSM1.smry <- by(datSM1, datSM1$group.factor, summary)
+dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
 
-```
-
-
-```{r ---> Plot ANOVA}
-#	TAKEN FROM
-# https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
-
-#		PRESERVE ORIGINAL DATA
-dat <- datSM1
-
-# Edit from here
-x <- which(names(dat) == "group.factor") # name of grouping variable
-y <- which(names(dat) == "ess_total" # names of variables to test
-| names(dat) == "bdi_total"
-| names(dat) == "mcgill_total")
-# | names(dat) == "Petal.Width")
-method1 <- "anova" # one of "anova" or "kruskal.test"
-method2 <- "t.test" # one of "wilcox.test" or "t.test"
-my_comparisons <- list(c("HC", "CLBP"), c("HC", "FM"), c("CLBP", "FM")) # comparisons for post-hoc tests
-# Edit until here
-
-
-# Edit at your own risk
-for (i in y) {
-  for (j in x) {
-    p <- ggboxplot(dat,
-      x = colnames(dat[j]), y = colnames(dat[i]),
-      color = colnames(dat[j]),
-      legend = "none",
-      palette = "npg",
-      add = "jitter"
-    )
-    print(
-      p + stat_compare_means(aes(label = paste0(..method..,
-      										  ", p-value = ", ..p.format..,
-      										  " (", ifelse(..p.adj.. > 0.05, 
-      										  			 "not significant",
-      										  			 ..p.signif..), ")")),
-      					   method = method1, 
-      					   label.y = max(dat[, i], na.rm = TRUE)
-      )
-      + stat_compare_means(comparisons = my_comparisons, method = method2, 
-      					 hide.ns = FALSE, # JC added
-      					 label.sep = ", ",
-      					 label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
-      )
-  }
-}
-
+summarise(dat.SM)
 ```
 
 
 
-```{r ---> Correlations 1, echo=TRUE}
+```{r ---> Correlations Across groups}
 
-library(tidyverse)
-library(psych)
+gp.cor <- dat.SM %>%
+	split(dat.SM$group.factor) %>%  
+	map(~corr.test(dat.SM %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+				   		   "psqi_Comp7", "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
 
-iris.cor <- iris %>%
-	# mutate(new.group = sample(LETTERS, 150, replace=TRUE)) %>% 
-  split(.$Species) %>%  
-  map(~corr.test(x = .x %>% select(Petal.Width, Sepal.Width),
-                 use = "everything",
-                 method = "spearman",
-                 adjust = "none",
-                 alpha = 0.05,
-                 ci = TRUE, minlength = 5)
-  )
+print(gp.cor)
 
-print(iris.cor)
-iris.cor.r <- map(iris.cor, ~.x$r)
-iris.cor.p <- map(iris.cor, ~.x$p)
-print(x = iris.cor.r, short = TRUE)
-print(x = iris.cor.p, short = TRUE)
-
-
-gp.cor1 <- datSM1 %>%
-  split(datSM1$group.factor) %>%  
-  map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
-                 use = "pairwise",
-                 method = "spearman",
-                 adjust = "none",
-                 alpha = 0.05,
-                 ci = TRUE, minlength = 5)
-  )
-
-print(gp.cor1)
-
-gp.cor1.r <- map(gp.cor1, ~.x$r)
-gp.cor1.p <- map(gp.cor1, ~.x$p)
-print(x = gp.cor1.r, short = TRUE)
-print(x = gp.cor1.p, short = TRUE)
+gp.cor.r <- map(gp.cor, ~.x$r)
+gp.cor.p <- map(gp.cor, ~.x$p)
+print(x = gp.cor.r, short = TRUE)
+print(x = gp.cor.p, short = TRUE)
 
 
 ```
 
-```{r ---> Correlations 1a}
-
-
-
+```{r ---> Correlations By group}
 # If you want the correlations between all numeric columns and your data has columns that are not numeric, you can exclude the non-numeric columns (which you need to do to avoid an error from corr.test) as follows (where I've used the default corr.test arguments to shorten the code):
 # gp.cor <- iris %>%
 #   # Add another non-numeric column
@@ -644,177 +559,75 @@ print(x = gp.cor1.p, short = TRUE)
 #   map(~corr.test(x = .x %>% select_if(is.numeric))
 #   )
 
-"Use Pairwise and Spearman"
-# corr.hc.mtrx <- dat.HC %>%
-	
-	# map(~
-corr.hc.mtrx <- corr.test(dat.HC %>% 
-						   select(ess_total, bdi_total, mcgill_total),
-						   use = "pairwise", 
-						   # available: pairwise, complete
-						   method = "spearman", 
-						   # available: pearson, spearman, kendall
-						   adjust = "none"
-						  # available: holm, hochberg, hommel,
-						  # bonferroni, BH, BY, fd, none
-						   )
-print(corr.hc.mtrx, short = TRUE)
+#  "Use Pairwise and Spearman"
 
 
-
-
-
-
-
-
-
-
-corr.hc.mtrx2  <- dat.HC[, c(2:4)]
-round(cor(corr.hc.mtrx2), 2)
-
-corr.clbp.mtrx <- corr.test(dat.CLBP %>% 
-						   select(ess_total, bdi_total, mcgill_total),
-						   use = "pairwise", 
-						   # available: pairwise, complete
-						   method = "spearman", 
-						   # available: pearson, spearman, kendall
-						   adjust = "none"
-						  # available: holm, hochberg, hommel,
-						  # bonferroni, BH, BY, fd, none
-						   )
-print(corr.clbp.mtrx, short = TRUE)
-
-corr.fm.mtrx <- corr.test(dat.FM %>% 
-						   select(ess_total, bdi_total, mcgill_total),
-						   use = "pairwise", 
-						   # available: pairwise, complete
-						   method = "spearman", 
-						   # available: pearson, spearman, kendall
-						   adjust = "none"
-						  # available: holm, hochberg, hommel,
-						  # bonferroni, BH, BY, fd, none
-						   )
-print(corr.fm.mtrx, short = TRUE)
-
-
-
-
-
-#		TRYING TO TEST THE CORRELATIONS BETWEEN GROUPS
-# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
-
-gp.cor2 <- datSM1 %>%
-	split(datSM1$group.factor) %>%
-	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+#		HEALTHY CONTROL GROUP
+HC.cor <- dat.HC %>% 
+	map(~corr.test(dat.HC  %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+				   		   "psqi_Comp7", "psqi_Global"),
 				   use = "pairwise",
 				   method = "spearman",
 				   adjust = "none",
-				   alpha = 0.05,
-				   ci = TRUE, minlength = 5)
-	)
+				   alpha = 0.05))
 
-print(gp.cor2)
+print(HC.cor)
+HC.cor.r <- map(HC.cor, ~.x$r)
+HC.cor.p <- map(HC.cor, ~.x$p)
+print(x = HC.cor.r, short = TRUE)
+print(HC.cor.p <- map(HC.cor, ~.x$p))
 
-
-gp.cor3 <- datSM1 %>%
-	split(datSM1$group.factor) %>%
-	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+#		FM GROUP
+FM.cor <- dat.FM %>% 
+	map(~corr.test(dat.FM  %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+				   		   "psqi_Comp7", "psqi_Global"),
 				   use = "pairwise",
 				   method = "spearman",
 				   adjust = "none",
-				   alpha = 0.05,
-				   ci = TRUE, minlength = 5)
-	)
+				   alpha = 0.05))
+
+print(FM.cor)
+FM.cor.r <- map(FM.cor, ~.x$r)
+FM.cor.p <- map(FM.cor, ~.x$p)
+print(x = FM.cor.r, short = TRUE)
+print(FM.cor.p <- map(FM.cor, ~.x$p))
 
 
-print(gp.cor3)
+#		CLBP GROUP
+CLBP.cor <- dat.CLBP %>% 
+	map(~corr.test(dat.CLBP  %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+				   		   "psqi_Comp7", "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05))
 
+print(CLBP.cor)
+CLBP.cor.r <- map(CLBP.cor, ~.x$r)
+CLBP.cor.p <- map(CLBP.cor, ~.x$p)
+print(x = CLBP.cor.r, short = TRUE)
+print(CLBP.cor.p <- map(CLBP.cor, ~.x$p))
 
-
-
-cor.mtrx <- cor(dat2[3:5], use = "complete.obs", method = "pearson")
-corrplot(cor.mtrx, method = ("number"))
-
-
-#		CORRELATIONS
-"Use Pairwise and Spearman"
-cor.bdi.ess <- corr.test(x = dat2[3:4],
-						 y = NULL, 
-						 use = "pairwise", # available: pairwise, complete
-						 method = "spearman",
-						 # available: pearson, spearman, kendall
-						 adjust = "none",
-						 # available: holm, hochberg, hommel, 
-						 # bonferroni, BH, BY, fd, none
-						 alpha = 0.05,
-						 ci = TRUE,minlength = 5
-					  )
-
-# gp.cor <- dat2 %>%
-# 	group_by(group.factor) %>%
-cor.mtrx3 <- 	corr.test(x = dat2[3:4],
-			  y = NULL, 
-			  use = "everything", # available: pairwise, complete
-			  method = "spearman",
-			  # available: pearson, spearman, kendall
-			  adjust = "none",
-			  # available: holm, hochberg, hommel, 
-			  # bonferroni, BH, BY, fd, none
-			  alpha = 0.05,
-			  ci = TRUE,minlength = 5
-	)
-
-
-
-
-
-print(x = cor.mtrx, short = TRUE)
-print(x = cor.mtrx, short = FALSE)
-
-cor.mtrx2 <- ezCor(
-  data = dat2[,c(3:4)],
-  r_size_lims = c(4,4),
-  label_size = 3
-)
-print(cor.mtrx2)
-print(cor.mtrx3)
-
-
-# dat2 %>%
-# 	group_by(group.factor) %>%
-	
-	
-# gp.cor <- dat2 %>%
-# 	group_by(group.factor) %>%
-# 	cor.mtrx3 <- 	corr.test(x = dat2[3:4],
-# 							y = NULL,
-# 							use = "everything", # available: pairwise, complete
-# 							method = "spearman",
-# 							# available: pearson, spearman, kendall
-# 							adjust = "none",
-# 							# available: holm, hochberg, hommel,
-# 							# bonferroni, BH, BY, fd, none
-# 							alpha = 0.05,
-# 							ci = TRUE,minlength = 5
-# 	)
-
-
-# corr.p(corr_matrix,158,adjust = "none",alpha = .05,minlength = 5,ci=TRUE)
-
-#corr_matrix
-
-
-# 
-# t_tests_base <- lapply(
-# 	dat1[resp_vars],
-# 	function(x) { t.test(x ~ group.factor, data = dat1) }
-# 	)
-# 
-# t_tests_base$disp
 
 ```
 
 
+
+
+```{r ---> Plotting v1}
+ ggplot(data = dat1) +
+	geom_point(mapping = aes(x = group.factor, y = TIB))
+
+```
 
 ###	BDI
 ```{r ---> BDI Summary}
@@ -1295,7 +1108,254 @@ skimr::skim(datSM1)
 
 
 
+```{r ---> OLD tries at corr}
 
+
+
+
+
+
+
+
+	
+HC.mtrx	 <- corr.test(dat.HC %>% 
+						   select("ess_total", "bdi_total", "mcgill_total",
+								  "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+								  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+								  "psqi_Comp7", "psqi_Global"),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none",
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						  alpha = 0.05, #)  #,
+						  ci = TRUE, minlength = 5)
+
+print(HC.mtrx$r)
+
+
+print(corr.hc.mtrx, short = TRUE)
+
+hc.cor.r <- HC.mtrx$r
+
+
+gp.cor1.r <- map(gp.cor1, ~.x$r)
+
+
+print(corr.hc.mtrx, short = TRUE)
+
+HC.cor.r <- map(HC.cor, ~.x$r)
+HC.cor1.p <- map(gp.cor1, ~.x$p)
+print(x = gp.cor1.r, short = TRUE)
+print(x = gp.cor1.p, short = TRUE)
+
+
+
+
+
+
+
+
+
+
+corr.hc.mtrx2  <- dat.HC[, c(2:4)]
+round(cor(corr.hc.mtrx2), 2)
+
+corr.clbp.mtrx <- corr.test(dat.CLBP %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.clbp.mtrx, short = TRUE)
+
+corr.fm.mtrx <- corr.test(dat.FM %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.fm.mtrx, short = TRUE)
+
+
+
+
+
+#		TRYING TO TEST THE CORRELATIONS BETWEEN GROUPS
+# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+
+gp.cor2 <- datSM1 %>%
+	split(datSM1$group.factor) %>%
+	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
+
+print(gp.cor2)
+
+
+gp.cor3 <- datSM1 %>%
+	split(datSM1$group.factor) %>%
+	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
+
+
+print(gp.cor3)
+
+
+
+
+cor.mtrx <- cor(dat2[3:5], use = "complete.obs", method = "pearson")
+corrplot(cor.mtrx, method = ("number"))
+
+
+#		CORRELATIONS
+"Use Pairwise and Spearman"
+cor.bdi.ess <- corr.test(x = dat2[3:4],
+						 y = NULL, 
+						 use = "pairwise", # available: pairwise, complete
+						 method = "spearman",
+						 # available: pearson, spearman, kendall
+						 adjust = "none",
+						 # available: holm, hochberg, hommel, 
+						 # bonferroni, BH, BY, fd, none
+						 alpha = 0.05,
+						 ci = TRUE,minlength = 5
+					  )
+
+# gp.cor <- dat2 %>%
+# 	group_by(group.factor) %>%
+cor.mtrx3 <- 	corr.test(x = dat2[3:4],
+			  y = NULL, 
+			  use = "everything", # available: pairwise, complete
+			  method = "spearman",
+			  # available: pearson, spearman, kendall
+			  adjust = "none",
+			  # available: holm, hochberg, hommel, 
+			  # bonferroni, BH, BY, fd, none
+			  alpha = 0.05,
+			  ci = TRUE,minlength = 5
+	)
+
+
+
+
+
+print(x = cor.mtrx, short = TRUE)
+print(x = cor.mtrx, short = FALSE)
+
+cor.mtrx2 <- ezCor(
+  data = dat2[,c(3:4)],
+  r_size_lims = c(4,4),
+  label_size = 3
+)
+print(cor.mtrx2)
+print(cor.mtrx3)
+
+
+# dat2 %>%
+# 	group_by(group.factor) %>%
+	
+	
+# gp.cor <- dat2 %>%
+# 	group_by(group.factor) %>%
+# 	cor.mtrx3 <- 	corr.test(x = dat2[3:4],
+# 							y = NULL,
+# 							use = "everything", # available: pairwise, complete
+# 							method = "spearman",
+# 							# available: pearson, spearman, kendall
+# 							adjust = "none",
+# 							# available: holm, hochberg, hommel,
+# 							# bonferroni, BH, BY, fd, none
+# 							alpha = 0.05,
+# 							ci = TRUE,minlength = 5
+# 	)
+
+
+# corr.p(corr_matrix,158,adjust = "none",alpha = .05,minlength = 5,ci=TRUE)
+
+#corr_matrix
+
+
+# 
+# t_tests_base <- lapply(
+# 	dat1[resp_vars],
+# 	function(x) { t.test(x ~ group.factor, data = dat1) }
+# 	)
+# 
+# t_tests_base$disp
+
+```
+
+
+
+
+
+```{r ---> Plot ANOVA - I don't trust this yet}
+#	TAKEN FROM
+# https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
+
+#		PRESERVE ORIGINAL DATA
+dat <- datSM1
+
+# Edit from here
+x <- which(names(dat) == "group.factor") # name of grouping variable
+y <- which(names(dat) == "ess_total" # names of variables to test
+| names(dat) == "bdi_total"
+| names(dat) == "mcgill_total")
+# | names(dat) == "Petal.Width")
+method1 <- "anova" # one of "anova" or "kruskal.test"
+method2 <- "t.test" # one of "wilcox.test" or "t.test"
+my_comparisons <- list(c("HC", "CLBP"), c("HC", "FM"), c("CLBP", "FM")) # comparisons for post-hoc tests
+# Edit until here
+
+
+# Edit at your own risk
+for (i in y) {
+  for (j in x) {
+    p <- ggboxplot(dat,
+      x = colnames(dat[j]), y = colnames(dat[i]),
+      color = colnames(dat[j]),
+      legend = "none",
+      palette = "npg",
+      add = "jitter"
+    )
+    print(
+      p + stat_compare_means(aes(label = paste0(..method..,
+      										  ", p-value = ", ..p.format..,
+      										  " (", ifelse(..p.adj.. > 0.05, 
+      										  			 "not significant",
+      										  			 ..p.signif..), ")")),
+      					   method = method1, 
+      					   label.y = max(dat[, i], na.rm = TRUE)
+      )
+      + stat_compare_means(comparisons = my_comparisons, method = method2, 
+      					 hide.ns = FALSE, # JC added
+      					 label.sep = ", ",
+      					 label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
+      )
+  }
+}
+
+```
 
 
 
