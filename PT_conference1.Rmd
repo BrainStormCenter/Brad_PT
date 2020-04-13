@@ -65,13 +65,15 @@ data %>% count(group)
 dat1  <- filter(data, group != 0, group != "NA", data$bdi1 != "NA")
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = TRUE)
-dat1 %>% count(group.factor)
 
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
 
 #		CLEAN ESS BY REMOVING "NA"
 dat1   <- filter(dat1, ess_total != "NA")
+
+
+dat1 %>% count(group.factor)
 ```
 
 ```{r ---> Small datasets}
