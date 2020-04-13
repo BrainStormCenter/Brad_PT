@@ -124,13 +124,16 @@ dat.psqi$psqi_5g <- as.numeric(dat.psqi$psqi_5g)
 dat.psqi$psqi_5h <- as.numeric(dat.psqi$psqi_5h)
 dat.psqi$psqi_5i <- as.numeric(dat.psqi$psqi_5i)
 # dat.psqi$psqi_5othera <- as.numeric(dat.psqi$psqi_5othera)
+dat.psqi$psqi_7 <- as.numeric(dat.psqi$psqi_7)
+dat.psqi$psqi_8a <- as.numeric(dat.psqi$psqi_8a)
 
 dat.psqi$psqi_9 <- as.numeric(dat.psqi$psqi_9)
 dat.psqi$psqi_component1 <- as.numeric(dat.psqi$psqi_component1)
 
 
-#		REPLACE psqii_5othera "NA" WITH 0
+#		REPLACE "NA" WITH 0
 dat.psqi$psqi_5othera <- coalesce(dat.psqi$psqi_5othera, 0L)
+
 
 ```
 
@@ -138,6 +141,15 @@ dat.psqi$psqi_5othera <- coalesce(dat.psqi$psqi_5othera, 0L)
 ```{r ---> PSQI Comp 1}
 #		COMPONENT 1 = QUESTION 9
 dat.psqi$psqi_Comp1 <- dat.psqi$psqi_component1
+
+#		SCORE QUESTION 1
+# Component 1: Subjective sleep quality—question 9
+# Response, Component Score to Q9 
+# Very good, 0
+# Fairly good, 1
+# Fairly bad, 2
+# Very bad, 3
+
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 
 ```
@@ -192,7 +204,7 @@ dat.psqi <- dat.psqi %>%
 ```{r ---> Component 3}
 # Component 3: Sleep duration—question 4
 
-dat.psqi$Q4 <- dat.psqi$psqi_4
+dat.psqi$psqi_Comp7 <- dat.psqi$psqi_4
 
 dat.psqi  <- dat.psqi %>%
 	mutate(
@@ -261,21 +273,127 @@ dat.psqi <- dat.psqi %>% relocate(psqi_5j, .before = psqi_Comp1)
 
 
 #		RESCORE THE RESPONSES - ORIG = 1-4; NEW = 0-3
+#		THIS REPLACES THE VALUES IN THE ORIGINAL VARIABLES
 dat.psqi <- dat.psqi %>% 
 	mutate_at(vars(matches("psqi_5[b-i]$")), ~ . - 1)
 
+#		RESCORING THE LONG WAY
+dat.psqi$Q5b <- dat.psqi$psqi_5b -1
+dat.psqi$Q5c <- dat.psqi$psqi_5c -1
+dat.psqi$Q5d <- dat.psqi$psqi_5d -1
+dat.psqi$Q5e <- dat.psqi$psqi_5e -1
+dat.psqi$Q5f <- dat.psqi$psqi_5f -1
+dat.psqi$Q5g <- dat.psqi$psqi_5g -1
+dat.psqi$Q5h <- dat.psqi$psqi_5h -1
+dat.psqi$Q5i <- dat.psqi$psqi_5i -1
+dat.psqi$Q5j <- dat.psqi$psqi_5j 
+
+#		SUMMING THE SCORES
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q5s = sum(c(Q5b, Q5c, Q5d, Q5e, Q5f, Q5g, Q5h, Q5i, Q5j), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+
+# Sum of 5b to 5j scores, Component 5 score
+# 0, 0
+# 1-9, 1
+# 10-18, 2 
+# 19-27, 3
+#		CONVERTING TO COMPONENT SCORE
+dat.psqi <- dat.psqi %>% 
+	mutate(
+		psqi_Comp5 = case_when(
+			Q5s < 1 ~ 0,
+			Q5s >= 1 & Q5s <=9 ~ 1,
+			Q5s >= 10 & Q5s <=18 ~ 1,
+			Q5s >= 19 & Q5s <=27 ~ 1,
+			TRUE ~ as.numeric(Q5s)
+		)
+	)
 
 
 
-
-
-
-
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp4, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
 
 
 
 
 ```
+
+```{r ---> Component 6}
+# Component 6: Use of sleep medication—question 6
+# Response to Q6, Component 6 score
+# Not during past month, 0
+# Less than once a week, 1 
+# Once or twice a week, 2
+# Three or more times a week, 3
+
+dat.psqi$psqi_Comp6 <- as.numeric(dat.psqi$psqi_6)
+
+```
+
+```{r ---> Component 7}
+# 	Component 7: SUM Daytime dysfunction—questions 7 and 8
+# Sum of Q7 and Q8 subscores, COMPONENT SCORE 
+# 0,0
+# 1-2 1 
+# 3-4 2 
+# 5-6 3
+
+#		SUM QUESTIONS 7 AND 8a
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q7and8a = sum(c(psqi_7, psqi_8a), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+#		SCORE COMPONENT 7
+dat.psqi  <- dat.psqi %>%
+	mutate(
+		psqi_Comp7 = case_when(
+			Q7and8a > 1 ~ 0,
+			Q7and8a >= 1 & Q7and8a <= 2 ~ 1,
+			Q7and8a >= 3 & Q7and8a <= 4 ~ 2,
+			Q7and8a >= 5 & Q7and8a <= 6 ~ 3,
+			TRUE ~ as.numeric(Q7and8a)
+		)
+	)
+
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp4, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp6, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp7, .after = last_col())
+
+```
+
+```{r ---> Global Score}
+# Global PSQI Score: Sum of seven component scores:
+
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		psqi_Global = sum(c(psqi_Comp1, psqi_Comp2, psqi_Comp3,
+							psqi_Comp4, psqi_Comp5, psqi_Comp6,
+							psqi_Comp7), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+
+```
+
+
+
 
 # FORUM QUESTIONS - RESPONSES
 ```{r ---> Recreate a dataset}
@@ -294,6 +412,8 @@ dput(head(psqi.Q5, 100))
 psqi_Q5s <- c("b","c","d","e","f","g","h","i")
 j <- "psqi_5"
 k <- "psQ5"
+
+
 for (i in psqi_Q5s){
 	q <- paste0(j, i) # original variable
 	y <- paste0(k,i) # new scored variable
@@ -315,15 +435,40 @@ for (i in psqi_Q5s){
 #		RESPONSE TO QUESTION #1`
 #			THIS DOES THE JOB BUT DOESN’T CREATE NEW COLUMNS
 psqi.Q5 <- psqi.Q5 %>% 
-	mutate_at(vars(matches("psqi_5[b-i]$")), ~ . - 1)
+	mutate_at(vars(matches("psqi_5[b-i]$")), ~ . -1)
 
 
 ```
 
 
-
+#SCRAP STUFF
 
 ```{r ---> SCRAP}
+
+#			THESE DON'T WORK AND I DON'T KNOW WHY
+# dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q5ss = sum(c("Q5[b-j]"), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+
+
+
+
+dat.psqi <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q5ss = sum(vars(matches("Q5[b-j]")), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+
+
+
+
+
 
 #		SUM RESPONSES
 psqi.Q5 <- psqi.Q5 %>% 
@@ -349,7 +494,8 @@ psqi.Q5  <- psqi.Q5 %>%
 
 
 
-
+psqi.Q5 %>% 
+  mutate_at(vars(matches("psqi_5[b-i]")), list("rescored" = . - 1))
 
 
 
