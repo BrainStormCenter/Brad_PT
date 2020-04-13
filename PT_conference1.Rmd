@@ -56,7 +56,13 @@ names(data)[names(data) == 'participant_id'] <- 'ID'
 # names(data)[names(data) == 'psqi_3'] <- 'psqi.waketime'
 # names(data)[names(data) == 'psqi_3a.factor'] <- 'psqi.wt.wake'
 
+#		WRITE NEW DATASET
+write_csv(data, "PT_data_13042020.csv",
+		  na = "NA", append = FALSE,
+		  col_names = TRUE, quote_escape = "double")
 
+
+data0 <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/ASQ_pilot/master/ASQ_pain_pilot_2019_04_19_v2.csv'), header = TRUE)
 ```
 
 ```{r ---> Clean data}
