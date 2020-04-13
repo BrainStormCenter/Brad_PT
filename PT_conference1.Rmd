@@ -43,26 +43,33 @@ dr_here(show_reason = FALSE)
 # library(ggplot2)		# ALREADY IN TIDYVERSE
 # library(dplyr) 		# ALREADY IN TIDYVERSE
 ```
+```{r ---> data prep}
+#		THIS SECTION PREPARED THE ORIGINAL DATA FOR SUBSEQUENT USE
+
+#	This reads the files created by RedCap
+# source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
+# #		RENAME VARIABLE
+# names(data)[names(data) == 'participant_id'] <- 'ID'
+# # names(data)[names(data) == 'psqi_1']  <- 'psqi.bedtime'
+# # names(data)[names(data) == 'psqi_1a.factor'] <- 'psqi.bt.sleep'
+# # names(data)[names(data) == 'psqi_3'] <- 'psqi.waketime'
+# # names(data)[names(data) == 'psqi_3a.factor'] <- 'psqi.wt.wake'
+# 
+# #		WRITE NEW DATASET
+# write_csv(data, "PT_data_13042020.csv",
+# 		  na = "NA", append = FALSE,
+# 		  col_names = TRUE, quote_escape = "double")
+# 
+# 
+# 
+# data0 <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/ASQ_pilot/master/ASQ_pain_pilot_2019_04_19_v2.csv'), header = TRUE)
+
+```
 
 ```{r ---> Import data}
-# import data:
-#	This reads the files created by RedCap
-source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
+#		IMPORT DATA FROM GITHUB
+data <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/Brad_PT/master/PT_data_13042020.csv'), header = TRUE)
 data <- as_tibble(data)
-#		RENAME VARIABLE
-names(data)[names(data) == 'participant_id'] <- 'ID'
-# names(data)[names(data) == 'psqi_1']  <- 'psqi.bedtime'
-# names(data)[names(data) == 'psqi_1a.factor'] <- 'psqi.bt.sleep'
-# names(data)[names(data) == 'psqi_3'] <- 'psqi.waketime'
-# names(data)[names(data) == 'psqi_3a.factor'] <- 'psqi.wt.wake'
-
-#		WRITE NEW DATASET
-write_csv(data, "PT_data_13042020.csv",
-		  na = "NA", append = FALSE,
-		  col_names = TRUE, quote_escape = "double")
-
-
-data0 <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/ASQ_pilot/master/ASQ_pain_pilot_2019_04_19_v2.csv'), header = TRUE)
 ```
 
 ```{r ---> Clean data}
@@ -81,6 +88,421 @@ dat1   <- filter(dat1, ess_total != "NA")
 
 dat1 %>% count(group.factor)
 ```
+
+
+
+# PSQI DATASET
+```{r ---> PSQI dataset}
+#		PSQI DATA
+# gather psqi variables into separate spreadsheet:
+dat.psqi <- dat1[,c(1,425,769,
+					  grep("pittsburgh", colnames(dat1)),
+					  grep("psqi", colnames(dat1)))]
+#grep("timestamp", colnames(dat.raw))
+
+colnames(dat.psqi)
+# label(dat.psqi)
+# view(dat.psqi)
+
+#	REORGANIZE VARIABLES
+dat.psqi <- dat.psqi %>% select(1:7,43,everything()) 
+dat.psqi <- dat.psqi %>% select(1:11,44,everything()) 
+dat.psqi <- dat.psqi %>% select(1:14,45,everything()) 
+dat.psqi <- dat.psqi %>% select(1:16,46,everything()) 
+dat.psqi <- dat.psqi %>% select(1:18,47,everything())
+dat.psqi <- dat.psqi %>% select(1:20,48,everything())
+dat.psqi <- dat.psqi %>% select(1:22,49,everything())
+dat.psqi <- dat.psqi %>% select(1:24,50,everything())
+dat.psqi <- dat.psqi %>% select(1:26,51,everything())
+dat.psqi <- dat.psqi %>% select(1:28,52,everything())
+dat.psqi <- dat.psqi %>% select(1:30,53,everything())
+dat.psqi <- dat.psqi %>% select(1:32,54,everything())
+dat.psqi <- dat.psqi %>% select(1:35,55,everything())
+dat.psqi <- dat.psqi %>% select(1:37,56,everything())
+dat.psqi <- dat.psqi %>% select(1:39,57,everything())
+dat.psqi <- dat.psqi %>% select(1:41,psqi_8b.factor,
+								psqi_9, psqi_9.factor,
+								everything())
+dat.psqi <- dat.psqi %>% select(1:45,
+								psqi_10.factor,
+								psqi_10a, psqi_10a.factor,
+								psqi_10b, psqi_10b.factor,
+								psqi_10c, psqi_10c.factor,
+								psqi_10d, psqi_10d.factor,
+								psqi_10e, 
+								psqi_10e1, psqi_10e1.factor,
+								everything())
+
+dat.psqi <- dat.psqi %>% select(1:2,group.factor,everything())
+
+colnames(dat.psqi)
+
+write.csv(dat.psqi, "PSQI_rawData_13April2020.csv", row.names = FALSE)
+
+# ls()
+```
+
+```{r ---> chr to num}
+dat.psqi$psqi_2 <- as.numeric(dat.psqi$psqi_2)
+dat.psqi$psqi_4 <- as.numeric(dat.psqi$psqi_4)
+dat.psqi$psqi_5a <- as.numeric(dat.psqi$psqi_5a)
+dat.psqi$psqi_5b <- as.numeric(dat.psqi$psqi_5b)
+dat.psqi$psqi_5c <- as.numeric(dat.psqi$psqi_5c)
+dat.psqi$psqi_5d <- as.numeric(dat.psqi$psqi_5d)
+dat.psqi$psqi_5e <- as.numeric(dat.psqi$psqi_5e)
+dat.psqi$psqi_5f <- as.numeric(dat.psqi$psqi_5f)
+dat.psqi$psqi_5g <- as.numeric(dat.psqi$psqi_5g)
+dat.psqi$psqi_5h <- as.numeric(dat.psqi$psqi_5h)
+dat.psqi$psqi_5i <- as.numeric(dat.psqi$psqi_5i)
+dat.psqi$psqi_5othera <- as.numeric(dat.psqi$psqi_5othera)
+dat.psqi$psqi_7 <- as.numeric(dat.psqi$psqi_7)
+dat.psqi$psqi_8a <- as.numeric(dat.psqi$psqi_8a)
+
+dat.psqi$psqi_9 <- as.numeric(dat.psqi$psqi_9)
+dat.psqi$psqi_component1 <- as.numeric(dat.psqi$psqi_component1)
+
+
+#		REPLACE "NA" WITH 0
+dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
+
+
+```
+
+# PSQI SCORING
+The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
+
+```{r ---> Time in bed}
+dat.psqi$bedtime  <- dat.psqi$psqi_1
+dat.psqi$bt.sleep <- dat.psqi$psqi_1a.factor
+dat.psqi$waketime <- dat.psqi$psqi_3
+dat.psqi$wt.wake <- dat.psqi$psqi_3a.factor
+
+#		FOR FORUM HELP VERSION #1
+#		GOING TO SLEEP AND WAKING UP ON THE SAME DAY RESULTS IN 24+ HOURS
+dat.psqi <- dat.psqi %>%
+	mutate_all(.funs = as.character) %>%
+	mutate_at(.vars = c("bt.sleep", "wt.wake"),
+			  .funs = ~ gsub(pattern = ".",
+			  			   replacement = "",
+			  			   x = .x,
+			  			   fixed = TRUE)) %>%
+	mutate(Sleep = as.POSIXct(x = paste(bedtime, bt.sleep),
+							  format = "%I:%M %p"),
+		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
+		   				  format = "%I:%M %p") +
+		   	as.difftime(tim = 1, units = "days"),
+		   `Time in bed` = Wake - Sleep)
+
+#		CRUDE FIX FOR THE 24+ HOUR ISSUE
+dat.psqi$TIB  <- as.numeric(dat.psqi$`Time in bed`)
+round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
+					  dat.psqi$TIB,
+					  dat.psqi$TIB - 24), 2)
+
+
+write.csv(dat.psqi, "PSQI_rawData_April2020_v1.csv", row.names = FALSE)
+
+colnames(dat.psqi)
+
+```
+
+```{r ---> COMP 1}
+#		COMPONENT 1 = QUESTION 9
+dat.psqi$psqi_Comp1 <- dat.psqi$psqi_component1
+
+#		SCORE QUESTION 1
+# Component 1: Subjective sleep quality—question 9
+# Response, Component Score to Q9 
+# Very good, 0
+# Fairly good, 1
+# Fairly bad, 2
+# Very bad, 3
+
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+
+```
+
+```{r ---> COMP 2}
+# Component 2: Sleep latency—questions 2 and 5a
+
+dat.psqi$Q2 <- dat.psqi$psqi_2
+dat.psqi$Q5a <- dat.psqi$psqi_5a
+
+dat.psqi  <- dat.psqi %>%
+	mutate(
+		Q2score1 = case_when(
+			Q2 <= 15 ~ 0,
+			Q2 >= 16 & Q2 <= 30 ~ 1,
+			Q2 >= 31 & Q2 <= 60 ~ 2,
+			Q2 > 60 ~ 3,
+			TRUE ~ as.numeric(Q2)
+		)
+	)
+
+dat.psqi <- dat.psqi %>% 
+	mutate(
+		Q5aScore1 = case_when(
+			Q5a == 1 ~ 0,
+			Q5a == 2 ~ 1,
+			Q5a == 3 ~ 2,
+			Q5a == 4 ~ 3,
+			TRUE ~ as.numeric(Q5a)
+		)
+	)
+
+
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q2and5 = sum(c(Q2score1, Q5aScore1), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+dat.psqi <- dat.psqi %>% 
+	mutate(
+		psqi_Comp2 = case_when(
+			Q2and5 == 0 ~ 0,
+			Q2and5 >= 1 & Q2and5 <= 2 ~ 1,
+			Q2and5 >= 3 & Q2and5 <= 4 ~ 2,
+			Q2and5 >= 5 & Q2and5 <= 6 ~ 3,
+			TRUE ~ as.numeric(Q2and5)
+		)
+	)
+
+```
+
+```{r ---> COMP 3}
+# Component 3: Sleep duration—question 4
+
+dat.psqi$Q4 <- dat.psqi$psqi_4
+
+dat.psqi  <- dat.psqi %>%
+	mutate(
+		psqi_Comp3 = case_when(
+			Q4 > 7 ~ 0,
+			Q4 >= 6 & Q4 <= 7 ~ 1,
+			Q4 >= 5 & Q4 < 6 ~ 2,
+			Q4 < 5 ~ 3,
+			TRUE ~ as.numeric(Q4)
+		)
+	)
+
+dat.psqi <- dat.psqi %>% relocate(Q4, .before = psqi_Comp1)
+
+```
+
+```{r ---> COMP 4}
+# Component 4: Sleep efficiency—questions 1, 3, and 4
+# Sleep efficiency = (# hours slept/# hours in bed) X 100% 
+#	= (Q4 / TIB) * 100
+# hours slept—question 4
+# hours in bed—calculated from responses to questions 1 and 3
+# 	Sleep efficiency, Component score 
+# 		> 85%, 0	
+# 		75-84%, 1
+# 		65-74%, 2
+# 		< 65%, 3
+
+dat.psqi$SE <- (dat.psqi$Q4 / dat.psqi$TIB) * 100
+
+dat.psqi  <- dat.psqi %>%
+	mutate(
+		psqi_Comp4 = case_when(
+			SE >= 85 ~ 0,
+			SE >= 75 & SE < 85 ~ 1,
+			SE >= 65 & SE < 75 ~ 2,
+			SE < 65 ~ 3,
+			TRUE ~ as.numeric(SE)
+		)
+	)
+
+dat.psqi <- dat.psqi %>% relocate(SE, .before = psqi_Comp1)
+```
+
+```{r ---> COMP 5}
+# Sum of 5b to 5j scores, Component 5 score
+# 0, 0
+# 1-9, 1
+# 10-18, 2 
+# 19-27, 3
+
+dat.psqi$psqi_5j <- dat.psqi$psqi_5othera # copy variable
+
+#		REARRANGE COLUMNS - AGAIN
+dat.psqi <- dat.psqi %>% relocate(psqi_5othera, .before = psqi_5b)
+dat.psqi <- dat.psqi %>% relocate(psqi_5b, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5c, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5d, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5e, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5f, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5g, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5h, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5i, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_5j, .before = psqi_Comp1)
+
+
+#		RESCORE THE RESPONSES - ORIG = 1-4; NEW = 0-3
+#		THIS REPLACES THE VALUES IN THE ORIGINAL VARIABLES
+dat.psqi <- dat.psqi %>% 
+	mutate_at(vars(matches("psqi_5[b-i]$")), ~ . - 1)
+
+#		RESCORING THE LONG WAY
+dat.psqi$Q5b <- dat.psqi$psqi_5b -1
+dat.psqi$Q5c <- dat.psqi$psqi_5c -1
+dat.psqi$Q5d <- dat.psqi$psqi_5d -1
+dat.psqi$Q5e <- dat.psqi$psqi_5e -1
+dat.psqi$Q5f <- dat.psqi$psqi_5f -1
+dat.psqi$Q5g <- dat.psqi$psqi_5g -1
+dat.psqi$Q5h <- dat.psqi$psqi_5h -1
+dat.psqi$Q5i <- dat.psqi$psqi_5i -1
+dat.psqi$Q5j <- dat.psqi$psqi_5j 
+
+#		SUMMING THE SCORES
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q5s = sum(c(Q5b, Q5c, Q5d, Q5e, Q5f, Q5g, Q5h, Q5i, Q5j), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+
+# Sum of 5b to 5j scores, Component 5 score
+# 0, 0
+# 1-9, 1
+# 10-18, 2 
+# 19-27, 3
+#		CONVERTING TO COMPONENT SCORE
+dat.psqi <- dat.psqi %>% 
+	mutate(
+		psqi_Comp5 = case_when(
+			Q5s < 1 ~ 0,
+			Q5s >= 1 & Q5s <=9 ~ 1,
+			Q5s >= 10 & Q5s <=18 ~ 1,
+			Q5s >= 19 & Q5s <=27 ~ 1,
+			TRUE ~ as.numeric(Q5s)
+		)
+	)
+
+
+
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp4, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
+
+
+
+
+```
+
+```{r ---> COMP 6}
+# Component 6: Use of sleep medication—question 6
+# Response to Q6, Component 6 score
+# Not during past month, 0
+# Less than once a week, 1 
+# Once or twice a week, 2
+# Three or more times a week, 3
+
+dat.psqi$psqi_Comp6 <- as.numeric(dat.psqi$psqi_6)
+
+```
+
+```{r ---> COMP 7}
+# 	Component 7: SUM Daytime dysfunction—questions 7 and 8
+# Sum of Q7 and Q8 subscores, COMPONENT SCORE 
+# 0,0
+# 1-2 1 
+# 3-4 2 
+# 5-6 3
+
+#		SUM QUESTIONS 7 AND 8a
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		Q7and8a = sum(c(psqi_7, psqi_8a), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+#		SCORE COMPONENT 7
+dat.psqi  <- dat.psqi %>%
+	mutate(
+		psqi_Comp7 = case_when(
+			Q7and8a > 1 ~ 0,
+			Q7and8a >= 1 & Q7and8a <= 2 ~ 1,
+			Q7and8a >= 3 & Q7and8a <= 4 ~ 2,
+			Q7and8a >= 5 & Q7and8a <= 6 ~ 3,
+			TRUE ~ as.numeric(Q7and8a)
+		)
+	)
+
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp4, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp6, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp7, .after = last_col())
+
+```
+
+```{r ---> GLOBAL Score}
+# Global PSQI Score: Sum of seven component scores:
+
+dat.psqi  <- dat.psqi %>%
+	rowwise() %>%
+	mutate(
+		psqi_Global = sum(c(psqi_Comp1, psqi_Comp2, psqi_Comp3,
+							psqi_Comp4, psqi_Comp5, psqi_Comp6,
+							psqi_Comp7), na.rm = TRUE)
+	) %>%
+	ungroup()
+
+```
+
+MERGE BACK INTO MAIN DATASET
+```{r ---> REINTEGRATE}
+#		COMBINING 2 DATASETS
+
+#		CREATING SMALL PSQI DATASET
+psqiSM  <- dat.psqi %>% dplyr::select("ID","psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+									  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+									  "psqi_Comp7", "psqi_Global")
+
+dat1 <- merge(dat1, psqiSM, by = "ID")
+
+# ls()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ```{r ---> Small datasets}
 
