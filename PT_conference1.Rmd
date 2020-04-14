@@ -478,10 +478,12 @@ MERGE BACK INTO MAIN DATASET
 #		COMBINING 2 DATASETS
 
 #		CREATING SMALL PSQI DATASET
-psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
-									  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
-									  "psqi_Comp7", "psqi_Global")
-
+psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","psqi_Comp1",
+									  "psqi_Comp2", "psqi_Comp3",
+									  "psqi_Comp4", "psqi_Comp5",
+									  "psqi_Comp6","psqi_Comp7",
+									  "psqi_Global")
+#		MERGE BACK INTO MAIN DATASET
 dat1 <- merge(dat1, psqiSM, by = "ID")
 
 # ls()
@@ -491,10 +493,13 @@ dat1 <- merge(dat1, psqiSM, by = "ID")
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
-dat.SM  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total",
-								  "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
-								  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
-								  "psqi_Comp7", "psqi_Global")
+dat.SM  <- dat1 %>% dplyr::select("group.factor","ess_total",
+								  "bdi_total", "mcgill_total",
+								  "psqi_Global","TIB")#,
+								  # "psqi_Comp1","psqi_Comp2",
+								  # "psqi_Comp3","psqi_Comp4",
+								  # "psqi_Comp5","psqi_Comp6",
+								  # "psqi_Comp7")
 
 # datSM1   <- filter(datSM1, ess_total != "NA")
 
@@ -511,6 +516,10 @@ write_csv(dat.SM, "dat.SM.csv",
 		  na = "NA", append = FALSE,
 		  col_names = TRUE, quote_escape = "double")
 
+plot(dat.SM)
+plot(dat.HC)
+plot(dat.CLBP)
+plot(dat.FM)
 
 #		TO RECREATE A DATASET
 # dput(head(dat.time, 20))
