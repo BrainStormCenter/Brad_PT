@@ -44,6 +44,10 @@ dr_here(show_reason = FALSE)
 # library(dplyr) 		# ALREADY IN TIDYVERSE
 ```
 ```{r ---> data prep}
+##				NOTE			##
+# Subject 248 WAKE TIME NEEDS TO BE CHANGED TO AM FROM PM  
+# THIS IS VERY VERY IMPORTANT
+
 #		THIS SECTION PREPARED THE ORIGINAL DATA FOR SUBSEQUENT USE
 
 #	This reads the files created by RedCap
@@ -74,11 +78,12 @@ data <- as_tibble(data)
 
 ```{r ---> Clean data}
 #		CLEANING AND PRESERVING ORIGINAL DATA
+
 data %>% count(group)
 dat1  <- filter(data, group != 0, group != "NA", data$bdi1 != "NA")
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = TRUE)
-
+names(dat1)[names(dat1) == 'gp.fct'] <- 'group.factor'
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
 
@@ -87,6 +92,7 @@ dat1   <- filter(dat1, ess_total != "NA")
 
 
 dat1 %>% count(group.factor)
+
 ```
 
 
@@ -172,10 +178,7 @@ dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
 The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
 
 ```{r ---> pqsi sanity check}
-
-# z <- dat1[which(dat1$TIB == 19, ]
-z <- data[which(dat.psqi$TIB == 19, ) ]
-
+# z <- data[which(dat.psqi$TIB == 19, ) ]
 ```
 
 ```{r ---> Time in bed}
@@ -226,7 +229,7 @@ dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 # Very bad, 3
 
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
-
+colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 2}
@@ -275,7 +278,9 @@ dat.psqi <- dat.psqi %>%
 			TRUE ~ as.numeric(Q2and5)
 		)
 	)
-
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
+colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 3}
@@ -295,7 +300,7 @@ dat.psqi  <- dat.psqi %>%
 	)
 
 dat.psqi <- dat.psqi %>% relocate(Q4, .before = psqi_Comp1)
-
+colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 4}
@@ -324,6 +329,7 @@ dat.psqi  <- dat.psqi %>%
 	)
 
 dat.psqi <- dat.psqi %>% relocate(SE, .before = psqi_Comp1)
+colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 5}
@@ -481,8 +487,6 @@ dat1 <- merge(dat1, psqiSM, by = "ID")
 # ls()
 ```
 
-
-
 ```{r ---> Small datasets}
 
 #		CREATING SMALL DATASETS
@@ -517,11 +521,10 @@ write_csv(dat.SM, "dat.SM.csv",
 
 ##	EXAMINE DATA
 ```{r ---> Summarize small dataset}
-dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
-
-summarise(dat.SM)
+# dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
+# 
+# summarise(dat.SM)
 ```
-
 
 
 ```{r ---> Correlations Across groups}
@@ -623,12 +626,248 @@ print(CLBP.cor.p <- map(CLBP.cor, ~.x$p))
 
 
 
-```{r ---> Plotting v1}
+```{r ---> Line plots}
  ggplot(data = dat1) +
 	geom_point(mapping = aes(x = group.factor, y = TIB))
 
+
+
+#		SIMPLE SCATTER PLOT
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x= psqi_Global, y = bdi_total))
+
+#		SCATTER PLOT WITH COLOR
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor))
+
+#		SCATTER PLOT WITH LOG-X AND COLOR
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(psqi_Global), y = bdi_total,
+							 color = group.factor))
+
+#		SCATTER PLOT WITH LOG-X, SMOOTH LINERAR MODEL, AND COLOR
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor), method = lm)
+
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(psqi_Global), y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = log(psqi_Global), y = bdi_total,
+							 color = group.factor), method = lm)
+
+#		VARIABLES = McGill AND BDI
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = mcgill_total, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = mcgill_total, y = bdi_total,
+							 color = group.factor), method = lm)
+
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(mcgill_total), y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = log(mcgill_total), y = bdi_total,
+							 color = group.factor), method = lm)
+
+
+#		VARIABLES = McGill AND BDI
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = bdi_total, y = mcgill_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = bdi_total, y = mcgill_total,
+							 color = group.factor), method = lm) 
+
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(bdi_total), y = mcgill_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = log(bdi_total), y = mcgill_total,
+							 color = group.factor), method = lm)
+
+
+
+
+
+
+#		FACETS -- 3 PANEL SCATTER PLOT
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor,)) +
+	facet_wrap(~ group.factor)
+
+
+#		SCATTER PLOT 
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x= psqi_Global, y = bdi_total))
+
+#		SMOOTH GEOM WITH COLOR BY GROUP
+ggplot(data = dat1) +
+	geom_smooth(mapping = aes(x = psqi_Global, 
+							  y = bdi_total,
+							  color = group.factor))
+
+#		GEOMS = POINT & SMOOTH, COLOR BY GROUP
+# ggplot(data = dat1) +
+
+
+
+#		SCATTER PLOT, SMOOTH LINES WITH COLOR AND PANELS
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							  color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							  linetype = group.factor,
+							  color = group.factor)) +
+	facet_wrap(~ group.factor)
+	
+#		A MORE SIMPLISTIC AND CONSISTENT WAY TO MAKE THE GRAPHS ABOVE
+#		SCATTER PLOT, SMOOTH LINES WITH COLOR AND PANELS
+ggplot(data = dat1, mapping = aes(x = psqi_Global, y = bdi_total)) +
+	geom_point(mapping = aes(color = group.factor)) +
+	geom_smooth(mapping = aes(color = group.factor), se = FALSE) +
+	facet_wrap(~ group.factor)
+
+
+attach(dat1) # attaches the database to the search path
+
+dat1 %>% 
+	ggplot(data = dat1, mapping = aes(x = psqi_Global, 
+									  y = bdi_total,
+									  color = group.factor))
+
+
+
+
 ```
 
+```{r ---> Box plots}
+
+#		BOX PLOT, SMOOTH LINES WITH COLOR AND PANELS
+ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+	geom_boxplot (mapping = aes(color = group.factor))
+
+z <- ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) 
+z +	geom_boxplot(mapping = aes(color = group.factor))
+z +	geom_boxplot(notch = TRUE, mapping = aes(color = group.factor))
+z +	geom_boxplot(varwidth = TRUE, notch = TRUE, 
+				 mapping = aes(color = group.factor))
+z +	geom_boxplot(varwidth = TRUE, 
+				 notch = TRUE,
+				 outlier.shape = NA,
+				 mapping = aes(color = group.factor)) +
+	geom_jitter(width = 0.2, mapping = aes(color = group.factor))
+
+
+
+# 	geom_smooth(mapping = aes(color = group.factor, se = FALSE)) +
+# 	facet_wrap(~ group.factor)
+
+
+
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot()
+
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot(notch = TRUE)
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot(notch = TRUE, varwidth = TRUE)
+p + geom_boxplot(varwidth = TRUE)
+
+ggplot(diamonds, aes(carat, price)) +
+  geom_boxplot()
+
+ggplot(diamonds, aes(carat, price)) +
+  geom_boxplot(aes(group = cut_width(carat, 0.25)))
+
+#	HC DATA ONLY
+ggplot(data = dat.HC) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							  color = group.factor)) +
+	facet_wrap(~ group.factor)
+
+
+
+
+
+
+```
+
+```{r ---> histograms}
+hist(bdi_total)
+
+hist(group_by(group.factor), bdi_total)
+
+
+
+hist(log(bdi_total))
+
+dat1 %>% 
+group_by(group.factor) %>%
+	mean(bdi_total, na.rm = TRUE)
+
+class(bdi_total)
+
+group_by(group.factor) %>% 
+	mean(bdi_total)
+
+by_group <- dat1 %>% group_by(group.factor)
+
+
+by_group %>% hist(
+	bdi_total #,
+	#mcgill_total
+)
+
+
+
+
+by_group %>% summarise(
+	bdi_total = mean(bdi_total),
+	mcgill_total = mean(mcgill_total)
+	)
+
+by_group %>% filter(bdi_total == max(bdi_total))
+
+
+
+
+
+
+```
+
+
+```{r ---> linear models}
+summary(lm(TIB ~ bdi_total + mcgill_total))
+
+summary(lm(psqi_Global ~ bdi_total + mcgill_total)) 
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_______________________________________________________
 ###	BDI
 ```{r ---> BDI Summary}
 #		BDI VARIABLES
