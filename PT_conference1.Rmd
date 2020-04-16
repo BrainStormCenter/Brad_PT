@@ -43,6 +43,28 @@ dr_here(show_reason = FALSE)
 # library(ggplot2)		# ALREADY IN TIDYVERSE
 # library(dplyr) 		# ALREADY IN TIDYVERSE
 ```
+
+```{r ---> Color schemes}
+##  different color series
+col1 <- colorRampPalette(c("#7F0000", "red", "#FF7F00",
+						   "yellow", "white","cyan",
+						   "#007FFF", "blue","#00007F"))
+col2 <- colorRampPalette(c("#67001F", "#B2182B",
+						   "#D6604D", "#F4A582",
+						   "#FDDBC7", "#FFFFFF",
+						   "#D1E5F0", "#92C5DE",
+						   "#4393C3", "#2166AC", 
+						   "#053061"))
+col3 <- colorRampPalette(c("red", "white", "blue"))
+col4 <- colorRampPalette(c("#7F0000", "red", "#FF7F00", 
+						   "yellow", "#7FFF7F",
+						   "cyan", "#007FFF", "blue",
+						   "#00007F"))
+wb <- c("white", "black")
+
+
+```
+
 ```{r ---> data prep}
 ##				NOTE			##
 # Subject 248 WAKE TIME NEEDS TO BE CHANGED TO AM FROM PM  
@@ -83,13 +105,16 @@ data %>% count(group)
 dat1  <- filter(data, group != 0, group != "NA", data$bdi1 != "NA")
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = TRUE)
-names(dat1)[names(dat1) == 'gp.fct'] <- 'group.factor'
+# names(dat1)[names(dat1) == 'gp.fct'] <- 'group.factor'
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
 
 #		CLEAN ESS BY REMOVING "NA"
 dat1   <- filter(dat1, ess_total != "NA")
 
+dat1$ess_total <- as.numeric(dat1$ess_total)
+dat1$bdi_total <- as.numeric(dat1$bdi_total)
+dat1$mcgill_total <- as.numeric(dat1$mcgill_total)
 
 dat1 %>% count(group.factor)
 
@@ -473,15 +498,28 @@ dat.psqi  <- dat.psqi %>%
 
 ```
 
+
+```{r ---> Rename Components}
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] <- 'slpQual'
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] <- 'slpLat'
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp3'] <- 'slpDur'
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp4'] <- 'slpEff'
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp5'] <- 'slpDist'
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp6'] <- 'slpMeds'
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp7'] <- 'slpDayFcn'
+
+
+
+```
 MERGE BACK INTO MAIN DATASET
 ```{r ---> REINTEGRATE}
 #		COMBINING 2 DATASETS
 
 #		CREATING SMALL PSQI DATASET
-psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","psqi_Comp1",
-									  "psqi_Comp2", "psqi_Comp3",
-									  "psqi_Comp4", "psqi_Comp5",
-									  "psqi_Comp6","psqi_Comp7",
+psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","slpQual",
+									  "slpLat", "slpDur",
+									  "slpEff", "slpDist",
+									  "slpMeds","slpDayFcn",
 									  "psqi_Global")
 #		MERGE BACK INTO MAIN DATASET
 dat1 <- merge(dat1, psqiSM, by = "ID")
@@ -493,13 +531,13 @@ dat1 <- merge(dat1, psqiSM, by = "ID")
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
-dat.SM  <- dat1 %>% dplyr::select("group.factor","ess_total",
+dat.SM  <- dat1 %>% dplyr::select("group.factor","slpQual",
+								  "slpLat", "slpDur",
+								  "slpEff", "slpDist",
+								  "slpMeds","slpDayFcn",
+								  "psqi_Global","ess_total",
 								  "bdi_total", "mcgill_total",
-								  "psqi_Global","TIB")#,
-								  # "psqi_Comp1","psqi_Comp2",
-								  # "psqi_Comp3","psqi_Comp4",
-								  # "psqi_Comp5","psqi_Comp6",
-								  # "psqi_Comp7")
+								  "TIB")
 
 # datSM1   <- filter(datSM1, ess_total != "NA")
 
@@ -510,16 +548,16 @@ dat.FM <- dat.SM %>%
 	filter(group.factor == "FM")
 dat.CLBP <- dat.SM %>%
 	filter(group.factor == "CLBP")
+dat.pain <- dat.SM %>%
+	filter(group.factor == "CLBP" | group.factor == "FM")
+
+
 
 #		WRITE SMALL DATASET
 write_csv(dat.SM, "dat.SM.csv",
 		  na = "NA", append = FALSE,
 		  col_names = TRUE, quote_escape = "double")
 
-plot(dat.SM)
-plot(dat.HC)
-plot(dat.CLBP)
-plot(dat.FM)
 
 #		TO RECREATE A DATASET
 # dput(head(dat.time, 20))
@@ -533,8 +571,247 @@ plot(dat.FM)
 # dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
 # 
 # summarise(dat.SM)
+
+#		LOOKING AT VARIANCE AMONG VARIABLES
+library(caret)
+nearZeroVar(dat.pain,
+			uniqueCut = 2,
+			names = TRUE)
+
 ```
 
+```{r ---> Basic COR plots}
+#		FOLLOWING A YOUTUBE CORRELATION TUTORIAL 
+#####
+#			ALL GROUPS
+plot(dat.SM)
+d  <- dat.SM[,c(-1)]
+plot(d)
+cor(d)
+cr <- cor(d)
+corrplot(cr)
+
+#####
+#		PAIN GROUPS
+plot(dat.pain)
+summary(dat.pain)
+e <- dat.pain %>% select(!"group.factor")
+e <- e %>% select(!"slpDist")
+plot(e)
+pcr <- cor(e)
+corrplot(pcr)
+
+#####
+#		HC GROUP
+plot(dat.HC)
+a <- dat.HC[,c(-1)]
+plot(a)
+round(cor(a), 2)
+acr <- cor(a)
+corrplot(acr,
+		 add = FALSE,
+		 method = "shade",
+		 diag = FALSE,
+		 type = "upper",
+		 title = 'HC group',
+		 is.corr = TRUE,
+		 outline = TRUE,
+		 # addgrid.col = "blue",
+		 addCoef.col = TRUE,
+		 addCoefasPercent = TRUE,
+		 col = col1(20),
+		 order = "hclust",
+		 hclust.method = "ward.D2",
+		 addrect = 3,
+		 p.mat = 
+		 rect.col = "red")
+
+## circle + colorful number
+## circle + colorful number
+
+
+####		ADDING GRAPHS TOGETHER		#######
+corrplot(acr, order = "hclust", type = "upper",
+		 # diag = FALSE,
+		 col = col1(20),
+		 bg = "dark grey",
+		 tl.pos = "d",
+		 tl.col = "black",
+		 addshade = "all",
+		 tl.cex = .85)
+corrplot(acr, add = TRUE, type = "lower", 
+		 method = "number", order = "hclust",
+		 diag = FALSE, tl.pos = "n", 
+		 col = col1(20),
+		 bg = "dark grey",
+		 addshade = "all",
+		 cl.pos = "n")
+
+
+
+
+
+corrplot(pcr, p.mat = res3$p, sig.level = 0.05)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
+
+corrplot(pcr, p.mat = res3$p, order = "original", insig = "p-value")
+corrplot(pcr, p.mat = res3$p, insig = "p-value", sig.level = -1) ## add all p-values
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
+
+corrplot(pcr, order = "AOE", type = "upper",
+		 diag = FALSE,
+		 col = col1(20),
+		 bg = "dark grey",
+		 p.mat = res3$p, #sig.level = 0.05,
+		 sig.level = -1,
+		 tl.pos = "lt",
+		 tl.col = "black",
+		 addshade = "all",
+		 tl.cex = .85)
+corrplot(pcr, add = TRUE, type = "lower", 
+		 method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", 
+		 col = col1(20),
+		 bg = "dark grey",
+		 addshade = "all",
+		 p.mat = res3$p, sig.level = 0.05,
+		 cl.pos = "n")
+
+
+
+
+
+
+
+
+
+
+corrplot(M, order = "AOE", type = "upper", tl.pos = "tp")
+
+corrplot(M, order = "AOE", type = "upper", tl.pos = "d")
+corrplot(M, add = TRUE, type = "lower", 
+		 method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n")
+
+
+
+
+# corrplot(acr, add = FALSE, type = "lower", method = "number", order = "AOE",
+# 		 diag = FALSE, tl.pos = "n", cl.pos = "n",
+# 		 bg = "grey",
+# 		 outline = TRUE,
+		 # col = col1(20))
+
+corrplot(acr, add = TRUE, type = "lower", method = "ellipse", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n")
+
+## order is hclust and draw rectangles
+# corrplot(M, order = "hclust")
+# corrplot(M, order = "hclust", addrect = 2)
+# corrplot(M, order = "hclust", addrect = 3, rect.col = "red")
+# corrplot(M, order = "hclust", addrect = 4, rect.col = "blue")
+# corrplot(M, order = "hclust", hclust.method = "ward.D2", addrect = 4)
+
+## circle + colorful number
+#		I LIKE THIS VERSION
+corrplot(acr, order = "AOE", type = "upper", tl.pos = "d",
+		 bg = "grey",
+		 outline = TRUE,
+		 hclust.method = "ward.D2",
+		 addgrid.col = "blue",
+		 col = col1(200))
+corrplot(acr, add = TRUE, type = "lower", method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n",
+		 bg = "grey",
+		 outline = TRUE,
+		 col = col1(200))
+
+
+###################		USING SIGNIFICANCE LEVELS #################
+M <- cor(mtcars)
+res1 <- cor.mtest(mtcars, conf.level = 0.95)
+res2 <- cor.mtest(mtcars, conf.level = 0.99)
+corrplot(M, p.mat = res1$p, sig.level = 0.01)
+
+
+e$ess_total <- as.numeric(e$ess_total)
+e$bdi_total <- as.numeric(e$bdi_total)
+e$mcgill_total <- as.numeric(e$mcgill_total)
+
+pcr <- cor(e)
+res3 <- cor.mtest(e, conf.level = 0.95)
+res4 <- cor.mtest(e, conf.level = 0.99)
+corrplot(pcr, p.mat = res3$p, sig.level = 0.01)
+
+
+corrplot(pcr, p.mat = res3$p, sig.level = 0.2)
+corrplot(pcr, p.mat = res3$p, sig.level = 0.05)
+corrplot(pcr, p.mat = res3$p, sig.level = 0.01)
+corrplot(pcr, p.mat = res3$p, insig = "blank")
+corrplot(pcr, p.mat = res3$p, insig = "p-value")
+corrplot(pcr, p.mat = res3$p, order = "original", insig = "p-value")
+corrplot(pcr, p.mat = res3$p, insig = "p-value", sig.level = -1) ## add all p-values
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
+
+corrplot(pcr, p.mat = res3$p,  insig = "blank", sig.level = 0.05) ## add all p-values
+
+########		corrplot.mixed 		#########
+
+corrplot.mixed(pcr2, tl.pos = "lt") ## I LIKE THIS VERSION AS A START
+
+
+M <- cor(mtcars)
+ord <- corrMatOrder(M, order = "AOE")
+M2 <- M[ord,ord]
+
+pcr <- cor(e)
+ord <- corrMatOrder(pcr, order = "AOE")
+pcr2 <- pcr[ord,ord]
+
+
+corrplot.mixed(pcr2)
+corrplot.mixed(pcr2, lower = "ellipse", upper = "circle")
+corrplot.mixed(pcr2, lower = "square", upper = "circle")
+corrplot.mixed(pcr2, lower = "shade", upper = "circle")
+corrplot.mixed(pcr2, tl.pos = "lt")
+
+corrplot.mixed(pcr2, tl.pos = "lt", diag = "u")
+corrplot.mixed(pcr2, tl.pos = "lt", diag = "l")
+corrplot.mixed(pcr2, tl.pos = "n")
+
+
+#
+
+
+
+
+
+
+
+
+
+
+#		LOOKING AT VARIANCE AMONG VARIABLES
+library(caret)
+nearZeroVar(a,
+			uniqueCut = 2,
+			names = TRUE)
+
+
+
+
+
+
+
+
+plot(dat.HC)
+plot(dat.CLBP)
+plot(dat.FM)
+
+```
 
 ```{r ---> Correlations Across groups}
 
