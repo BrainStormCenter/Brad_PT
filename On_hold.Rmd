@@ -1,0 +1,1261 @@
+---
+title: "On hold"
+author: "Jason"
+date: "4/20/2020"
+output: html_document
+---
+These are commands that are on hold.
+Eventually, I will use most of them for the PT analyses.
+
+
+
+
+```{r ---> COR ALL Gps}
+#		FOLLOWING A YOUTUBE CORRELATION TUTORIAL 
+#####
+#			ALL GROUPS
+plot(dat.SM)
+dSM <- dat.SM[,c(-1)] # REMOVE group.factor
+plot(dSM)
+dSM <- dSM %>% select(!"slpDist") # REMOVE slpDist B/C LACK OF VARIANCE
+plot(dSM)
+
+
+#		For symmetric matrices, raw probabilites are reported below the diagonal 
+#		and correlations adjusted for multiple comparisons above the diagonal.
+
+ct <- corr.test(attitude, adjust = "none")
+ct
+
+corrplot(ct$r)
+corrplot(ct$p)
+
+cor(dSM)
+
+corr.matrix <- corr.test(e,
+						 use = "pairwise",
+						 method = "spearman",
+						 adjust = "none",
+						 alpha = 0.05,
+						 ci = TRUE, minlength = 5)
+
+
+
+cr <- cor(d)
+corrplot(cr)
+
+#####
+#		PAIN GROUPS
+plot(dat.pain)
+summary(dat.pain)
+e <- dat.pain %>% select(!"group.factor")
+e <- e %>% select(!"slpDist")
+plot(e)
+pcr <- cor(e)
+corrplot(pcr)
+
+#####
+#		HC GROUP
+plot(dat.HC)
+a <- dat.HC[,c(-1)]
+plot(a)
+round(cor(a), 2)
+acr <- cor(a)
+corrplot(acr,
+		 add = FALSE,
+		 method = "shade",
+		 diag = FALSE,
+		 type = "upper",
+		 title = 'HC group',
+		 is.corr = TRUE,
+		 outline = TRUE,
+		 # addgrid.col = "blue",
+		 addCoef.col = TRUE,
+		 addCoefasPercent = TRUE,
+		 col = col1(20),
+		 order = "hclust",
+		 hclust.method = "ward.D2",
+		 addrect = 3,
+		 p.mat = 
+		 rect.col = "red")
+
+## circle + colorful number
+## circle + colorful number
+
+
+####		ADDING GRAPHS TOGETHER		#######
+corrplot(acr, order = "hclust", type = "upper",
+		 # diag = FALSE,
+		 col = col1(20),
+		 bg = "dark grey",
+		 tl.pos = "d",
+		 tl.col = "black",
+		 addshade = "all",
+		 tl.cex = .85)
+corrplot(acr, add = TRUE, type = "lower", 
+		 method = "number", order = "hclust",
+		 diag = FALSE, tl.pos = "n", 
+		 col = col1(20),
+		 bg = "dark grey",
+		 addshade = "all",
+		 cl.pos = "n")
+
+
+
+
+
+corrplot(pcr, p.mat = res3$p, sig.level = 0.05)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
+
+corrplot(pcr, p.mat = res3$p, order = "original", insig = "p-value")
+corrplot(pcr, p.mat = res3$p, insig = "p-value", sig.level = -1) ## add all p-values
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
+
+corrplot(pcr, order = "AOE", type = "upper",
+		 diag = FALSE,
+		 col = col1(20),
+		 bg = "dark grey",
+		 tl.pos = "lt",
+		 tl.col = "black",
+		 # addshade = "all",
+		 p.mat = res3$p, #sig.level = 0.05,
+		 sig.level = -1,
+		 insig = "n",
+		 # sig.level = 0.05,
+		 tl.cex = .85)
+corrplot(pcr, add = TRUE, type = "lower", 
+		 method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", 
+		 col = col1(20),
+		 bg = "dark grey",
+		 addshade = "all",
+		 p.mat = res3$p, #sig.level = 0.05,
+		 insig = "blank",
+		 cl.pos = "n")
+
+
+
+library(psych)
+
+pairs.panels(e, scale=TRUE)
+
+library(corrr)
+
+e %>% correlate() %>% network_plot(min_cor=0.4)
+
+
+corr.matrix <- corr.test(e,
+						 use = "pairwise",
+						 method = "spearman",
+						 adjust = "none",
+						 alpha = 0.05,
+						 ci = TRUE, minlength = 5)
+
+
+corrplot(corr.matrix$r, 
+		 p.mat = corr.matrix$p,
+		 insig = "n"
+		 )
+
+
+
+corr.matrix2 <- subset(corr.matrix, corr.matrix$p<0.05)
+P <- corrplot(corr.matrix$r, method="square",type="lower",col=col1(100),is.corr=T,mar=c(1,1,1,1),tl.cex=0.5)
+
+
+
+
+
+
+
+corr.test(dat.SM %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB","slpQual",
+				   		   "slpLat", "slpDur",
+				   		   "slpEff", "slpDist",
+				   		   "slpMeds","slpDayFcn",
+				   		   "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+
+
+
+
+
+
+
+
+corrplot(M, order = "AOE", type = "upper", tl.pos = "tp")
+
+corrplot(M, order = "AOE", type = "upper", tl.pos = "d")
+corrplot(M, add = TRUE, type = "lower", 
+		 method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n")
+
+
+
+
+# corrplot(acr, add = FALSE, type = "lower", method = "number", order = "AOE",
+# 		 diag = FALSE, tl.pos = "n", cl.pos = "n",
+# 		 bg = "grey",
+# 		 outline = TRUE,
+		 # col = col1(20))
+
+corrplot(acr, add = TRUE, type = "lower", method = "ellipse", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n")
+
+## order is hclust and draw rectangles
+# corrplot(M, order = "hclust")
+# corrplot(M, order = "hclust", addrect = 2)
+# corrplot(M, order = "hclust", addrect = 3, rect.col = "red")
+# corrplot(M, order = "hclust", addrect = 4, rect.col = "blue")
+# corrplot(M, order = "hclust", hclust.method = "ward.D2", addrect = 4)
+
+## circle + colorful number
+#		I LIKE THIS VERSION
+corrplot(acr, order = "AOE", type = "upper", tl.pos = "d",
+		 bg = "grey",
+		 outline = TRUE,
+		 hclust.method = "ward.D2",
+		 addgrid.col = "blue",
+		 col = col1(200))
+corrplot(acr, add = TRUE, type = "lower", method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n",
+		 bg = "grey",
+		 outline = TRUE,
+		 col = col1(200))
+
+
+###################		USING SIGNIFICANCE LEVELS #################
+M <- cor(mtcars)
+res1 <- cor.mtest(mtcars, conf.level = 0.95)
+res2 <- cor.mtest(mtcars, conf.level = 0.99)
+corrplot(M, p.mat = res1$p, sig.level = 0.01)
+
+
+e$ess_total <- as.numeric(e$ess_total)
+e$bdi_total <- as.numeric(e$bdi_total)
+e$mcgill_total <- as.numeric(e$mcgill_total)
+
+pcr <- cor(e)
+res3 <- cor.mtest(e, conf.level = 0.95)
+res4 <- cor.mtest(e, conf.level = 0.99)
+corrplot(pcr, p.mat = res3$p, sig.level = 0.01)
+
+
+corrplot(pcr, p.mat = res3$p, sig.level = 0.2)
+corrplot(pcr, p.mat = res3$p, sig.level = 0.05)
+corrplot(pcr, p.mat = res3$p, sig.level = 0.01)
+corrplot(pcr, p.mat = res3$p, insig = "blank")
+corrplot(pcr, p.mat = res3$p, insig = "p-value")
+corrplot(pcr, p.mat = res3$p, order = "original", insig = "p-value")
+corrplot(pcr, p.mat = res3$p, insig = "p-value", sig.level = -1) ## add all p-values
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
+corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
+
+corrplot(pcr, p.mat = res3$p,  insig = "blank", sig.level = -1) ## add all p-values
+
+########		corrplot.mixed 		#########
+
+corrplot.mixed(pcr2, tl.pos = "lt", insig = "blank") ## I LIKE THIS VERSION AS A START
+
+
+M <- cor(mtcars)
+ord <- corrMatOrder(M, order = "AOE")
+M2 <- M[ord,ord]
+
+pcr <- cor(e)
+ord <- corrMatOrder(pcr, order = "AOE")
+pcr2 <- pcr[ord,ord]
+
+
+corrplot.mixed(pcr2)
+corrplot.mixed(pcr2, lower = "ellipse", upper = "circle")
+corrplot.mixed(pcr2, lower = "square", upper = "circle")
+corrplot.mixed(pcr2, lower = "shade", upper = "circle")
+corrplot.mixed(pcr2, tl.pos = "lt")
+
+corrplot.mixed(pcr2, tl.pos = "lt", diag = "u")
+corrplot.mixed(pcr2, tl.pos = "lt", diag = "l")
+corrplot.mixed(pcr2, tl.pos = "n")
+
+
+#
+
+
+
+
+
+
+
+
+
+
+#		LOOKING AT VARIANCE AMONG VARIABLES
+library(caret)
+nearZeroVar(a,
+			uniqueCut = 2,
+			names = TRUE)
+
+
+
+
+
+
+
+
+plot(dat.HC)
+plot(dat.CLBP)
+plot(dat.FM)
+
+```
+
+```{r ---> Basic COR plots 2}
+####		FROM A FORUM POST IN 2019		####
+library(tidyverse)
+
+# Function to get correletions and p.values in a "long" data frame
+corr.data = function(data) {
+  
+  # Get correlations
+  cor.vals = cor(data)
+  
+  # Get p-values
+  cor.p = cor.mtest(data, conf.level = 0.95)$p
+  rownames(cor.p) = rownames(cor.vals)
+  colnames(cor.p) = colnames(cor.vals)
+  
+  cbind(rowvars=rownames(cor.vals), data.frame(cor.vals)) %>% 
+    gather(colvars, corr, -rowvars) %>% 
+    left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
+                gather(colvars, p.value, -rowvars))
+}
+
+
+corr.data(mtcars) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars))) +
+	geom_tile(colour="grey20", aes(fill=corr), size=0.5) +
+	# geom_point(aes(size=p.value, colour=cut(abs(corr), c(0, 0.01, 0.05, 1), include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label=sprintf("%1.2f", corr)), position=position_nudge(y=0.2), 
+			  size=3, colour="white") +
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), position=position_nudge(y=-0.2), 
+			  size=2.5, colour="white") +
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", midpoint=0, limits=c(-1,1)) +
+	scale_size_continuous(range=c(8,12)) +
+	labs(x="",y="") +
+	theme_classic() +
+	coord_fixed()
+
+
+
+corr.data(dSM) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars))) +
+	geom_tile(colour="grey20", aes(fill=corr), size=0.5) +
+	# geom_point(aes(size=p.value, colour=cut(abs(corr), c(0, 0.01, 0.05, 1), include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label=sprintf("%1.2f", corr)), position=position_nudge(y=0.2), 
+			  size=3, colour="white") +
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), position=position_nudge(y=-0.2), 
+			  size=2.5, colour="white") +
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", midpoint=0, limits=c(-1,1)) +
+	scale_size_continuous(range=c(8,12)) +
+	labs(x="",y="") +
+	theme_classic() +
+	coord_fixed()
+
+
+
+
+
+
+
+```
+
+
+```{r ---> Basic COR plots 3}
+####		FROM A FORUM POST IN 2019		####
+library(tidyverse)
+
+# Function to get correletions and p.values in a "long" data frame
+corr.data = function(data) {
+  
+  # Get correlations
+  cor.vals = cor(data)
+  
+  # Get p-values
+  cor.p = cor.mtest(data, conf.level = 0.95)$p
+  rownames(cor.p) = rownames(cor.vals)
+  colnames(cor.p) = colnames(cor.vals)
+  
+  cbind(rowvars=rownames(cor.vals), data.frame(cor.vals)) %>% 
+    gather(colvars, corr, -rowvars) %>% 
+    left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
+                gather(colvars, p.value, -rowvars))
+}
+
+
+corr.data(e) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars))) +
+	geom_tile(colour="grey20", aes(fill=corr), size=0.5) +
+	# geom_point(aes(size=p.value, colour=cut(abs(corr), c(0, 0.01, 0.05, 1), include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label=sprintf("%1.2f", corr)), position=position_nudge(y=0.2), 
+			  size=3, colour="white") +
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), position=position_nudge(y=-0.2), 
+			  size=2.5, colour="white") +
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", midpoint=0, limits=c(-1,1)) +
+	scale_size_continuous(range=c(8,12)) +
+	labs(x="",y="") +
+	theme_classic() +
+	coord_fixed()
+
+
+
+
+
+
+
+
+
+
+```
+
+
+```{r ---> Correlations Across groups}
+
+gp.cor <- dat.SM %>%
+	split(dat.SM$group.factor) %>%  
+	map(~corr.test(dat.SM %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB","slpQual",
+				   		   "slpLat", "slpDur",
+				   		   "slpEff", "slpDist",
+				   		   "slpMeds","slpDayFcn",
+				   		   "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
+
+print(gp.cor)
+
+gp.cor.r <- map(gp.cor, ~.x$r)
+gp.cor.p <- map(gp.cor, ~.x$p)
+print(x = gp.cor.r, short = TRUE)
+print(x = gp.cor.p, short = TRUE)
+
+ggplot(gp.cor)
+
+```
+
+```{r ---> Correlations By group}
+# If you want the correlations between all numeric columns and your data has columns that are not numeric, you can exclude the non-numeric columns (which you need to do to avoid an error from corr.test) as follows (where I've used the default corr.test arguments to shorten the code):
+# gp.cor <- iris %>%
+#   # Add another non-numeric column
+#   mutate(new.group = sample(LETTERS, 150, replace=TRUE)) %>% 
+#   split(.$Species) %>%  
+#   map(~corr.test(x = .x %>% select_if(is.numeric))
+#   )
+
+#  "Use Pairwise and Spearman"
+
+
+#		HEALTHY CONTROL GROUP
+HC.cor <- dat.HC %>% 
+	map(~corr.test(dat.HC  %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+				   		   "psqi_Comp7", "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05))
+
+print(HC.cor)
+HC.cor.r <- map(HC.cor, ~.x$r)
+HC.cor.p <- map(HC.cor, ~.x$p)
+print(x = HC.cor.r, short = TRUE)
+print(HC.cor.p <- map(HC.cor, ~.x$p))
+
+#		FM GROUP
+FM.cor <- dat.FM %>% 
+	map(~corr.test(dat.FM  %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", 
+				   		   "slpQual",
+				   		   "slpLat", "slpDur",
+				   		   "slpEff", "slpDist",
+				   		   "slpMeds","slpDayFcn",
+				   		   "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05))
+
+print(FM.cor)
+FM.cor.r <- map(FM.cor, ~.x$r)
+FM.cor.p <- map(FM.cor, ~.x$p)
+print(x = FM.cor.r, short = TRUE)
+print(FM.cor.p <- map(FM.cor, ~.x$p))
+
+
+#		CLBP GROUP
+CLBP.cor <- dat.CLBP %>% 
+	map(~corr.test(dat.CLBP  %>% 
+				   	select("ess_total", "bdi_total", "mcgill_total",
+				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+				   		   "psqi_Comp7", "psqi_Global"),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05))
+
+print(CLBP.cor)
+CLBP.cor.r <- map(CLBP.cor, ~.x$r)
+CLBP.cor.p <- map(CLBP.cor, ~.x$p)
+print(x = CLBP.cor.r, short = TRUE)
+print(CLBP.cor.p <- map(CLBP.cor, ~.x$p))
+
+
+```
+
+
+
+
+```{r ---> Line plots}
+ ggplot(data = dat1) +
+	geom_point(mapping = aes(x = group.factor, y = TIB))
+
+
+
+#		SIMPLE SCATTER PLOT
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x= psqi_Global, y = bdi_total))
+
+#		SCATTER PLOT WITH COLOR
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor))
+
+#		SCATTER PLOT WITH LOG-X AND COLOR
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(psqi_Global), y = bdi_total,
+							 color = group.factor))
+
+#		SCATTER PLOT WITH LOG-X, SMOOTH LINERAR MODEL, AND COLOR
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor), method = lm)
+
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(psqi_Global), y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = log(psqi_Global), y = bdi_total,
+							 color = group.factor), method = lm)
+
+#		VARIABLES = McGill AND BDI
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = mcgill_total, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = mcgill_total, y = bdi_total,
+							 color = group.factor), method = lm)
+
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(mcgill_total), y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = log(mcgill_total), y = bdi_total,
+							 color = group.factor), method = lm)
+
+
+#		VARIABLES = McGill AND BDI
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = bdi_total, y = mcgill_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = bdi_total, y = mcgill_total,
+							 color = group.factor), method = lm) 
+
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = log(bdi_total), y = mcgill_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = log(bdi_total), y = mcgill_total,
+							 color = group.factor), method = lm)
+
+
+
+
+
+
+#		FACETS -- 3 PANEL SCATTER PLOT
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor,)) +
+	facet_wrap(~ group.factor)
+
+
+#		SCATTER PLOT 
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x= psqi_Global, y = bdi_total))
+
+#		SMOOTH GEOM WITH COLOR BY GROUP
+ggplot(data = dat1) +
+	geom_smooth(mapping = aes(x = psqi_Global, 
+							  y = bdi_total,
+							  color = group.factor))
+
+#		GEOMS = POINT & SMOOTH, COLOR BY GROUP
+# ggplot(data = dat1) +
+
+
+
+#		SCATTER PLOT, SMOOTH LINES WITH COLOR AND PANELS
+ggplot(data = dat1) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							  color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							  linetype = group.factor,
+							  color = group.factor)) +
+	facet_wrap(~ group.factor)
+	
+#		A MORE SIMPLISTIC AND CONSISTENT WAY TO MAKE THE GRAPHS ABOVE
+#		SCATTER PLOT, SMOOTH LINES WITH COLOR AND PANELS
+ggplot(data = dat1, mapping = aes(x = psqi_Global, y = bdi_total)) +
+	geom_point(mapping = aes(color = group.factor)) +
+	geom_smooth(mapping = aes(color = group.factor), se = FALSE) +
+	facet_wrap(~ group.factor)
+
+
+attach(dat1) # attaches the database to the search path
+
+dat1 %>% 
+	ggplot(data = dat1, mapping = aes(x = psqi_Global, 
+									  y = bdi_total,
+									  color = group.factor))
+
+
+
+
+```
+
+```{r ---> Box plots}
+
+#		BOX PLOT, SMOOTH LINES WITH COLOR AND PANELS
+ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+	geom_boxplot (mapping = aes(color = group.factor))
+
+z <- ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) 
+z +	geom_boxplot(mapping = aes(color = group.factor))
+z +	geom_boxplot(notch = TRUE, mapping = aes(color = group.factor))
+z +	geom_boxplot(varwidth = TRUE, notch = TRUE, 
+				 mapping = aes(color = group.factor))
+z +	geom_boxplot(varwidth = TRUE, 
+				 notch = TRUE,
+				 outlier.shape = NA,
+				 mapping = aes(color = group.factor)) +
+	geom_jitter(width = 0.2, mapping = aes(color = group.factor))
+
+
+
+# 	geom_smooth(mapping = aes(color = group.factor, se = FALSE)) +
+# 	facet_wrap(~ group.factor)
+
+
+
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot()
+
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot(notch = TRUE)
+p <- ggplot(mpg, aes(class, hwy))
+p + geom_boxplot(notch = TRUE, varwidth = TRUE)
+p + geom_boxplot(varwidth = TRUE)
+
+ggplot(diamonds, aes(carat, price)) +
+  geom_boxplot()
+
+ggplot(diamonds, aes(carat, price)) +
+  geom_boxplot(aes(group = cut_width(carat, 0.25)))
+
+#	HC DATA ONLY
+ggplot(data = dat.HC) +
+	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
+							 color = group.factor)) +
+	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
+							  color = group.factor)) +
+	facet_wrap(~ group.factor)
+
+
+
+
+
+
+```
+
+```{r ---> histograms}
+hist(bdi_total)
+
+hist(group_by(group.factor), bdi_total)
+
+
+
+hist(log(bdi_total))
+
+dat1 %>% 
+group_by(group.factor) %>%
+	mean(bdi_total, na.rm = TRUE)
+
+class(bdi_total)
+
+group_by(group.factor) %>% 
+	mean(bdi_total)
+
+by_group <- dat1 %>% group_by(group.factor)
+
+
+by_group %>% hist(
+	bdi_total #,
+	#mcgill_total
+)
+
+
+
+
+by_group %>% summarise(
+	bdi_total = mean(bdi_total),
+	mcgill_total = mean(mcgill_total)
+	)
+
+by_group %>% filter(bdi_total == max(bdi_total))
+
+
+
+
+
+
+```
+
+
+```{r ---> linear models}
+summary(lm(TIB ~ bdi_total + mcgill_total))
+
+summary(lm(psqi_Global ~ bdi_total + mcgill_total)) 
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+_______________________________________________________
+###	BDI
+
+```{r ---> BDI dataset}
+
+
+```
+
+
+
+
+```{r ---> BDI Summary}
+#		BDI VARIABLES
+# dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
+# view(dat.bdi)
+
+bdi.smry1  <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		)
+view(bdi.smry1)
+```
+
+```{r ---> ANOVA BDI}
+library(gplots)
+#		COMPUTE ANOVA OF BDI 
+bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
+ print(bdi.aov)
+
+#		SUMMARY OF THE ANALYSES
+summary(bdi.aov)
+TukeyHSD(bdi.aov)
+summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH")
+
+# 	1. Homogeniety of variances
+plot(bdi.aov, 1)
+
+ 
+ library(car)
+#	Levene's Test
+leveneTest(bdi_total ~ group.factor, data = dat1)
+
+#	Relaxing the homogeneity of variance assumption
+oneway.test(bdi_total ~ group.factor, data = dat1)
+
+pairwise.t.test(dat1$bdi_total, dat1$group.factor,
+				p.adjust.method = "BH",
+				pool.sd = FALSE)
+
+#	2. Normality
+# plot(bdi.aov, 2) #	Produces errors
+
+#	EXTRACT RESIDUALS
+bdi.aov.resid <- residuals(object = bdi.aov)
+
+#	RUN Shapiro-Wilk normality test
+shapiro.test(x = bdi.aov.resid)
+
+#	Non-parametric alternative to one-way ANOVA test
+kruskal.test(bdi_total ~ group.factor, data = dat1)
+
+#		DONE AS OF March 17, 2020
+```
+
+
+### BDI & ESS
+
+```{r ---> Correlations 2}
+#		FOLLOWING YOOUTUBE VIDEO ABOUT CORRELATIONS
+#		Will have to create dummy variables to look 
+#		at the correlations of factor variables
+dat3 <- dat2
+# dat3$group.factor
+dat3  <- select(dat2, na.rm = TRUE) 
+
+dat3 %>% count(group.factor)
+
+```
+
+```{r  ---> NEEDS WORK MANOVA}
+
+# url: https://amunategui.github.io/Exploring-Your-Data-Set/
+
+library(caret)
+dmy <- dummyVars(" ~ .", data = dat3)
+
+dat3Trsf <- data.frame(predict(dmy, newdata = dat3))
+
+# dat4Trsf <- dat3Trsf
+
+cor.prob <- function(X, dfr = nrow(X) - 2) {
+	 R <- cor(X, use = "pairwise.complete.obs")
+	 above <- row(R) < col(R)
+	 r2 <- R[above]^2
+	 Fstat <- r2 * dfr / (1 - r2)
+	 R[above] <- 1 - pf(Fstat, 1, dfr)
+	 R
+}
+
+flattenSquareMatrix <- function(m) {
+	if( (class(m) != "matrix") | (nrow(m) != ncol(m))) stop("Must be a square matrix.")
+	if(!identical(rownames(m), colnames(m))) stop("Row and column names must be equal.")
+	ut <- upper.tri(m)
+	data.frame(i = rownames(m)[row(m)[ut]],
+			   j = rownames(m)[col(m)[ut]],
+			   cor=t(m)[ut],
+			   p=m[ut])
+}
+corMasterlist <- flattenSquareMatrix(cor.prob(dat3Trsf))
+dim(corMasterlist)
+head(corMasterlist)
+
+corList <- corMasterlist[order(-abs(corMasterlist$cor)),]
+print(head(corList))
+
+selectedSub <- subset(corList, (abs(cor) > 0.2 & j == 'mcgill_total'))
+print(selectedSub) 
+
+bestSub  <- as.character(selectedSub$i)
+
+library(psych)
+pairs.panels(dat3Trsf[c(bestSub, 'mcgill_total')])
+
+
+
+#	END
+```
+
+```{r ---> Epsworth}
+ess.dat  <- dat1[c(1:2,grep("ess", colnames(dat1)))]
+view(ess.dat)
+```
+
+
+
+```{r ---> PSQI}
+psqi.dat  <- dat1[c(1:2,grep("psqi", colnames(dat1)))]
+view(dat.psqi)
+
+```
+
+
+
+
+
+
+```{r ---> ANOVA USE THIS}
+#		COMPUTE ANOVA OF MULTIPLE VARIABLES
+
+# "group.factor","slpQual",
+# 								  "slpLat", "slpDur",
+# 								  "slpEff", "slpDist",
+# 								  "slpMeds","slpDayFcn",
+# 								  "psqi_Global","ess_total",
+# 								  "bdi_total", "mcgill_total",
+# 								  "TIB"
+model1 = aov(bdi_total ~ group.factor, data = dat1)
+
+model2  <- dat1 %>% 
+	aov(formula = bdi_total ~ group.factor, data = .)
+model3  <- dat1 %>% 
+	aov(formula = ess_total ~ group.factor, data = .)
+model4  <- dat1 %>% 
+	aov(formula = psqi_Global ~ group.factor, data = .)
+model5  <- dat1 %>% 
+	aov(formula = mcgill_total ~ group.factor, data = .)
+
+
+model6  <- dat1 %>% 
+	aov(formula = bdi_total ~ group.factor, data = .)
+model7  <- dat1 %>% 
+	aov(formula = bdi_total ~ group.factor, data = .)
+
+summary(model1)
+summary(model2)
+summary(model3)
+summary(model4)
+summary(model5)
+
+TukeyHSD(model1)
+TukeyHSD(model2)
+TukeyHSD(model3)
+TukeyHSD(model4)
+TukeyHSD(model5)
+
+# print(model1)
+# 
+# #		SUMMARY OF THE ANALYSIS
+summary(model1)
+# TukeyHSD(model1)
+# library(multcomp)
+# 
+summary(glht(model1, linfct = mcp(group.factor = "Tukey")))
+# 
+# # 	1. Homogeniety of variances
+# plot(model1, 1)
+# 
+# #	Levene's Test
+# leveneTest(bdi_total ~ group.factor, data = dat1)
+# 
+# #	2. Normality
+# plot(model1, 2)
+# 
+# #	EXTRACT RESIDUALS
+# aov_residuals  <- residuals(object = model1)
+# 
+# #	RUN Shapiro-Wilk normality test
+# shapiro.test(x = aov_residuals)
+# 
+# 
+# dat1.gp.BDI  <- ggplot(data = dat1.smry1,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# 
+# print(dat1.gp.BDI)
+# 
+# print(dat1.gp.BDI)
+
+# dat1.gp.BDI  <- ggplot(data = dat1,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# 
+# print(dat1.gp.BDI)
+# 
+# dat1.gp.BDI  <- ggplot(data = dat1, na.rm = TRUE,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# print(dat1.gp.BDI)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r ---> MANOVA}
+# data(mtcars)
+# head(mtcars)
+# help(manova)
+# model1 <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars)
+# summary(model1)
+# model1
+
+#		TRYING THE ABOVE WITH MY OWN DATA
+# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+
+
+gp.manova1 <- manova(cbind(ess_total, bdi_total,
+							mcgill_total) ~ group.factor,
+					  data = dat1)
+summary(gp.manova1)
+## Dufferent tests for the MANOVA
+summary(gp.manova1, test = "Hotelling-Lawley")
+summary(gp.manova1, test = "Roy")
+summary(gp.manova1, test = "Pillai")
+summary(gp.manova1, test = "Wilks")
+
+## LOOK TO SEE WHICH DIFFER
+summary.aov(gp.manova1)
+
+
+
+
+```
+
+
+```{r left over}
+# print(model1)
+# 
+# #		SUMMARY OF THE ANALYSIS
+summary(model1)
+# TukeyHSD(model1)
+# library(multcomp)
+# 
+summary(glht(model1, linfct = mcp(group.factor = "Tukey")))
+# 
+# # 	1. Homogeniety of variances
+# plot(model1, 1)
+# 
+# #	Levene's Test
+# leveneTest(bdi_total ~ group.factor, data = dat1)
+# 
+# #	2. Normality
+# plot(model1, 2)
+# 
+# #	EXTRACT RESIDUALS
+# aov_residuals  <- residuals(object = model1)
+# 
+# #	RUN Shapiro-Wilk normality test
+# shapiro.test(x = aov_residuals)
+# 
+# 
+# dat1.gp.BDI  <- ggplot(data = dat1.smry1,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# 
+# print(dat1.gp.BDI)
+# 
+# print(dat1.gp.BDI)
+
+# dat1.gp.BDI  <- ggplot(data = dat1,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# 
+# print(dat1.gp.BDI)
+# 
+# dat1.gp.BDI  <- ggplot(data = dat1, na.rm = TRUE,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# print(dat1.gp.BDI)
+
+
+```
+
+
+
+
+
+
+
+
+
+```{r ---> BDI Plots}
+#		BAR CHART
+# bdi.smry2  <- ggplot(data = dat1,
+# 					   aes(x = group.factor,
+# 					   	y = bdi_total,
+# 					   	fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "Groups") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group")
+# 
+# print(bdi.smry2) # I'm not sure what values are used in the graph
+# 
+# #		BOX PLOT
+# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+# 	geom_boxplot()
+# 
+# 
+# ggboxplot(dat1, x = "group", y = "bdi_total",
+# 		  add = "dotplot")
+# 
+# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
+# 		  add = "jitter", shape = "group.factor")
+# 
+# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
+# 		  order = c("FM", "CLBP", "HC"))
+# 
+# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
+# 		  color = "red", fill = "darkblue",
+# 		  order = c("FM", "CLBP", "HC"))
+# 
+
+
+# Mean plots
+# ++++++++++++++++++++
+# Plot weight by group
+# Add error bars: mean_se
+# (other values include: mean_sd, mean_ci, median_iqr, ....)
+# ggline(dat1, x = "group.factor", y = "bdi_total", 
+#        add = c("mean_se", "jitter"), 
+#        order = c("FM", "CLBP", "HC"),
+#        ylab = "BDI Total", xlab = "Group")
+
+
+# Box plots - 	NOTY WORKING
+# ++++++++++++++++++++
+# Plot BDI by group and color by group
+# bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total, 
+# 										 fill = group.factor)) +
+# 	geom_boxplot()
+
+	
+# 		  color = "black", fill = 
+# 		  order = c("HC", "CLBP", "FM"),
+#           ylab = "BDI", xlab = "Group")
+
+# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
+# view(dat.totals)
+
+#		DONE AS OF March 17, 2020
+```
+
+```{r ---> line plot}
+ggline(dat1, x = "group.factor", y = "bdi_total", 
+       add = c("mean_se", "jitter"),
+       order = c("FM", "CLBP", "HC"),
+       ylab = "BDI Total", xlab = "Group")
+
+```
+
+
+
+
+
+##		PLOTS
+```{R ---> Bar chart by Group}
+# dat1.gp.BDI  <- ggplot(data = dat1,
+# 						aes(x = group.factor,
+# 							y = bdi_total, pdi_total,
+# 							fill = group.factor)) +
+# 	geom_bar(color = "black", stat = "identity",
+# 			 position = position_dodge(),
+# 			 size = .3) +
+# 	scale_fill_hue(name = "group") +
+# 	xlab("Subjects groups") +
+# 	ylab("BDI total") +
+# 	ggtitle("BDI by group analysis")
+# 
+# print(dat1.gp.BDI)
+
+```
+
+
+```{r ---> Box plots}
+# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
+# 	geom_boxplot()
+# 
+# ggplot(data = dat1) +
+# 	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total))
+# 
+
+```
+

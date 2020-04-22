@@ -1,0 +1,28 @@
+---
+title: "Printout"
+author: "Jason"
+date: "4/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r ---> Libraries}
+library(tidyverse)
+library(reprex)
+library(here)
+here()
+dr_here(show_reason = FALSE)
+
+```
+
+
+
+```{r}
+colnames(dat.SM)
+
+```
+

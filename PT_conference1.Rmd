@@ -7,11 +7,13 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, comment="")
 ```
 
 ```{r ---> Libraries}
 # library(readxl) # This is used to import data from excel
+library(gt)
+library(glue)
 library(doBy)
 library(lubridate)
 library(psych)
@@ -199,12 +201,14 @@ dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
 
 ```
 
+
 # PSQI SCORING
 The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
 
 ```{r ---> pqsi sanity check}
 # z <- data[which(dat.psqi$TIB == 19, ) ]
 ```
+
 
 ```{r ---> Time in bed}
 dat.psqi$bedtime  <- dat.psqi$psqi_1
@@ -237,7 +241,7 @@ round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
 
 write.csv(dat.psqi, "PSQI_rawData_April2020_v1.csv", row.names = FALSE)
 
-colnames(dat.psqi)
+# colnames(dat.psqi)
 
 ```
 
@@ -254,7 +258,7 @@ dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 # Very bad, 3
 
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
-colnames(dat.psqi)
+# colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 2}
@@ -305,7 +309,7 @@ dat.psqi <- dat.psqi %>%
 	)
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
-colnames(dat.psqi)
+# colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 3}
@@ -325,7 +329,7 @@ dat.psqi  <- dat.psqi %>%
 	)
 
 dat.psqi <- dat.psqi %>% relocate(Q4, .before = psqi_Comp1)
-colnames(dat.psqi)
+# colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 4}
@@ -354,7 +358,7 @@ dat.psqi  <- dat.psqi %>%
 	)
 
 dat.psqi <- dat.psqi %>% relocate(SE, .before = psqi_Comp1)
-colnames(dat.psqi)
+# colnames(dat.psqi)
 ```
 
 ```{r ---> COMP 5}
@@ -363,6 +367,26 @@ colnames(dat.psqi)
 # 1-9, 1
 # 10-18, 2 
 # 19-27, 3
+
+
+###		NEED TO DO THIS TWICE FOR SOME REASON	####
+dat.psqi$psqi_2 <- as.numeric(dat.psqi$psqi_2)
+dat.psqi$psqi_4 <- as.numeric(dat.psqi$psqi_4)
+dat.psqi$psqi_5a <- as.numeric(dat.psqi$psqi_5a)
+dat.psqi$psqi_5b <- as.numeric(dat.psqi$psqi_5b)
+dat.psqi$psqi_5c <- as.numeric(dat.psqi$psqi_5c)
+dat.psqi$psqi_5d <- as.numeric(dat.psqi$psqi_5d)
+dat.psqi$psqi_5e <- as.numeric(dat.psqi$psqi_5e)
+dat.psqi$psqi_5f <- as.numeric(dat.psqi$psqi_5f)
+dat.psqi$psqi_5g <- as.numeric(dat.psqi$psqi_5g)
+dat.psqi$psqi_5h <- as.numeric(dat.psqi$psqi_5h)
+dat.psqi$psqi_5i <- as.numeric(dat.psqi$psqi_5i)
+dat.psqi$psqi_5othera <- as.numeric(dat.psqi$psqi_5othera)
+dat.psqi$psqi_7 <- as.numeric(dat.psqi$psqi_7)
+dat.psqi$psqi_8a <- as.numeric(dat.psqi$psqi_8a)
+
+dat.psqi$psqi_9 <- as.numeric(dat.psqi$psqi_9)
+dat.psqi$psqi_component1 <- as.numeric(dat.psqi$psqi_component1)
 
 dat.psqi$psqi_5j <- dat.psqi$psqi_5othera # copy variable
 
@@ -430,9 +454,11 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp4, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
 
 
-
+# colnames(dat.psqi)
 
 ```
+
+
 
 ```{r ---> COMP 6}
 # Component 6: Use of sleep medication—question 6
@@ -443,8 +469,11 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
 # Three or more times a week, 3
 
 dat.psqi$psqi_Comp6 <- as.numeric(dat.psqi$psqi_6)
+# colnames(dat.psqi)
 
 ```
+
+
 
 ```{r ---> COMP 7}
 # 	Component 7: SUM Daytime dysfunction—questions 7 and 8
@@ -484,6 +513,9 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp7, .after = last_col())
 
 ```
 
+
+
+
 ```{r ---> GLOBAL Score}
 # Global PSQI Score: Sum of seven component scores:
 
@@ -496,10 +528,15 @@ dat.psqi  <- dat.psqi %>%
 	) %>%
 	ungroup()
 
+
+colnames(dat.psqi)
+
 ```
 
 
-```{r ---> Rename Components}
+
+
+```{r ---> RENAME COMPS}
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] <- 'slpQual'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] <- 'slpLat'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp3'] <- 'slpDur'
@@ -508,7 +545,7 @@ names(dat.psqi)[names(dat.psqi) == 'psqi_Comp5'] <- 'slpDist'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp6'] <- 'slpMeds'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp7'] <- 'slpDayFcn'
 
-
+colnames(dat.psqi)
 
 ```
 MERGE BACK INTO MAIN DATASET
@@ -525,9 +562,13 @@ psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","slpQual",
 dat1 <- merge(dat1, psqiSM, by = "ID")
 
 # ls()
+# colnames(dat1)
+
 ```
 
-```{r ---> Small datasets}
+
+## FINAL DATASETS
+```{r ---> DATA TO ANALYZE, comment=""}
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
@@ -539,8 +580,6 @@ dat.SM  <- dat1 %>% dplyr::select("group.factor","slpQual",
 								  "bdi_total", "mcgill_total",
 								  "TIB")
 
-# datSM1   <- filter(datSM1, ess_total != "NA")
-
 
 dat.HC <- dat.SM %>%
 	filter(group.factor == "HC")
@@ -550,7 +589,6 @@ dat.CLBP <- dat.SM %>%
 	filter(group.factor == "CLBP")
 dat.pain <- dat.SM %>%
 	filter(group.factor == "CLBP" | group.factor == "FM")
-
 
 
 #		WRITE SMALL DATASET
@@ -566,8 +604,10 @@ write_csv(dat.SM, "dat.SM.csv",
 #		DONE AS OF March 31, 2020
 ```
 
-##	EXAMINE DATA
-```{r ---> Summarize small dataset}
+
+
+
+```{r ---> QA DATA}
 # dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
 # 
 # summarise(dat.SM)
@@ -578,1469 +618,209 @@ nearZeroVar(dat.pain,
 			uniqueCut = 2,
 			names = TRUE)
 
-```
-
-```{r ---> Basic COR plots}
-#		FOLLOWING A YOUTUBE CORRELATION TUTORIAL 
-#####
-#			ALL GROUPS
-plot(dat.SM)
-d  <- dat.SM[,c(-1)]
-plot(d)
-cor(d)
-cr <- cor(d)
-corrplot(cr)
-
-#####
-#		PAIN GROUPS
-plot(dat.pain)
-summary(dat.pain)
-e <- dat.pain %>% select(!"group.factor")
-e <- e %>% select(!"slpDist")
-plot(e)
-pcr <- cor(e)
-corrplot(pcr)
-
-#####
-#		HC GROUP
-plot(dat.HC)
-a <- dat.HC[,c(-1)]
-plot(a)
-round(cor(a), 2)
-acr <- cor(a)
-corrplot(acr,
-		 add = FALSE,
-		 method = "shade",
-		 diag = FALSE,
-		 type = "upper",
-		 title = 'HC group',
-		 is.corr = TRUE,
-		 outline = TRUE,
-		 # addgrid.col = "blue",
-		 addCoef.col = TRUE,
-		 addCoefasPercent = TRUE,
-		 col = col1(20),
-		 order = "hclust",
-		 hclust.method = "ward.D2",
-		 addrect = 3,
-		 p.mat = 
-		 rect.col = "red")
-
-## circle + colorful number
-## circle + colorful number
-
-
-####		ADDING GRAPHS TOGETHER		#######
-corrplot(acr, order = "hclust", type = "upper",
-		 # diag = FALSE,
-		 col = col1(20),
-		 bg = "dark grey",
-		 tl.pos = "d",
-		 tl.col = "black",
-		 addshade = "all",
-		 tl.cex = .85)
-corrplot(acr, add = TRUE, type = "lower", 
-		 method = "number", order = "hclust",
-		 diag = FALSE, tl.pos = "n", 
-		 col = col1(20),
-		 bg = "dark grey",
-		 addshade = "all",
-		 cl.pos = "n")
-
-
-
-
-
-corrplot(pcr, p.mat = res3$p, sig.level = 0.05)
-corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
-corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
-
-corrplot(pcr, p.mat = res3$p, order = "original", insig = "p-value")
-corrplot(pcr, p.mat = res3$p, insig = "p-value", sig.level = -1) ## add all p-values
-corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
-corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
-
-corrplot(pcr, order = "AOE", type = "upper",
-		 diag = FALSE,
-		 col = col1(20),
-		 bg = "dark grey",
-		 tl.pos = "lt",
-		 tl.col = "black",
-		 # addshade = "all",
-		 p.mat = res3$p, #sig.level = 0.05,
-		 sig.level = -1,
-		 insig = "n",
-		 # sig.level = 0.05,
-		 tl.cex = .85)
-corrplot(pcr, add = TRUE, type = "lower", 
-		 method = "number", order = "AOE",
-		 diag = FALSE, tl.pos = "n", 
-		 col = col1(20),
-		 bg = "dark grey",
-		 addshade = "all",
-		 p.mat = res3$p, #sig.level = 0.05,
-		 insig = "blank",
-		 cl.pos = "n")
-
-
-
-library(psych)
-
-pairs.panels(e, scale=TRUE)
-
-library(corrr)
-
-e %>% correlate() %>% network_plot(min_cor=0.4)
-
-
-corr.matrix <- corr.test(e,
-						 use = "pairwise",
-						 method = "spearman",
-						 adjust = "none",
-						 alpha = 0.05,
-						 ci = TRUE, minlength = 5)
-
-
-corrplot(corr.matrix$r, 
-		 p.mat = corr.matrix$p,
-		 insig = "n"
-		 )
-
-
-
-corr.matrix2 <- subset(corr.matrix, corr.matrix$p<0.05)
-P <- corrplot(corr.matrix$r, method="square",type="lower",col=col1(100),is.corr=T,mar=c(1,1,1,1),tl.cex=0.5)
-
-
-
-
-
-
-
-corr.test(dat.SM %>% 
-				   	select("ess_total", "bdi_total", "mcgill_total",
-				   		   "TIB","slpQual",
-				   		   "slpLat", "slpDur",
-				   		   "slpEff", "slpDist",
-				   		   "slpMeds","slpDayFcn",
-				   		   "psqi_Global"),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05,
-				   ci = TRUE, minlength = 5)
-
-
-
-
-
-
-
-
-corrplot(M, order = "AOE", type = "upper", tl.pos = "tp")
-
-corrplot(M, order = "AOE", type = "upper", tl.pos = "d")
-corrplot(M, add = TRUE, type = "lower", 
-		 method = "number", order = "AOE",
-		 diag = FALSE, tl.pos = "n", cl.pos = "n")
-
-
-
-
-# corrplot(acr, add = FALSE, type = "lower", method = "number", order = "AOE",
-# 		 diag = FALSE, tl.pos = "n", cl.pos = "n",
-# 		 bg = "grey",
-# 		 outline = TRUE,
-		 # col = col1(20))
-
-corrplot(acr, add = TRUE, type = "lower", method = "ellipse", order = "AOE",
-		 diag = FALSE, tl.pos = "n", cl.pos = "n")
-
-## order is hclust and draw rectangles
-# corrplot(M, order = "hclust")
-# corrplot(M, order = "hclust", addrect = 2)
-# corrplot(M, order = "hclust", addrect = 3, rect.col = "red")
-# corrplot(M, order = "hclust", addrect = 4, rect.col = "blue")
-# corrplot(M, order = "hclust", hclust.method = "ward.D2", addrect = 4)
-
-## circle + colorful number
-#		I LIKE THIS VERSION
-corrplot(acr, order = "AOE", type = "upper", tl.pos = "d",
-		 bg = "grey",
-		 outline = TRUE,
-		 hclust.method = "ward.D2",
-		 addgrid.col = "blue",
-		 col = col1(200))
-corrplot(acr, add = TRUE, type = "lower", method = "number", order = "AOE",
-		 diag = FALSE, tl.pos = "n", cl.pos = "n",
-		 bg = "grey",
-		 outline = TRUE,
-		 col = col1(200))
-
-
-###################		USING SIGNIFICANCE LEVELS #################
-M <- cor(mtcars)
-res1 <- cor.mtest(mtcars, conf.level = 0.95)
-res2 <- cor.mtest(mtcars, conf.level = 0.99)
-corrplot(M, p.mat = res1$p, sig.level = 0.01)
-
-
-e$ess_total <- as.numeric(e$ess_total)
-e$bdi_total <- as.numeric(e$bdi_total)
-e$mcgill_total <- as.numeric(e$mcgill_total)
-
-pcr <- cor(e)
-res3 <- cor.mtest(e, conf.level = 0.95)
-res4 <- cor.mtest(e, conf.level = 0.99)
-corrplot(pcr, p.mat = res3$p, sig.level = 0.01)
-
-
-corrplot(pcr, p.mat = res3$p, sig.level = 0.2)
-corrplot(pcr, p.mat = res3$p, sig.level = 0.05)
-corrplot(pcr, p.mat = res3$p, sig.level = 0.01)
-corrplot(pcr, p.mat = res3$p, insig = "blank")
-corrplot(pcr, p.mat = res3$p, insig = "p-value")
-corrplot(pcr, p.mat = res3$p, order = "original", insig = "p-value")
-corrplot(pcr, p.mat = res3$p, insig = "p-value", sig.level = -1) ## add all p-values
-corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "blank", addrect = 3)
-corrplot(pcr, p.mat = res3$p, order = "hclust", insig = "pch", addrect = 3)
-
-corrplot(pcr, p.mat = res3$p,  insig = "blank", sig.level = -1) ## add all p-values
-
-########		corrplot.mixed 		#########
-
-corrplot.mixed(pcr2, tl.pos = "lt", insig = "blank") ## I LIKE THIS VERSION AS A START
-
-
-M <- cor(mtcars)
-ord <- corrMatOrder(M, order = "AOE")
-M2 <- M[ord,ord]
-
-pcr <- cor(e)
-ord <- corrMatOrder(pcr, order = "AOE")
-pcr2 <- pcr[ord,ord]
-
-
-corrplot.mixed(pcr2)
-corrplot.mixed(pcr2, lower = "ellipse", upper = "circle")
-corrplot.mixed(pcr2, lower = "square", upper = "circle")
-corrplot.mixed(pcr2, lower = "shade", upper = "circle")
-corrplot.mixed(pcr2, tl.pos = "lt")
-
-corrplot.mixed(pcr2, tl.pos = "lt", diag = "u")
-corrplot.mixed(pcr2, tl.pos = "lt", diag = "l")
-corrplot.mixed(pcr2, tl.pos = "n")
-
-
-#
-
-
-
-
-
-
-
-
-
-
-#		LOOKING AT VARIANCE AMONG VARIABLES
-library(caret)
-nearZeroVar(a,
-			uniqueCut = 2,
-			names = TRUE)
-
-
-
-
-
-
-
-
-plot(dat.HC)
-plot(dat.CLBP)
-plot(dat.FM)
-
-```
-
-```{r ---> Basic COR plots 2}
-####		FROM A FORUM POST IN 2019		####
-library(tidyverse)
-
-# Function to get correletions and p.values in a "long" data frame
-corr.data = function(data) {
-  
-  # Get correlations
-  cor.vals = cor(data)
-  
-  # Get p-values
-  cor.p = cor.mtest(data, conf.level = 0.95)$p
-  rownames(cor.p) = rownames(cor.vals)
-  colnames(cor.p) = colnames(cor.vals)
-  
-  cbind(rowvars=rownames(cor.vals), data.frame(cor.vals)) %>% 
-    gather(colvars, corr, -rowvars) %>% 
-    left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
-                gather(colvars, p.value, -rowvars))
-}
-
-
-corr.data(mtcars) %>% 
-	ggplot(aes(colvars, fct_rev(rowvars))) +
-	geom_tile(colour="grey20", aes(fill=corr), size=0.5) +
-	# geom_point(aes(size=p.value, colour=cut(abs(corr), c(0, 0.01, 0.05, 1), include.lowest=TRUE)), pch=15) +
-	geom_text(aes(label=sprintf("%1.2f", corr)), position=position_nudge(y=0.2), 
-			  size=3, colour="white") +
-	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), position=position_nudge(y=-0.2), 
-			  size=2.5, colour="white") +
-	scale_fill_gradient2(low="red", mid="yellow2", high="blue", midpoint=0, limits=c(-1,1)) +
-	scale_size_continuous(range=c(8,12)) +
-	labs(x="",y="") +
-	theme_classic() +
-	coord_fixed()
-
-
-
-
-
-
-
-
-
-
-```
-
-
-```{r ---> Basic COR plots 3}
-####		FROM A FORUM POST IN 2019		####
-library(tidyverse)
-
-# Function to get correletions and p.values in a "long" data frame
-corr.data = function(data) {
-  
-  # Get correlations
-  cor.vals = cor(data)
-  
-  # Get p-values
-  cor.p = cor.mtest(data, conf.level = 0.95)$p
-  rownames(cor.p) = rownames(cor.vals)
-  colnames(cor.p) = colnames(cor.vals)
-  
-  cbind(rowvars=rownames(cor.vals), data.frame(cor.vals)) %>% 
-    gather(colvars, corr, -rowvars) %>% 
-    left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
-                gather(colvars, p.value, -rowvars))
-}
-
-
-corr.data(e) %>% 
-	ggplot(aes(colvars, fct_rev(rowvars))) +
-	geom_tile(colour="grey20", aes(fill=corr), size=0.5) +
-	# geom_point(aes(size=p.value, colour=cut(abs(corr), c(0, 0.01, 0.05, 1), include.lowest=TRUE)), pch=15) +
-	geom_text(aes(label=sprintf("%1.2f", corr)), position=position_nudge(y=0.2), 
-			  size=3, colour="white") +
-	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), position=position_nudge(y=-0.2), 
-			  size=2.5, colour="white") +
-	scale_fill_gradient2(low="red", mid="yellow2", high="blue", midpoint=0, limits=c(-1,1)) +
-	scale_size_continuous(range=c(8,12)) +
-	labs(x="",y="") +
-	theme_classic() +
-	coord_fixed()
-
-
-
-
-
-
-
-
-
-
-```
-
-
-```{r ---> Correlations Across groups}
-
-gp.cor <- dat.SM %>%
-	split(dat.SM$group.factor) %>%  
-	map(~corr.test(dat.SM %>% 
-				   	select("ess_total", "bdi_total", "mcgill_total",
-				   		   "TIB","slpQual",
-				   		   "slpLat", "slpDur",
-				   		   "slpEff", "slpDist",
-				   		   "slpMeds","slpDayFcn",
-				   		   "psqi_Global"),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05,
-				   ci = TRUE, minlength = 5)
-	)
-
-print(gp.cor)
-
-gp.cor.r <- map(gp.cor, ~.x$r)
-gp.cor.p <- map(gp.cor, ~.x$p)
-print(x = gp.cor.r, short = TRUE)
-print(x = gp.cor.p, short = TRUE)
-
-ggplot(gp.cor)
-
-```
-
-```{r ---> Correlations By group}
-# If you want the correlations between all numeric columns and your data has columns that are not numeric, you can exclude the non-numeric columns (which you need to do to avoid an error from corr.test) as follows (where I've used the default corr.test arguments to shorten the code):
-# gp.cor <- iris %>%
-#   # Add another non-numeric column
-#   mutate(new.group = sample(LETTERS, 150, replace=TRUE)) %>% 
-#   split(.$Species) %>%  
-#   map(~corr.test(x = .x %>% select_if(is.numeric))
-#   )
-
-#  "Use Pairwise and Spearman"
-
-
-#		HEALTHY CONTROL GROUP
-HC.cor <- dat.HC %>% 
-	map(~corr.test(dat.HC  %>% 
-				   	select("ess_total", "bdi_total", "mcgill_total",
-				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
-				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
-				   		   "psqi_Comp7", "psqi_Global"),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05))
-
-print(HC.cor)
-HC.cor.r <- map(HC.cor, ~.x$r)
-HC.cor.p <- map(HC.cor, ~.x$p)
-print(x = HC.cor.r, short = TRUE)
-print(HC.cor.p <- map(HC.cor, ~.x$p))
-
-#		FM GROUP
-FM.cor <- dat.FM %>% 
-	map(~corr.test(dat.FM  %>% 
-				   	select("ess_total", "bdi_total", "mcgill_total",
-				   		   "TIB", 
-				   		   "slpQual",
-				   		   "slpLat", "slpDur",
-				   		   "slpEff", "slpDist",
-				   		   "slpMeds","slpDayFcn",
-				   		   "psqi_Global"),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05))
-
-print(FM.cor)
-FM.cor.r <- map(FM.cor, ~.x$r)
-FM.cor.p <- map(FM.cor, ~.x$p)
-print(x = FM.cor.r, short = TRUE)
-print(FM.cor.p <- map(FM.cor, ~.x$p))
-
-
-#		CLBP GROUP
-CLBP.cor <- dat.CLBP %>% 
-	map(~corr.test(dat.CLBP  %>% 
-				   	select("ess_total", "bdi_total", "mcgill_total",
-				   		   "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
-				   		   "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
-				   		   "psqi_Comp7", "psqi_Global"),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05))
-
-print(CLBP.cor)
-CLBP.cor.r <- map(CLBP.cor, ~.x$r)
-CLBP.cor.p <- map(CLBP.cor, ~.x$p)
-print(x = CLBP.cor.r, short = TRUE)
-print(CLBP.cor.p <- map(CLBP.cor, ~.x$p))
-
+#	slpDist has little to no variance
 
 ```
 
 
 
 
-```{r ---> Line plots}
- ggplot(data = dat1) +
-	geom_point(mapping = aes(x = group.factor, y = TIB))
+##	EXAMINE DATA
+```{r ---> DESCRIPTIVES}
+summary(dat.SM) # Quick overview
 
+#		MEANS AND SDs
+dat.SM.smry <- dat.SM %>% 
+	group_by(group.factor) %>% 
+	summarise_all(. , list(mean=mean, sd=sd))
 
+dat.SM.smry
 
-#		SIMPLE SCATTER PLOT
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x= psqi_Global, y = bdi_total))
-
-#		SCATTER PLOT WITH COLOR
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
-							 color = group.factor))
-
-#		SCATTER PLOT WITH LOG-X AND COLOR
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = log(psqi_Global), y = bdi_total,
-							 color = group.factor))
-
-#		SCATTER PLOT WITH LOG-X, SMOOTH LINERAR MODEL, AND COLOR
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
-							 color = group.factor), method = lm)
-
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = log(psqi_Global), y = bdi_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = log(psqi_Global), y = bdi_total,
-							 color = group.factor), method = lm)
-
-#		VARIABLES = McGill AND BDI
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = mcgill_total, y = bdi_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = mcgill_total, y = bdi_total,
-							 color = group.factor), method = lm)
-
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = log(mcgill_total), y = bdi_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = log(mcgill_total), y = bdi_total,
-							 color = group.factor), method = lm)
-
-
-#		VARIABLES = McGill AND BDI
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = bdi_total, y = mcgill_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = bdi_total, y = mcgill_total,
-							 color = group.factor), method = lm) 
-
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = log(bdi_total), y = mcgill_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = log(bdi_total), y = mcgill_total,
-							 color = group.factor), method = lm)
-
-
-
-
-
-
-#		FACETS -- 3 PANEL SCATTER PLOT
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
-							 color = group.factor,)) +
-	facet_wrap(~ group.factor)
-
-
-#		SCATTER PLOT 
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x= psqi_Global, y = bdi_total))
-
-#		SMOOTH GEOM WITH COLOR BY GROUP
-ggplot(data = dat1) +
-	geom_smooth(mapping = aes(x = psqi_Global, 
-							  y = bdi_total,
-							  color = group.factor))
-
-#		GEOMS = POINT & SMOOTH, COLOR BY GROUP
-# ggplot(data = dat1) +
-
-
-
-#		SCATTER PLOT, SMOOTH LINES WITH COLOR AND PANELS
-ggplot(data = dat1) +
-	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
-							  color = group.factor)) +
-	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
-							  linetype = group.factor,
-							  color = group.factor)) +
-	facet_wrap(~ group.factor)
-	
-#		A MORE SIMPLISTIC AND CONSISTENT WAY TO MAKE THE GRAPHS ABOVE
-#		SCATTER PLOT, SMOOTH LINES WITH COLOR AND PANELS
-ggplot(data = dat1, mapping = aes(x = psqi_Global, y = bdi_total)) +
-	geom_point(mapping = aes(color = group.factor)) +
-	geom_smooth(mapping = aes(color = group.factor), se = FALSE) +
-	facet_wrap(~ group.factor)
-
-
-attach(dat1) # attaches the database to the search path
-
-dat1 %>% 
-	ggplot(data = dat1, mapping = aes(x = psqi_Global, 
-									  y = bdi_total,
-									  color = group.factor))
-
+write_csv(dat.SM.smry, "dat.SM.smry.csv",
+		  na = "NA", append = FALSE,
+		  col_names = TRUE, quote_escape = "double")
 
 
 
 ```
 
-```{r ---> Box plots}
 
-#		BOX PLOT, SMOOTH LINES WITH COLOR AND PANELS
-ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-	geom_boxplot (mapping = aes(color = group.factor))
 
-z <- ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) 
-z +	geom_boxplot(mapping = aes(color = group.factor))
-z +	geom_boxplot(notch = TRUE, mapping = aes(color = group.factor))
-z +	geom_boxplot(varwidth = TRUE, notch = TRUE, 
-				 mapping = aes(color = group.factor))
-z +	geom_boxplot(varwidth = TRUE, 
-				 notch = TRUE,
-				 outlier.shape = NA,
-				 mapping = aes(color = group.factor)) +
-	geom_jitter(width = 0.2, mapping = aes(color = group.factor))
-
-
-
-# 	geom_smooth(mapping = aes(color = group.factor, se = FALSE)) +
-# 	facet_wrap(~ group.factor)
-
-
-
-p <- ggplot(mpg, aes(class, hwy))
-p + geom_boxplot()
-
-p <- ggplot(mpg, aes(class, hwy))
-p + geom_boxplot(notch = TRUE)
-p <- ggplot(mpg, aes(class, hwy))
-p + geom_boxplot(notch = TRUE, varwidth = TRUE)
-p + geom_boxplot(varwidth = TRUE)
-
-ggplot(diamonds, aes(carat, price)) +
-  geom_boxplot()
-
-ggplot(diamonds, aes(carat, price)) +
-  geom_boxplot(aes(group = cut_width(carat, 0.25)))
-
-#	HC DATA ONLY
-ggplot(data = dat.HC) +
-	geom_point(mapping = aes(x = psqi_Global, y = bdi_total,
-							 color = group.factor)) +
-	geom_smooth(mapping = aes(x = psqi_Global, y = bdi_total,
-							  color = group.factor)) +
-	facet_wrap(~ group.factor)
-
-
-
-
-
-
-```
-
-```{r ---> histograms}
-hist(bdi_total)
-
-hist(group_by(group.factor), bdi_total)
-
-
-
-hist(log(bdi_total))
-
-dat1 %>% 
-group_by(group.factor) %>%
-	mean(bdi_total, na.rm = TRUE)
-
-class(bdi_total)
-
-group_by(group.factor) %>% 
-	mean(bdi_total)
-
-by_group <- dat1 %>% group_by(group.factor)
-
-
-by_group %>% hist(
-	bdi_total #,
-	#mcgill_total
-)
-
-
-
-
-by_group %>% summarise(
-	bdi_total = mean(bdi_total),
-	mcgill_total = mean(mcgill_total)
-	)
-
-by_group %>% filter(bdi_total == max(bdi_total))
-
-
-
-
-
-
-```
-
-
-```{r ---> linear models}
-summary(lm(TIB ~ bdi_total + mcgill_total))
-
-summary(lm(psqi_Global ~ bdi_total + mcgill_total)) 
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-_______________________________________________________
-###	BDI
-```{r ---> BDI Summary}
-#		BDI VARIABLES
-# dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
-# view(dat.bdi)
-
-bdi.smry1  <- dat1 %>%
-	group_by(group.factor) %>%
-	summarise(
-		count = n(),
-		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
-		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
-		)
-view(bdi.smry1)
-```
-
-```{r ---> ANOVA BDI}
-library(gplots)
-#		COMPUTE ANOVA OF BDI 
-bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
- print(bdi.aov)
-
-#		SUMMARY OF THE ANALYSES
-summary(bdi.aov)
-TukeyHSD(bdi.aov)
-summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH")
-
-# 	1. Homogeniety of variances
-plot(bdi.aov, 1)
-
- 
- library(car)
-#	Levene's Test
-leveneTest(bdi_total ~ group.factor, data = dat1)
-
-#	Relaxing the homogeneity of variance assumption
-oneway.test(bdi_total ~ group.factor, data = dat1)
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH",
-				pool.sd = FALSE)
-
-#	2. Normality
-# plot(bdi.aov, 2) #	Produces errors
-
-#	EXTRACT RESIDUALS
-bdi.aov.resid <- residuals(object = bdi.aov)
-
-#	RUN Shapiro-Wilk normality test
-shapiro.test(x = bdi.aov.resid)
-
-#	Non-parametric alternative to one-way ANOVA test
-kruskal.test(bdi_total ~ group.factor, data = dat1)
-
-#		DONE AS OF March 17, 2020
-```
-
-
-### BDI & ESS
-
-```{r ---> Correlations 2}
-#		FOLLOWING YOOUTUBE VIDEO ABOUT CORRELATIONS
-#		Will have to create dummy variables to look 
-#		at the correlations of factor variables
-dat3 <- dat2
-# dat3$group.factor
-dat3  <- select(dat2, na.rm = TRUE) 
-
-dat3 %>% count(group.factor)
-
-```
-
-```{r  ---> NEEDS WORK MANOVA}
-
-# url: https://amunategui.github.io/Exploring-Your-Data-Set/
-
-library(caret)
-dmy <- dummyVars(" ~ .", data = dat3)
-
-dat3Trsf <- data.frame(predict(dmy, newdata = dat3))
-
-# dat4Trsf <- dat3Trsf
-
-cor.prob <- function(X, dfr = nrow(X) - 2) {
-	 R <- cor(X, use = "pairwise.complete.obs")
-	 above <- row(R) < col(R)
-	 r2 <- R[above]^2
-	 Fstat <- r2 * dfr / (1 - r2)
-	 R[above] <- 1 - pf(Fstat, 1, dfr)
-	 R
-}
-
-flattenSquareMatrix <- function(m) {
-	if( (class(m) != "matrix") | (nrow(m) != ncol(m))) stop("Must be a square matrix.")
-	if(!identical(rownames(m), colnames(m))) stop("Row and column names must be equal.")
-	ut <- upper.tri(m)
-	data.frame(i = rownames(m)[row(m)[ut]],
-			   j = rownames(m)[col(m)[ut]],
-			   cor=t(m)[ut],
-			   p=m[ut])
-}
-corMasterlist <- flattenSquareMatrix(cor.prob(dat3Trsf))
-dim(corMasterlist)
-head(corMasterlist)
-
-corList <- corMasterlist[order(-abs(corMasterlist$cor)),]
-print(head(corList))
-
-selectedSub <- subset(corList, (abs(cor) > 0.2 & j == 'mcgill_total'))
-print(selectedSub) 
-
-bestSub  <- as.character(selectedSub$i)
-
-library(psych)
-pairs.panels(dat3Trsf[c(bestSub, 'mcgill_total')])
-
-
-
-#	END
-```
-
-```{r ---> Epsworth}
-ess.dat  <- dat1[c(1:2,grep("ess", colnames(dat1)))]
-view(ess.dat)
-```
-
-
-
-```{r ---> PSQI}
-psqi.dat  <- dat1[c(1:2,grep("psqi", colnames(dat1)))]
-view(dat.psqi)
-
-```
-
-
-
-
-
-
-```{r ---> ANOVA 2b}
+```{r ---> ANOVA USE THIS}
 #		COMPUTE ANOVA OF MULTIPLE VARIABLES
-# model1 = aov(bdi_total ~ group.factor, data = dat1)
-# print(model1)
-# 
-# #		SUMMARY OF THE ANALYSIS
-# summary(model1)
-# TukeyHSD(model1)
-# library(multcomp)
-# 
-# summary(glht(model1, linfct = mcp(group.factor = "Tukey")))
-# 
-# # 	1. Homogeniety of variances
-# plot(model1, 1)
-# 
-# #	Levene's Test
-# leveneTest(bdi_total ~ group.factor, data = dat1)
-# 
-# #	2. Normality
-# plot(model1, 2)
-# 
-# #	EXTRACT RESIDUALS
-# aov_residuals  <- residuals(object = model1)
-# 
-# #	RUN Shapiro-Wilk normality test
-# shapiro.test(x = aov_residuals)
-# 
-# 
-# dat1.gp.BDI  <- ggplot(data = dat1.smry1,
-# 					   aes(x = group.factor,
-# 					   	y = bdi_total,
-# 					   	fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "Groups") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group analysis")
-# 
-# print(dat1.gp.BDI)
-# 
-# print(dat1.gp.BDI)
 
-# dat1.gp.BDI  <- ggplot(data = dat1,
-# 					   aes(x = group.factor,
-# 					   	y = bdi_total,
-# 					   	fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "Groups") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group analysis")
-# 
-# print(dat1.gp.BDI)
-# 
-# dat1.gp.BDI  <- ggplot(data = dat1, na.rm = TRUE,
-# 					   aes(x = group.factor,
-# 					   	y = bdi_total,
-# 					   	fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "Groups") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group analysis")
-# print(dat1.gp.BDI)
+# "group.factor","slpQual",
+# "slpLat", "slpDur",
+# "slpEff", "slpDist",
+# "slpMeds","slpDayFcn",
+# "psqi_Global","ess_total",
+# "bdi_total", "mcgill_total",
+# "TIB"
+
+model1 = aov(bdi_total ~ group.factor, data = dat1)
+
+model2  <- dat1 %>% 
+	aov(formula = bdi_total ~ group.factor, data = .)
+model3  <- dat1 %>% 
+	aov(formula = ess_total ~ group.factor, data = .)
+model4  <- dat1 %>% 
+	aov(formula = psqi_Global ~ group.factor, data = .)
+model5  <- dat1 %>% 
+	aov(formula = mcgill_total ~ group.factor, data = .)
+
+
+model6  <- dat1 %>% 
+	aov(formula = bdi_total ~ group.factor, data = .)
+model7  <- dat1 %>% 
+	aov(formula = bdi_total ~ group.factor, data = .)
+
+summary(model1)
+summary(model2)
+summary(model3)
+summary(model4)
+summary(model5)
+
+TukeyHSD(model1)
+TukeyHSD(model2)
+TukeyHSD(model3)
+TukeyHSD(model4)
+TukeyHSD(model5)
+```
+
+```{r ---> Slack help}
+####			From russH on Slack		####
+
+# dat1 %>% select(some, columns)  is equivalent to `dat1[, c("some", "columns")]`
+
+#	OPTION 1 - BUT PostHoc DOESN’T WORK
+modelzz <- dat1 %>%
+  dplyr::select(bdi_total, ess_total) %>% 
+  purrr::map(~ aov(.x ~ group.factor, data = dat1)) %>%
+  purrr::map_dfr(~ broom::tidy(.), .id = 'source')
+
+summary(modelzz)
+
+TukeyHSD(modelzz)
+
+
+#	OPTION 2 - PostHoc DOES WORK
+
+zzz <- data[, c('bdi_total' , 'ess_total')]
+print("hello")
+str(dat1$bdi_total)
+str(dat1$ess_total)
+
+dat1$ess_total
+
+  # construct anova model for each column of dat1[, my_outcome_variables]
+model_summaries <- dat1[,c("bdi_total", "ess_total")] %>%
+  purrr::map(~ aov(.x ~ group.factor, data = dat1))  %>%
+  # append the TukeyHSD CI estimates
+  purrr::map(function(x) {
+    list(
+      model = x,
+      tukey = TukeyHSD(x)
+    )
+  })
+
+# Then you could use:
+summary(model_summaries$bdi_total$model)
+print(round(model_summaries$bdi_total$tukey$group.factor, 4))
+print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+print(signif(model_summaries$bdi_total$tukey$group.factor, 3))  %>% gt()
+signif(model_summaries$bdi_total$tukey$group.factor, 3)
+# summary(model_summaries$bdi_total$tukey$group.factor)
+# model_summaries$x$model #  to access the ANOVA model 
+# and 
+model_summaries$x$tukey # to access the CI estimates
 
 
 ```
 
 
+```{r ---> TABLES}
+z_table2 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+z_table3 <- as.data.frame(z_table2)
+z_table3$row <- c("CLBP-HC", "FM-HC", 
+				  "FM-CLBP")
+
+print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+z_table1 <- as_tibble(signif(model_summaries$bdi_total$tukey$group.factor, 3))
 
 
 
+z_tab3 <- z_table3 %>% 
+	gt(
+		rowname_col = "row"
+	)  %>% 
+	tab_header(
+		title = md("**BDI**"),
+		subtitle = md("ANOVA PostHoc")
+	) %>% 
+	tab_stubhead(label = "Comparisons")
 
 
+z_tab3
 
+
+# z_tab4 <- #
+
+z_table3 %>% 
+	dplyr::select("row" , "diff", "p adj")  %>% 
+	gt(
+		# rowname_col = "row"
+	)  %>% 
+	fmt_number(
+		columns = vars("p adj"),
+		decimals = 5
+	) %>% 
+	tab_header(
+		title = md("**BDI**"),
+		subtitle = md("ANOVA PostHoc")
+	) %>% 
+	# tab_stubhead(label = "Comparisons") %>% 
+	tab_style(
+		style = list(
+			cell_fill(color = "tomato")
+		),
+		locations = cells_body(
+			columns = vars(diff),
+			rows = diff < 1)
+	)
+
+z_tab4	
+
+
+# data_color(
+	# 	columns = vars("p adj"),
+	# 	colors = scales::col_numeric(
+	# 		# palette = c("red", "pink", "orange", "yellow"), 
+	# 		palette = c("white", "yellow", "red"),
+	# 		domain = c(-0.005, 0.0005))
+	# ) %>%
+	# tab_footnote(
+	#   footnote = "Color indicates level significance.",
+	#   locations = cells_column_labels(
+	#     columns = vars("p adj"))
+# ) %>% 
+# tab_source_note(
+# 	source_note = "FM-HC is the most significant"
+# ) %>% 
+	
+
+z_tab4
+
+
+```
 
 
 
 ```{r ---> MANOVA}
-# data(mtcars)
-# head(mtcars)
-# help(manova)
-# model1 <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars)
-# summary(model1)
-# model1
+data(mtcars) 
+head(mtcars) 
+help(manova) 
 
-#		TRYING THE ABOVE WITH MY OWN DATA
-# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
-
-
-gp.manova1 <- manova(cbind(ess_total, bdi_total,
-							mcgill_total) ~ group.factor,
-					  data = dat2)
-summary(gp.manova1)
-## Dufferent tests for the MANOVA
-summary(gp.manova1, test = "Hotelling-Lawley")
-summary(gp.manova1, test = "Roy")
-summary(gp.manova1, test = "Pillai")
-summary(gp.manova1, test = "Wilks")
-
-## LOOK TO SEE WHICH DIFFER
-summary.aov(gp.manova1)
-
-
-
+zz_MANOVA <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars) 
+summary(zz_MANOVA)
 
 ```
-
-```{r ---> BDI Plots}
-#		BAR CHART
-# bdi.smry2  <- ggplot(data = dat1,
-# 					   aes(x = group.factor,
-# 					   	y = bdi_total,
-# 					   	fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "Groups") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group")
-# 
-# print(bdi.smry2) # I'm not sure what values are used in the graph
-# 
-# #		BOX PLOT
-# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-# 	geom_boxplot()
-# 
-# 
-# ggboxplot(dat1, x = "group", y = "bdi_total",
-# 		  add = "dotplot")
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  add = "jitter", shape = "group.factor")
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  order = c("FM", "CLBP", "HC"))
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  color = "red", fill = "darkblue",
-# 		  order = c("FM", "CLBP", "HC"))
-# 
-
-
-# Mean plots
-# ++++++++++++++++++++
-# Plot weight by group
-# Add error bars: mean_se
-# (other values include: mean_sd, mean_ci, median_iqr, ....)
-# ggline(dat1, x = "group.factor", y = "bdi_total", 
-#        add = c("mean_se", "jitter"), 
-#        order = c("FM", "CLBP", "HC"),
-#        ylab = "BDI Total", xlab = "Group")
-
-
-# Box plots - 	NOTY WORKING
-# ++++++++++++++++++++
-# Plot BDI by group and color by group
-# bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total, 
-# 										 fill = group.factor)) +
-# 	geom_boxplot()
-
-	
-# 		  color = "black", fill = 
-# 		  order = c("HC", "CLBP", "FM"),
-#           ylab = "BDI", xlab = "Group")
-
-# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
-# view(dat.totals)
-
-#		DONE AS OF March 17, 2020
-```
-
-```{r ---> line plot}
-ggline(dat1, x = "group.factor", y = "bdi_total", 
-       add = c("mean_se", "jitter"),
-       order = c("FM", "CLBP", "HC"),
-       ylab = "BDI Total", xlab = "Group")
-
-```
-
-
-
-
-
-##		PLOTS
-```{R ---> Bar chart by Group}
-# dat1.gp.BDI  <- ggplot(data = dat1,
-# 						aes(x = group.factor,
-# 							y = bdi_total, pdi_total,
-# 							fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "group") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group analysis")
-# 
-# print(dat1.gp.BDI)
-
-```
-
-
-```{r ---> Box plots}
-# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-# 	geom_boxplot()
-# 
-# ggplot(data = dat1) +
-# 	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total))
-# 
-
-```
-
-
-##	SCRAP
-```{r ---> Scrap}
-
-# data <- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE)
-
-# spec_csv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
-
-# " col_names = TRUE)
-
-
-datSM2 %>% count(group.factor)
-mean(datSM2$ess_total)
-datSM2 %>% count(ess_total)
-
-
-# summarise(datSM2,
-# 		  maxESS = max(ess_total, na.rm = TRUE),
-# 		  avgESS = mean(ess_total, na.rm = TRUE)
-# )
-
-
-
-
-
-
-
-
-
-
-
-
-
-# smallData <- select(dat1, ID, group.factor, bdi_total)
-# 
-# write_csv(smallData,
-# 		  '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv',
-# 		  na = "NA", append = FALSE,
-# 		  col_names = TRUE, quote_escape = "double")	
-#		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
-# dat2 <- arrange(dat1, ID, group.factor, sex)
-# arrange(dat2, ID, group.factor, sex)
-
-#	RENAME VARIABLES
-# df = dataframe
-# old.var.name = The name you don't like anymore
-# new.var.name = The name you want to get
-
-
-
-# dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
-# dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE)
-#	THIS WORKS AS OF March 15, 2020
-#a1_Ctr3_voi1_2020_03_12_for_R <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt", col_names = TRUE)
-
-#a2_SubjectList_2020_03_12 <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/SubjectList_2020_03_12.txt", col_names = TRUE
-
-
-##  bdi_total
-
-# dat.pdi  <- data[c(1:2,grep("pdi", colnames(data)))]
-# 
-# dat.pain  <- data[c(1:2,grep("pain", colnames(data)))]
-# 
-# 
-
-
-# dat.bdi2  <- select(dat.bdi,
-# 					ends_with(!= "factor"))
-
-
-
-
-# {r ---> Jon: creating new variables}
-# This works
-# library(dplyr)
-# data1 %>% 
-#   mutate_at(
-#     vars(starts_with("pos"), starts_with("neg")),
-#     ~as.numeric(as.character(.))
-#   ) %>% 
-#   rowwise() %>% 
-#   mutate(
-#     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE)
-#   ) %>% 
-#   ungroup()
-
-```
-
-
-
-
-```{r ---> Factors}
-# dat.factors  <- select_if(dat1, is.factor)
-# colnames(dat.factors)
-
-# levels(dat.factors$condition.factor)
-# 
-# class(dat1$group.factor)
-# levels(dat1$group.factor)
-# #		DONE AS OF March 17, 2020
-
-```
-
-
-
-
-```{r ---> skimr}
-
-skimr::skim(datSM1)
-
-```
-
-
-
-
-
-```{r ---> OLD tries at corr}
-
-
-
-
-
-
-
-
-	
-HC.mtrx	 <- corr.test(dat.HC %>% 
-						   select("ess_total", "bdi_total", "mcgill_total",
-								  "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
-								  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
-								  "psqi_Comp7", "psqi_Global"),
-						   use = "pairwise", 
-						   # available: pairwise, complete
-						   method = "spearman", 
-						   # available: pearson, spearman, kendall
-						   adjust = "none",
-						  # available: holm, hochberg, hommel,
-						  # bonferroni, BH, BY, fd, none
-						  alpha = 0.05, #)  #,
-						  ci = TRUE, minlength = 5)
-
-print(HC.mtrx$r)
-
-
-print(corr.hc.mtrx, short = TRUE)
-
-hc.cor.r <- HC.mtrx$r
-
-
-gp.cor1.r <- map(gp.cor1, ~.x$r)
-
-
-print(corr.hc.mtrx, short = TRUE)
-
-HC.cor.r <- map(HC.cor, ~.x$r)
-HC.cor1.p <- map(gp.cor1, ~.x$p)
-print(x = gp.cor1.r, short = TRUE)
-print(x = gp.cor1.p, short = TRUE)
-
-
-
-
-
-
-
-
-
-
-corr.hc.mtrx2  <- dat.HC[, c(2:4)]
-round(cor(corr.hc.mtrx2), 2)
-
-corr.clbp.mtrx <- corr.test(dat.CLBP %>% 
-						   select(ess_total, bdi_total, mcgill_total),
-						   use = "pairwise", 
-						   # available: pairwise, complete
-						   method = "spearman", 
-						   # available: pearson, spearman, kendall
-						   adjust = "none"
-						  # available: holm, hochberg, hommel,
-						  # bonferroni, BH, BY, fd, none
-						   )
-print(corr.clbp.mtrx, short = TRUE)
-
-corr.fm.mtrx <- corr.test(dat.FM %>% 
-						   select(ess_total, bdi_total, mcgill_total),
-						   use = "pairwise", 
-						   # available: pairwise, complete
-						   method = "spearman", 
-						   # available: pearson, spearman, kendall
-						   adjust = "none"
-						  # available: holm, hochberg, hommel,
-						  # bonferroni, BH, BY, fd, none
-						   )
-print(corr.fm.mtrx, short = TRUE)
-
-
-
-
-
-#		TRYING TO TEST THE CORRELATIONS BETWEEN GROUPS
-# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
-
-gp.cor2 <- datSM1 %>%
-	split(datSM1$group.factor) %>%
-	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05,
-				   ci = TRUE, minlength = 5)
-	)
-
-print(gp.cor2)
-
-
-gp.cor3 <- datSM1 %>%
-	split(datSM1$group.factor) %>%
-	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
-				   use = "pairwise",
-				   method = "spearman",
-				   adjust = "none",
-				   alpha = 0.05,
-				   ci = TRUE, minlength = 5)
-	)
-
-
-print(gp.cor3)
-
-
-
-
-cor.mtrx <- cor(dat2[3:5], use = "complete.obs", method = "pearson")
-corrplot(cor.mtrx, method = ("number"))
-
-
-#		CORRELATIONS
-"Use Pairwise and Spearman"
-cor.bdi.ess <- corr.test(x = dat2[3:4],
-						 y = NULL, 
-						 use = "pairwise", # available: pairwise, complete
-						 method = "spearman",
-						 # available: pearson, spearman, kendall
-						 adjust = "none",
-						 # available: holm, hochberg, hommel, 
-						 # bonferroni, BH, BY, fd, none
-						 alpha = 0.05,
-						 ci = TRUE,minlength = 5
-					  )
-
-# gp.cor <- dat2 %>%
-# 	group_by(group.factor) %>%
-cor.mtrx3 <- 	corr.test(x = dat2[3:4],
-			  y = NULL, 
-			  use = "everything", # available: pairwise, complete
-			  method = "spearman",
-			  # available: pearson, spearman, kendall
-			  adjust = "none",
-			  # available: holm, hochberg, hommel, 
-			  # bonferroni, BH, BY, fd, none
-			  alpha = 0.05,
-			  ci = TRUE,minlength = 5
-	)
-
-
-
-
-
-print(x = cor.mtrx, short = TRUE)
-print(x = cor.mtrx, short = FALSE)
-
-cor.mtrx2 <- ezCor(
-  data = dat2[,c(3:4)],
-  r_size_lims = c(4,4),
-  label_size = 3
-)
-print(cor.mtrx2)
-print(cor.mtrx3)
-
-
-# dat2 %>%
-# 	group_by(group.factor) %>%
-	
-	
-# gp.cor <- dat2 %>%
-# 	group_by(group.factor) %>%
-# 	cor.mtrx3 <- 	corr.test(x = dat2[3:4],
-# 							y = NULL,
-# 							use = "everything", # available: pairwise, complete
-# 							method = "spearman",
-# 							# available: pearson, spearman, kendall
-# 							adjust = "none",
-# 							# available: holm, hochberg, hommel,
-# 							# bonferroni, BH, BY, fd, none
-# 							alpha = 0.05,
-# 							ci = TRUE,minlength = 5
-# 	)
-
-
-# corr.p(corr_matrix,158,adjust = "none",alpha = .05,minlength = 5,ci=TRUE)
-
-#corr_matrix
-
-
-# 
-# t_tests_base <- lapply(
-# 	dat1[resp_vars],
-# 	function(x) { t.test(x ~ group.factor, data = dat1) }
-# 	)
-# 
-# t_tests_base$disp
-
-```
-
-
-
-
-
-```{r ---> Plot ANOVA - I don't trust this yet}
-#	TAKEN FROM
-# https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
-
-#		PRESERVE ORIGINAL DATA
-dat <- datSM1
-
-# Edit from here
-x <- which(names(dat) == "group.factor") # name of grouping variable
-y <- which(names(dat) == "ess_total" # names of variables to test
-| names(dat) == "bdi_total"
-| names(dat) == "mcgill_total")
-# | names(dat) == "Petal.Width")
-method1 <- "anova" # one of "anova" or "kruskal.test"
-method2 <- "t.test" # one of "wilcox.test" or "t.test"
-my_comparisons <- list(c("HC", "CLBP"), c("HC", "FM"), c("CLBP", "FM")) # comparisons for post-hoc tests
-# Edit until here
-
-
-# Edit at your own risk
-for (i in y) {
-  for (j in x) {
-    p <- ggboxplot(dat,
-      x = colnames(dat[j]), y = colnames(dat[i]),
-      color = colnames(dat[j]),
-      legend = "none",
-      palette = "npg",
-      add = "jitter"
-    )
-    print(
-      p + stat_compare_means(aes(label = paste0(..method..,
-      										  ", p-value = ", ..p.format..,
-      										  " (", ifelse(..p.adj.. > 0.05, 
-      										  			 "not significant",
-      										  			 ..p.signif..), ")")),
-      					   method = method1, 
-      					   label.y = max(dat[, i], na.rm = TRUE)
-      )
-      + stat_compare_means(comparisons = my_comparisons, method = method2, 
-      					 hide.ns = FALSE, # JC added
-      					 label.sep = ", ",
-      					 label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
-      )
-  }
-}
-
-```
-
-
-
-
-
-
-
-
-
-
-
-

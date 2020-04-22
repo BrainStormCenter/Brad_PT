@@ -1,0 +1,464 @@
+---
+title: "Testing Ground"
+author: "Jason"
+date: "4/20/2020"
+output: html_document
+---
+
+
+```{r ---> }
+# iris %>%
+#        group_by(Species) %>%
+#        summarise_at(vars(starts_with("Sepal")), list(mean=mean, sd=sd))
+# 
+
+```
+
+
+##	SCRAP
+```{r ---> Scrap}
+
+# data <- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE)
+
+# spec_csv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
+
+# " col_names = TRUE)
+
+
+datSM2 %>% count(group.factor)
+mean(datSM2$ess_total)
+datSM2 %>% count(ess_total)
+
+
+# summarise(datSM2,
+# 		  maxESS = max(ess_total, na.rm = TRUE),
+# 		  avgESS = mean(ess_total, na.rm = TRUE)
+# )
+
+
+
+
+
+
+
+
+
+
+
+
+
+# smallData <- select(dat1, ID, group.factor, bdi_total)
+# 
+# write_csv(smallData,
+# 		  '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv',
+# 		  na = "NA", append = FALSE,
+# 		  col_names = TRUE, quote_escape = "double")	
+#		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
+# dat2 <- arrange(dat1, ID, group.factor, sex)
+# arrange(dat2, ID, group.factor, sex)
+
+#	RENAME VARIABLES
+# df = dataframe
+# old.var.name = The name you don't like anymore
+# new.var.name = The name you want to get
+
+
+
+# dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
+# dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE)
+#	THIS WORKS AS OF March 15, 2020
+#a1_Ctr3_voi1_2020_03_12_for_R <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt", col_names = TRUE)
+
+#a2_SubjectList_2020_03_12 <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/SubjectList_2020_03_12.txt", col_names = TRUE
+
+
+##  bdi_total
+
+# dat.pdi  <- data[c(1:2,grep("pdi", colnames(data)))]
+# 
+# dat.pain  <- data[c(1:2,grep("pain", colnames(data)))]
+# 
+# 
+
+
+# dat.bdi2  <- select(dat.bdi,
+# 					ends_with(!= "factor"))
+
+
+
+
+# {r ---> Jon: creating new variables}
+# This works
+# library(dplyr)
+# data1 %>% 
+#   mutate_at(
+#     vars(starts_with("pos"), starts_with("neg")),
+#     ~as.numeric(as.character(.))
+#   ) %>% 
+#   rowwise() %>% 
+#   mutate(
+#     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE)
+#   ) %>% 
+#   ungroup()
+
+```
+
+
+
+
+```{r ---> Factors}
+# dat.factors  <- select_if(dat1, is.factor)
+# colnames(dat.factors)
+
+# levels(dat.factors$condition.factor)
+# 
+# class(dat1$group.factor)
+# levels(dat1$group.factor)
+# #		DONE AS OF March 17, 2020
+
+```
+
+
+
+
+```{r ---> skimr}
+
+skimr::skim(datSM1)
+
+```
+
+
+
+
+
+```{r ---> OLD tries at corr}
+
+
+
+
+
+
+
+
+	
+HC.mtrx	 <- corr.test(dat.HC %>% 
+						   select("ess_total", "bdi_total", "mcgill_total",
+								  "TIB", "psqi_Comp1", "psqi_Comp2", "psqi_Comp3",
+								  "psqi_Comp4", "psqi_Comp5", "psqi_Comp6",
+								  "psqi_Comp7", "psqi_Global"),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none",
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						  alpha = 0.05, #)  #,
+						  ci = TRUE, minlength = 5)
+
+print(HC.mtrx$r)
+
+
+print(corr.hc.mtrx, short = TRUE)
+
+hc.cor.r <- HC.mtrx$r
+
+
+gp.cor1.r <- map(gp.cor1, ~.x$r)
+
+
+print(corr.hc.mtrx, short = TRUE)
+
+HC.cor.r <- map(HC.cor, ~.x$r)
+HC.cor1.p <- map(gp.cor1, ~.x$p)
+print(x = gp.cor1.r, short = TRUE)
+print(x = gp.cor1.p, short = TRUE)
+
+
+
+
+
+
+
+
+
+
+corr.hc.mtrx2  <- dat.HC[, c(2:4)]
+round(cor(corr.hc.mtrx2), 2)
+
+corr.clbp.mtrx <- corr.test(dat.CLBP %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.clbp.mtrx, short = TRUE)
+
+corr.fm.mtrx <- corr.test(dat.FM %>% 
+						   select(ess_total, bdi_total, mcgill_total),
+						   use = "pairwise", 
+						   # available: pairwise, complete
+						   method = "spearman", 
+						   # available: pearson, spearman, kendall
+						   adjust = "none"
+						  # available: holm, hochberg, hommel,
+						  # bonferroni, BH, BY, fd, none
+						   )
+print(corr.fm.mtrx, short = TRUE)
+
+
+
+
+
+#		TRYING TO TEST THE CORRELATIONS BETWEEN GROUPS
+# dat2  <- dat1 %>% dplyr::select("group.factor","ess_total", "bdi_total", "mcgill_total")
+
+gp.cor2 <- datSM1 %>%
+	split(datSM1$group.factor) %>%
+	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
+
+print(gp.cor2)
+
+
+gp.cor3 <- datSM1 %>%
+	split(datSM1$group.factor) %>%
+	map(~corr.test(datSM1 %>% select(ess_total, bdi_total, mcgill_total),
+				   use = "pairwise",
+				   method = "spearman",
+				   adjust = "none",
+				   alpha = 0.05,
+				   ci = TRUE, minlength = 5)
+	)
+
+
+print(gp.cor3)
+
+
+
+
+cor.mtrx <- cor(dat2[3:5], use = "complete.obs", method = "pearson")
+corrplot(cor.mtrx, method = ("number"))
+
+
+#		CORRELATIONS
+"Use Pairwise and Spearman"
+cor.bdi.ess <- corr.test(x = dat2[3:4],
+						 y = NULL, 
+						 use = "pairwise", # available: pairwise, complete
+						 method = "spearman",
+						 # available: pearson, spearman, kendall
+						 adjust = "none",
+						 # available: holm, hochberg, hommel, 
+						 # bonferroni, BH, BY, fd, none
+						 alpha = 0.05,
+						 ci = TRUE,minlength = 5
+					  )
+
+# gp.cor <- dat2 %>%
+# 	group_by(group.factor) %>%
+cor.mtrx3 <- 	corr.test(x = dat2[3:4],
+			  y = NULL, 
+			  use = "everything", # available: pairwise, complete
+			  method = "spearman",
+			  # available: pearson, spearman, kendall
+			  adjust = "none",
+			  # available: holm, hochberg, hommel, 
+			  # bonferroni, BH, BY, fd, none
+			  alpha = 0.05,
+			  ci = TRUE,minlength = 5
+	)
+
+
+
+
+
+print(x = cor.mtrx, short = TRUE)
+print(x = cor.mtrx, short = FALSE)
+
+cor.mtrx2 <- ezCor(
+  data = dat2[,c(3:4)],
+  r_size_lims = c(4,4),
+  label_size = 3
+)
+print(cor.mtrx2)
+print(cor.mtrx3)
+
+
+# dat2 %>%
+# 	group_by(group.factor) %>%
+	
+	
+# gp.cor <- dat2 %>%
+# 	group_by(group.factor) %>%
+# 	cor.mtrx3 <- 	corr.test(x = dat2[3:4],
+# 							y = NULL,
+# 							use = "everything", # available: pairwise, complete
+# 							method = "spearman",
+# 							# available: pearson, spearman, kendall
+# 							adjust = "none",
+# 							# available: holm, hochberg, hommel,
+# 							# bonferroni, BH, BY, fd, none
+# 							alpha = 0.05,
+# 							ci = TRUE,minlength = 5
+# 	)
+
+
+# corr.p(corr_matrix,158,adjust = "none",alpha = .05,minlength = 5,ci=TRUE)
+
+#corr_matrix
+
+
+# 
+# t_tests_base <- lapply(
+# 	dat1[resp_vars],
+# 	function(x) { t.test(x ~ group.factor, data = dat1) }
+# 	)
+# 
+# t_tests_base$disp
+
+```
+
+
+
+
+
+```{r ---> Plot ANOVA - I don't trust this yet}
+#	TAKEN FROM
+# https://www.r-bloggers.com/how-to-do-a-t-test-or-anova-for-many-variables-at-once-in-r-and-communicate-the-results-in-a-better-way/
+
+#		PRESERVE ORIGINAL DATA
+dat <- datSM1
+
+# Edit from here
+x <- which(names(dat) == "group.factor") # name of grouping variable
+y <- which(names(dat) == "ess_total" # names of variables to test
+| names(dat) == "bdi_total"
+| names(dat) == "mcgill_total")
+# | names(dat) == "Petal.Width")
+method1 <- "anova" # one of "anova" or "kruskal.test"
+method2 <- "t.test" # one of "wilcox.test" or "t.test"
+my_comparisons <- list(c("HC", "CLBP"), c("HC", "FM"), c("CLBP", "FM")) # comparisons for post-hoc tests
+# Edit until here
+
+
+# Edit at your own risk
+for (i in y) {
+  for (j in x) {
+    p <- ggboxplot(dat,
+      x = colnames(dat[j]), y = colnames(dat[i]),
+      color = colnames(dat[j]),
+      legend = "none",
+      palette = "npg",
+      add = "jitter"
+    )
+    print(
+      p + stat_compare_means(aes(label = paste0(..method..,
+      										  ", p-value = ", ..p.format..,
+      										  " (", ifelse(..p.adj.. > 0.05, 
+      										  			 "not significant",
+      										  			 ..p.signif..), ")")),
+      					   method = method1, 
+      					   label.y = max(dat[, i], na.rm = TRUE)
+      )
+      + stat_compare_means(comparisons = my_comparisons, method = method2, 
+      					 hide.ns = FALSE, # JC added
+      					 label.sep = ", ",
+      					 label = "p.format") # remove if p-value of ANOVA or Kruskal-Wallis test >= 0.05
+      )
+  }
+}
+
+```
+
+
+
+
+
+```{r ---> basic stuff}
+
+
+library(plyr)
+ddply(dat.SM, .(group.factor), colwise(mean))
+zjunk.sd <- ddply(dat.SM, .(group.factor), colwise(sd))
+
+
+dat.SM %>% group_by(group.factor)  %>% across((funs(mean, sd)))
+
+
+ag2 <- aggregate(x = dat.SM, by = list(gp = dat.SM$group.factor), FUN = "mean")
+
+ag3 <- aggregate(group.factor ~ ., data = dat.SM, mean)
+ag3
+
+str(ToothGrowth)
+xtabs(group.factor ~ ., data = ag)
+
+head(dat.SM)
+library(data.table)
+zSum <- data.table(dat.SM)
+zSum
+
+zSum
+
+
+
+df <- tibble(id = 1:4, w = runif(4), x = runif(4), y = runif(4), z = runif(4))
+testings <- df %>%
+	rowwise() %>%
+	mutate(
+		sum = sum(c_across(w:z)),
+		sd = sd(c_across(w:z))
+	)
+
+
+
+
+# this will get you your mean and SD's for each column
+zSum[, sapply(.SD, function(x) list(mean=mean(x), sd=sd(x)))]
+#
+
+
+dat.SM.gps <- group_by(dat.SM, group.factor)
+
+dat.SM.gps
+
+dat.junk <- dat.SM %>%
+	filter(group.factor == "TRUE")
+
+summary(dat.SM.gps)
+
+test1 <- summarize(dat.SM.gps,
+				   count = n(),
+				   BDI.avg = mean(bdi_total),
+				   BDI.sd = sd(bdi_total)
+				   )
+AVG <- map(
+	select(dat.SM, -group.factor),
+	~ mean(.x ~group.factor)
+)
+
+test2 <- summary(dat.SM.gps)
+test2
+#
+```
+
+
+
+
+
+
+
+
+
+
+
