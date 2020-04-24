@@ -369,6 +369,9 @@ summary {
 
 
 <pre class="r"><code># library(readxl) # This is used to import data from excel
+library(gt)
+library(broom)
+library(glue)
 library(doBy)
 library(lubridate)</code></pre>
 <pre><code>
@@ -402,11 +405,19 @@ Attaching package: 'Hmisc'</code></pre>
 <pre><code>The following object is masked from 'package:psych':
 
     describe</code></pre>
+<pre><code>The following object is masked from 'package:gt':
+
+    html</code></pre>
 <pre><code>The following objects are masked from 'package:base':
 
     format.pval, units</code></pre>
-<pre class="r"><code>library(modelr)
-# library(fuzzyjoin)
+<pre class="r"><code>library(modelr)</code></pre>
+<pre><code>
+Attaching package: 'modelr'</code></pre>
+<pre><code>The following object is masked from 'package:broom':
+
+    bootstrap</code></pre>
+<pre class="r"><code># library(fuzzyjoin)
 # library(reshape2)
 library(varhandle)
 library(multcomp)</code></pre>
@@ -433,14 +444,16 @@ library(ggpubr)</code></pre>
 <pre><code>Loading required package: magrittr</code></pre>
 <pre class="r"><code>library(skimr)
 library(tidyverse)</code></pre>
-<pre><code>── Attaching packages ──────────────────────────────────────────────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
+<pre><code>── Attaching packages ───────────────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
 <pre><code>✓ tibble  3.0.0           ✓ dplyr   0.8.99.9002
 ✓ tidyr   1.0.2           ✓ stringr 1.4.0      
 ✓ purrr   0.3.3           ✓ forcats 0.5.0      </code></pre>
-<pre><code>── Conflicts ─────────────────────────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+<pre><code>── Conflicts ──────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
 x ggplot2::%+%()           masks psych::%+%()
 x ggplot2::alpha()         masks psych::alpha()
 x lubridate::as.difftime() masks base::as.difftime()
+x modelr::bootstrap()      masks broom::bootstrap()
+x dplyr::collapse()        masks glue::collapse()
 x lubridate::date()        masks base::date()
 x tidyr::extract()         masks magrittr::extract()
 x dplyr::filter()          masks stats::filter()
@@ -481,28 +494,17 @@ col4 &lt;- colorRampPalette(c(&quot;#7F0000&quot;, &quot;red&quot;, &quot;#FF7F0
                            &quot;cyan&quot;, &quot;#007FFF&quot;, &quot;blue&quot;,
                            &quot;#00007F&quot;))
 wb &lt;- c(&quot;white&quot;, &quot;black&quot;)</code></pre>
-<pre class="r"><code>##              NOTE            ##
-# Subject 248 WAKE TIME NEEDS TO BE CHANGED TO AM FROM PM  
-# THIS IS VERY VERY IMPORTANT
+<pre class="r"><code># currentDate &lt;- format(Sys.Date(), &quot;%d_%X_%Y&quot;)
+currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
 
-#       THIS SECTION PREPARED THE ORIGINAL DATA FOR SUBSEQUENT USE
 
-#   This reads the files created by RedCap
-# source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
-# #     RENAME VARIABLE
-# names(data)[names(data) == 'participant_id'] &lt;- 'ID'
-# # names(data)[names(data) == 'psqi_1']  &lt;- 'psqi.bedtime'
-# # names(data)[names(data) == 'psqi_1a.factor'] &lt;- 'psqi.bt.sleep'
-# # names(data)[names(data) == 'psqi_3'] &lt;- 'psqi.waketime'
-# # names(data)[names(data) == 'psqi_3a.factor'] &lt;- 'psqi.wt.wake'
-# # 
-# #     WRITE NEW DATASET
-# write_csv(data, &quot;PT_data_13042020.csv&quot;,
-#         na = &quot;NA&quot;, append = FALSE,
-#         col_names = TRUE, quote_escape = &quot;double&quot;)
+date.time.append &lt;- function(str, sep = '_', date.format =&quot;%Y_%m_%d_%H_%M_%S&quot;) {
+stopifnot(is.character(str))
+return(paste(str, format(Sys.time(), date.format), sep = sep))  
+}
 
-# 
-# </code></pre>
+# TO USE THIS FUNCTION JUST ADD A STRING WITHIN THE PARENTHESESSS AS BELOW
+# date.time.append(&quot;fileName&quot;)</code></pre>
 <pre class="r"><code>#       IMPORT DATA FROM GITHUB
 data &lt;- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/Brad_PT/master/PT_data_13042020.csv'), header = TRUE)
 data &lt;- as_tibble(data)</code></pre>
@@ -741,7 +743,6 @@ dat.psqi$psqi_5othera &lt;- dat.psqi$psqi_5othera %&gt;% replace_na(0)</code></p
 <div id="psqi-scoring" class="section level1">
 <h1>PSQI SCORING</h1>
 <p>The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality.</p>
-<pre class="r"><code># z &lt;- data[which(dat.psqi$TIB == 19, ) ]</code></pre>
 <pre class="r"><code>dat.psqi$bedtime  &lt;- dat.psqi$psqi_1
 dat.psqi$bt.sleep &lt;- dat.psqi$psqi_1a.factor
 dat.psqi$waketime &lt;- dat.psqi$psqi_3
@@ -782,7 +783,14 @@ round(dat.psqi$TIB  &lt;- if_else(dat.psqi$TIB &lt; 24,
 [133]  7.75  7.00 12.00  7.00  7.00  9.75  7.00  7.00  7.00  7.17  9.00  9.00
 [145]  8.00 12.00  6.00  7.50  9.00  8.00  8.50  9.00  7.00  8.00  4.50 10.00
 [157]  8.02  8.50</code></pre>
-<pre class="r"><code>write.csv(dat.psqi, &quot;PSQI_rawData_April2020_v1.csv&quot;, row.names = FALSE)
+<pre class="r"><code># write.csv(dat.psqi, &quot;PSQI_rawData_April2020_v1.csv&quot;, row.names = FALSE)
+
+currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
+write_csv(dat.psqi,
+          paste(&quot;PSQI_rawData_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;),
+          na = &quot;NA&quot;,
+          col_names = TRUE, quote_escape = &quot;double&quot;)
+
 
 # colnames(dat.psqi)</code></pre>
 <pre class="r"><code>#       COMPONENT 1 = QUESTION 9
@@ -973,7 +981,7 @@ dat.psqi &lt;- dat.psqi %&gt;%
     )
 
 
-
+#       ORGANIZING COLUMNS
 dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp1, .after = last_col())
 dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp2, .after = last_col())
 dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp3, .after = last_col())
@@ -1018,6 +1026,7 @@ dat.psqi  &lt;- dat.psqi %&gt;%
         )
     )
 
+#       ORGANIZING COLUMNS
 dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp1, .after = last_col())
 dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp2, .after = last_col())
 dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp3, .after = last_col())
@@ -1138,7 +1147,8 @@ colnames(dat.psqi)</code></pre>
  [98] &quot;psqi_Comp6&quot;                                    
  [99] &quot;psqi_Comp7&quot;                                    
 [100] &quot;psqi_Global&quot;                                   </code></pre>
-<pre class="r"><code>names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] &lt;- 'slpQual'
+<pre class="r"><code>#       RENAME THE PSQI COMPONENTS
+names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] &lt;- 'slpQual'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] &lt;- 'slpLat'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp3'] &lt;- 'slpDur'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp4'] &lt;- 'slpEff'
@@ -1247,6 +1257,11 @@ colnames(dat.psqi)</code></pre>
  [98] &quot;slpMeds&quot;                                       
  [99] &quot;slpDayFcn&quot;                                     
 [100] &quot;psqi_Global&quot;                                   </code></pre>
+<pre class="r"><code>currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
+write_csv(dat.psqi,
+          paste(&quot;PSQI_scored_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;),
+          na = &quot;NA&quot;,
+          col_names = TRUE, quote_escape = &quot;double&quot;)</code></pre>
 <p>MERGE BACK INTO MAIN DATASET</p>
 <pre class="r"><code>#       COMBINING 2 DATASETS
 
@@ -1273,7 +1288,6 @@ dat.SM  &lt;- dat1 %&gt;% dplyr::select(&quot;group.factor&quot;,&quot;slpQual&q
                                   &quot;bdi_total&quot;, &quot;mcgill_total&quot;,
                                   &quot;TIB&quot;)
 
-
 dat.HC &lt;- dat.SM %&gt;%
     filter(group.factor == &quot;HC&quot;)
 dat.FM &lt;- dat.SM %&gt;%
@@ -1289,6 +1303,21 @@ write_csv(dat.SM, &quot;dat.SM.csv&quot;,
           na = &quot;NA&quot;, append = FALSE,
           col_names = TRUE, quote_escape = &quot;double&quot;)
 
+
+
+# You could use the paste function to define the filename with date appended to it. See the example below: 
+
+
+smallData &lt;- paste(&quot;dat.SM2_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;) 
+write_csv(dat.SM, smallData,
+          na = &quot;NA&quot;,
+          col_names = TRUE, quote_escape = &quot;double&quot;) 
+
+currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
+write_csv(dat.SM,
+          paste(&quot;dat.SM_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;),
+          na = &quot;NA&quot;,
+          col_names = TRUE, quote_escape = &quot;double&quot;) 
 
 #       TO RECREATE A DATASET
 # dput(head(dat.time, 20))
@@ -1360,6 +1389,432 @@ dat.SM.smry</code></pre>
 <pre class="r"><code>write_csv(dat.SM.smry, &quot;dat.SM.smry.csv&quot;,
           na = &quot;NA&quot;, append = FALSE,
           col_names = TRUE, quote_escape = &quot;double&quot;)</code></pre>
+<pre class="r"><code>#   PostHoc DOES WORK
+
+# construct anova model for each column of dat1[, my_outcome_variables]
+model_summaries &lt;- dat1[,c(&quot;slpQual&quot;, &quot;slpLat&quot;, &quot;slpDur&quot;,
+                           &quot;slpEff&quot;, &quot;slpDist&quot;,&quot;slpMeds&quot;,
+                           &quot;slpDayFcn&quot;,&quot;psqi_Global&quot;,&quot;ess_total&quot;,
+                           &quot;bdi_total&quot;, &quot;mcgill_total&quot;,
+                           &quot;TIB&quot;)] %&gt;%
+  purrr::map(~ aov(.x ~ group.factor, data = dat1))  %&gt;%
+  # append the TukeyHSD CI estimates
+  purrr::map(function(x) {
+    list(
+      model = x,
+      tukey = TukeyHSD(x)
+    )
+  })
+
+#       TO ACCESS THE RESULTS
+summary(model_summaries$bdi_total$model)</code></pre>
+<pre><code>              Df Sum Sq Mean Sq F value   Pr(&gt;F)    
+group.factor   2   3894  1947.1   32.84 1.29e-12 ***
+Residuals    155   9191    59.3                     
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+<pre class="r"><code>print(round(model_summaries$bdi_total$tukey$group.factor, 4))</code></pre>
+<pre><code>           diff    lwr     upr p adj
+CLBP-HC  6.8650 3.4255 10.3045 0e+00
+FM-HC   12.8536 9.0869 16.6204 0e+00
+FM-CLBP  5.9886 2.4199  9.5573 3e-04</code></pre>
+<pre class="r"><code># print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+# print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+# signif(model_summaries$bdi_total$tukey$group.factor, 3)</code></pre>
+<pre class="r"><code>z_table1 &lt;- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))</code></pre>
+<pre><code>          diff   lwr    upr     p adj
+CLBP-HC  6.865 3.426 10.300 1.534e-05
+FM-HC   12.850 9.087 16.620 5.429e-13
+FM-CLBP  5.989 2.420  9.557 3.202e-04</code></pre>
+<pre class="r"><code>z_table1 &lt;- as.data.frame(z_table1)
+z_table1$row &lt;- c(&quot;CLBP-HC&quot;, &quot;FM-HC&quot;, 
+                  &quot;FM-CLBP&quot;)
+
+z_table1 %&gt;% 
+    # dplyr::select(&quot;row&quot; , &quot;diff&quot;, &quot;p adj&quot;)  %&gt;% 
+    gt(rowname_col = &quot;row&quot;)  %&gt;% 
+    tab_header(
+        title = md(&quot;**BDI**&quot;),
+        subtitle = md(&quot;ANOVA PostHoc&quot;)) %&gt;% 
+    tab_stubhead(label = &quot;Comparisons&quot;) </code></pre>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#cesantvckc .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#cesantvckc .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#cesantvckc .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#cesantvckc .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#cesantvckc .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#cesantvckc .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#cesantvckc .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#cesantvckc .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#cesantvckc .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#cesantvckc .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#cesantvckc .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#cesantvckc .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#cesantvckc .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#cesantvckc .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#cesantvckc .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#cesantvckc .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#cesantvckc .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#cesantvckc .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#cesantvckc .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#cesantvckc .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#cesantvckc .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#cesantvckc .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#cesantvckc .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#cesantvckc .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#cesantvckc .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#cesantvckc .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#cesantvckc .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#cesantvckc .gt_left {
+  text-align: left;
+}
+
+#cesantvckc .gt_center {
+  text-align: center;
+}
+
+#cesantvckc .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#cesantvckc .gt_font_normal {
+  font-weight: normal;
+}
+
+#cesantvckc .gt_font_bold {
+  font-weight: bold;
+}
+
+#cesantvckc .gt_font_italic {
+  font-style: italic;
+}
+
+#cesantvckc .gt_super {
+  font-size: 65%;
+}
+
+#cesantvckc .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="cesantvckc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  <thead class="gt_header">
+    <tr>
+      <th colspan="5" class="gt_heading gt_title gt_font_normal" style><strong>BDI</strong></th>
+    </tr>
+    <tr>
+      <th colspan="5" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border" style>ANOVA PostHoc</th>
+    </tr>
+  </thead>
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Comparisons</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">diff</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">lwr</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">upr</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">p adj</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr>
+      <td class="gt_row gt_left gt_stub">CLBP-HC</td>
+      <td class="gt_row gt_right">6.865</td>
+      <td class="gt_row gt_right">3.426</td>
+      <td class="gt_row gt_right">10.300</td>
+      <td class="gt_row gt_right">1.534e-05</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">FM-HC</td>
+      <td class="gt_row gt_right">12.850</td>
+      <td class="gt_row gt_right">9.087</td>
+      <td class="gt_row gt_right">16.620</td>
+      <td class="gt_row gt_right">5.429e-13</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">FM-CLBP</td>
+      <td class="gt_row gt_right">5.989</td>
+      <td class="gt_row gt_right">2.420</td>
+      <td class="gt_row gt_right">9.557</td>
+      <td class="gt_row gt_right">3.202e-04</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
 </div>
 </div>
 

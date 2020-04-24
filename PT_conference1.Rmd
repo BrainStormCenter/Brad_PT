@@ -8,11 +8,15 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, comment="")
+
+
+
 ```
 
 ```{r ---> Libraries}
 # library(readxl) # This is used to import data from excel
 library(gt)
+library(broom)
 library(glue)
 library(doBy)
 library(lubridate)
@@ -67,7 +71,26 @@ wb <- c("white", "black")
 
 ```
 
-```{r ---> data prep}
+```{r ---> Date for files}
+# currentDate <- format(Sys.Date(), "%d_%X_%Y")
+currentDate <- format(Sys.time(), "%F_%H-%M")
+
+
+date.time.append <- function(str, sep = '_', date.format ="%Y_%m_%d_%H_%M_%S") {
+stopifnot(is.character(str))
+return(paste(str, format(Sys.time(), date.format), sep = sep))  
+}
+
+# TO USE THIS FUNCTION JUST ADD A STRING WITHIN THE PARENTHESESSS AS BELOW
+# date.time.append("fileName")
+
+```
+
+
+```{r ---> data prep, eval=FALSE, echo=FALSE}
+####	THIS IS COMPLETED FOR THE DATA USED HERE AS OF April 23, 2020 		####
+
+
 ##				NOTE			##
 # Subject 248 WAKE TIME NEEDS TO BE CHANGED TO AM FROM PM  
 # THIS IS VERY VERY IMPORTANT
@@ -205,7 +228,7 @@ dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
 # PSQI SCORING
 The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
 
-```{r ---> pqsi sanity check}
+```{r ---> pqsi sanity check, eval=FALSE, echo=FALSE}
 # z <- data[which(dat.psqi$TIB == 19, ) ]
 ```
 
@@ -239,7 +262,14 @@ round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
 					  dat.psqi$TIB - 24), 2)
 
 
-write.csv(dat.psqi, "PSQI_rawData_April2020_v1.csv", row.names = FALSE)
+# write.csv(dat.psqi, "PSQI_rawData_April2020_v1.csv", row.names = FALSE)
+
+currentDate <- format(Sys.time(), "%F_%H-%M")
+write_csv(dat.psqi,
+		  paste("PSQI_rawData_",currentDate,".csv",sep=""),
+		  na = "NA",
+		  col_names = TRUE, quote_escape = "double")
+
 
 # colnames(dat.psqi)
 
@@ -260,6 +290,7 @@ dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 # colnames(dat.psqi)
 ```
+
 
 ```{r ---> COMP 2}
 # Component 2: Sleep latency—questions 2 and 5a
@@ -446,7 +477,7 @@ dat.psqi <- dat.psqi %>%
 	)
 
 
-
+#		ORGANIZING COLUMNS
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
@@ -503,6 +534,7 @@ dat.psqi  <- dat.psqi %>%
 		)
 	)
 
+#		ORGANIZING COLUMNS
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
@@ -537,6 +569,7 @@ colnames(dat.psqi)
 
 
 ```{r ---> RENAME COMPS}
+#		RENAME THE PSQI COMPONENTS
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] <- 'slpQual'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] <- 'slpLat'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp3'] <- 'slpDur'
@@ -547,7 +580,14 @@ names(dat.psqi)[names(dat.psqi) == 'psqi_Comp7'] <- 'slpDayFcn'
 
 colnames(dat.psqi)
 
+currentDate <- format(Sys.time(), "%F_%H-%M")
+write_csv(dat.psqi,
+		  paste("PSQI_scored_",currentDate,".csv",sep=""),
+		  na = "NA",
+		  col_names = TRUE, quote_escape = "double")
+
 ```
+
 MERGE BACK INTO MAIN DATASET
 ```{r ---> REINTEGRATE}
 #		COMBINING 2 DATASETS
@@ -580,7 +620,6 @@ dat.SM  <- dat1 %>% dplyr::select("group.factor","slpQual",
 								  "bdi_total", "mcgill_total",
 								  "TIB")
 
-
 dat.HC <- dat.SM %>%
 	filter(group.factor == "HC")
 dat.FM <- dat.SM %>%
@@ -596,6 +635,21 @@ write_csv(dat.SM, "dat.SM.csv",
 		  na = "NA", append = FALSE,
 		  col_names = TRUE, quote_escape = "double")
 
+
+
+# You could use the paste function to define the filename with date appended to it. See the example below: 
+
+
+smallData <- paste("dat.SM2_",currentDate,".csv",sep="") 
+write_csv(dat.SM, smallData,
+		  na = "NA",
+		  col_names = TRUE, quote_escape = "double") 
+
+currentDate <- format(Sys.time(), "%F_%H-%M")
+write_csv(dat.SM,
+		  paste("dat.SM_",currentDate,".csv",sep=""),
+		  na = "NA",
+		  col_names = TRUE, quote_escape = "double") 
 
 #		TO RECREATE A DATASET
 # dput(head(dat.time, 20))
@@ -644,9 +698,149 @@ write_csv(dat.SM.smry, "dat.SM.smry.csv",
 
 ```
 
+```{r ---> ANOVA with PostHoc, eval=TRUE, echo=TRUE}
+#	PostHoc DOES WORK
+
+# construct anova model for each column of dat1[, my_outcome_variables]
+model_summaries <- dat1[,c("slpQual", "slpLat", "slpDur",
+						   "slpEff", "slpDist","slpMeds",
+						   "slpDayFcn","psqi_Global","ess_total",
+						   "bdi_total", "mcgill_total",
+						   "TIB")] %>%
+  purrr::map(~ aov(.x ~ group.factor, data = dat1))  %>%
+  # append the TukeyHSD CI estimates
+  purrr::map(function(x) {
+    list(
+      model = x,
+      tukey = TukeyHSD(x)
+    )
+  })
+
+#		TO ACCESS THE RESULTS
+summary(model_summaries$bdi_total$model)
+print(round(model_summaries$bdi_total$tukey$group.factor, 4))
+# print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+# print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
+# signif(model_summaries$bdi_total$tukey$group.factor, 3)
 
 
-```{r ---> ANOVA USE THIS}
+
+GetModels <- function(l) l$model
+Models <- purrr::map(model_summaries, GetModels) %>% 
+  purrr::map_dfr(broom::tidy, .id = "Name")
+head(Models)
+
+
+```
+
+```{r ---> Model tables}
+Models %>%
+	dplyr::select("term" , "df", "p.value")  %>%
+	gt() %>% 
+	fmt_number(
+		columns = vars("p.value"),
+		decimals = 4
+	)
+
+```
+
+```{r ---> GT tables ver 1,eval=TRUE, echo=TRUE}
+z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
+z_table1 <- as.data.frame(z_table1)
+z_table1$row <- c("CLBP-HC", "FM-HC", 
+				  "FM-CLBP")
+
+z_table1 %>% 
+	# dplyr::select("row" , "diff", "p adj")  %>% 
+	gt(rowname_col = "row")  %>% 
+	tab_header(
+		title = md("**BDI**"),
+		subtitle = md("ANOVA PostHoc")) %>% 
+	tab_stubhead(label = "Comparisons") 
+
+```
+
+
+
+```{r ---> GT TABLES, eval=FALSE, echo=FALSE}
+z_table0 <- summary(model_summaries$bdi_total$model)
+z_table0 <- as.table(z_table0)
+
+zz <- print(summary(model_summaries$bdi_total$model))
+
+zz1 <- summary.aov(model_summaries$bdi_total$model)
+
+zz2 <- as_data_frame(zz1)
+zz2
+zz1 <- as_tibble(zz)
+
+zz %>% gt()
+
+
+
+# %>% 
+# 	gt()
+
+z_table0  %>% 
+	gt()
+
+z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
+z_table1 <- as.data.frame(z_table1)
+z_table1$row <- c("CLBP-HC", "FM-HC", 
+				  "FM-CLBP")
+
+z_table1 %>% 
+	# dplyr::select("row" , "diff", "p adj")  %>% 
+	gt(rowname_col = "row")  %>% 
+	tab_header(
+		title = md("**BDI**"),
+		subtitle = md("ANOVA PostHoc")) %>% 
+	tab_stubhead(label = "Comparisons") 
+
+
+
+# %>%
+	# tab_style(
+	# 	style = list(
+	# 		cell_fill(color = "tomato")
+	# 	),
+	# 	locations = cells_body(
+	# 		columns = vars(diff),
+	# 		rows = diff < 1)
+	# fmt_number(
+	# 	columns = vars("p adj"),
+	# 	decimals = 2
+	# ) %>% 
+	# )
+
+z_tab4	
+
+
+# data_color(
+	# 	columns = vars("p adj"),
+	# 	colors = scales::col_numeric(
+	# 		# palette = c("red", "pink", "orange", "yellow"), 
+	# 		palette = c("white", "yellow", "red"),
+	# 		domain = c(-0.005, 0.0005))
+	# ) %>%
+	# tab_footnote(
+	#   footnote = "Color indicates level significance.",
+	#   locations = cells_column_labels(
+	#     columns = vars("p adj"))
+# ) %>% 
+# tab_source_note(
+# 	source_note = "FM-HC is the most significant"
+# ) %>% 
+	
+
+z_tab4
+
+
+```
+
+
+
+```{r ---> ANOVA USE THIS, eval=FALSE, echo=FALSE}
 #		COMPUTE ANOVA OF MULTIPLE VARIABLES
 
 # "group.factor","slpQual",
@@ -687,7 +881,7 @@ TukeyHSD(model4)
 TukeyHSD(model5)
 ```
 
-```{r ---> Slack help}
+```{r ---> Slack help, eval=FALSE, echo=FALSE}
 ####			From russH on Slack		####
 
 # dat1 %>% select(some, columns)  is equivalent to `dat1[, c("some", "columns")]`
@@ -724,103 +918,33 @@ model_summaries <- dat1[,c("bdi_total", "ess_total")] %>%
   })
 
 # Then you could use:
+
+#		TO ACCESS THE RESULTS
 summary(model_summaries$bdi_total$model)
 print(round(model_summaries$bdi_total$tukey$group.factor, 4))
 print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-print(signif(model_summaries$bdi_total$tukey$group.factor, 3))  %>% gt()
+print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
 signif(model_summaries$bdi_total$tukey$group.factor, 3)
+
+
 # summary(model_summaries$bdi_total$tukey$group.factor)
 # model_summaries$x$model #  to access the ANOVA model 
 # and 
-model_summaries$x$tukey # to access the CI estimates
-
-
-```
-
-
-```{r ---> TABLES}
-z_table2 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-z_table3 <- as.data.frame(z_table2)
-z_table3$row <- c("CLBP-HC", "FM-HC", 
-				  "FM-CLBP")
-
-print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-z_table1 <- as_tibble(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-
-
-
-z_tab3 <- z_table3 %>% 
-	gt(
-		rowname_col = "row"
-	)  %>% 
-	tab_header(
-		title = md("**BDI**"),
-		subtitle = md("ANOVA PostHoc")
-	) %>% 
-	tab_stubhead(label = "Comparisons")
-
-
-z_tab3
-
-
-# z_tab4 <- #
-
-z_table3 %>% 
-	dplyr::select("row" , "diff", "p adj")  %>% 
-	gt(
-		# rowname_col = "row"
-	)  %>% 
-	fmt_number(
-		columns = vars("p adj"),
-		decimals = 5
-	) %>% 
-	tab_header(
-		title = md("**BDI**"),
-		subtitle = md("ANOVA PostHoc")
-	) %>% 
-	# tab_stubhead(label = "Comparisons") %>% 
-	tab_style(
-		style = list(
-			cell_fill(color = "tomato")
-		),
-		locations = cells_body(
-			columns = vars(diff),
-			rows = diff < 1)
-	)
-
-z_tab4	
-
-
-# data_color(
-	# 	columns = vars("p adj"),
-	# 	colors = scales::col_numeric(
-	# 		# palette = c("red", "pink", "orange", "yellow"), 
-	# 		palette = c("white", "yellow", "red"),
-	# 		domain = c(-0.005, 0.0005))
-	# ) %>%
-	# tab_footnote(
-	#   footnote = "Color indicates level significance.",
-	#   locations = cells_column_labels(
-	#     columns = vars("p adj"))
-# ) %>% 
-# tab_source_note(
-# 	source_note = "FM-HC is the most significant"
-# ) %>% 
-	
-
-z_tab4
+#		THE LINE BELOW DOESN’T WORK YET
+# model_summaries$x$tukey # to access the CI estimates
 
 
 ```
 
 
 
-```{r ---> MANOVA}
-data(mtcars) 
-head(mtcars) 
-help(manova) 
 
-zz_MANOVA <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars) 
-summary(zz_MANOVA)
 
+```{r ---> MANOVA, eval=FALSE, echo=FALSE}
+data(mtcars)
+head(mtcars)
+help(manova)
+
+zz_MANOVA <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars)
+summary(zz_MANOVA) 
 ```
