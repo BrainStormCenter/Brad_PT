@@ -3,7 +3,9 @@ title: "Brad PT"
 author: "Jason"
 created: "16/03/2020"
 modified: "3/17/2020"
-output: html_document
+output: 
+  html_document: 
+    toc: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -13,9 +15,10 @@ knitr::opts_chunk$set(echo = TRUE, comment="")
 
 ```
 
-```{r ---> Libraries}
+```{r ---> Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
 # library(readxl) # This is used to import data from excel
 library(gt)
+library(caret)
 library(knitr)
 library(kableExtra)
 library(broom)
@@ -52,7 +55,7 @@ dr_here(show_reason = FALSE)
 # library(dplyr) 		# ALREADY IN TIDYVERSE
 ```
 
-```{r ---> Color schemes}
+```{r ---> Color schemes, eval=TRUE, echo=FALSE, message=FALSE}
 ##  different color series
 col1 <- colorRampPalette(c("#7F0000", "red", "#FF7F00",
 						   "yellow", "white","cyan",
@@ -73,7 +76,7 @@ wb <- c("white", "black")
 
 ```
 
-```{r ---> Date for files}
+```{r ---> Date for files, eval=TRUE, echo=FALSE, message=FALSE}
 # currentDate <- format(Sys.Date(), "%d_%X_%Y")
 currentDate <- format(Sys.time(), "%F_%H-%M")
 
@@ -119,16 +122,26 @@ return(paste(str, format(Sys.time(), date.format), sep = sep))
 
 ```
 
+# ABSTRACT
+**Introduction**: Chronic pain (CP) is a widespread and costly condition, affecting nearly 100 million Americans and costing over $600 billion annually. Evidence suggests that compared to healthy controls (HC), chronic pain populations experience problems with sleep and depression. Less understood is how whether these problems are differentially experienced by different chronic pain conditions (i.e., chronic low back pain and fibrimyalgia). To address this questions, questionnaire data regarding sleep, depression and pain were collected from healthy controls (HC, n=50) Fibromyalgia (FM, n=44), and chronic low back pain (CLBP, n=64) groups. 
+
+**Methods**: An ANOVA with Tukey Honest Significant Differences (TukeyHSD) testing was carried out using RStudio (Version 1.2.5033). The overall test for a main effect of group was significant for all but two variables (i.e., Total time in bed and overall daytime functioning). PostHoc follow up testing using TukeyHSD revealed the presence of significant group differences for all but the same two variables listed above. However, the FM-HC comparison trended toward significance with p ≤ 0.07.
+
+
+
+# DATA
 ```{r ---> Import data}
 #		IMPORT DATA FROM GITHUB
 data <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/Brad_PT/master/PT_data_13042020.csv'), header = TRUE)
 data <- as_tibble(data)
 ```
 
-```{r ---> Clean data}
+## CLEAN DATA
+Number of subjects per group
+```{r ---> Clean data, eval=TRUE, echo=FALSE, message=FALSE}
 #		CLEANING AND PRESERVING ORIGINAL DATA
 
-data %>% count(group)
+# data %>% count(group)
 dat1  <- filter(data, group != 0, group != "NA", data$bdi1 != "NA")
 dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
 levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = TRUE)
@@ -148,9 +161,10 @@ dat1 %>% count(group.factor)
 ```
 
 
+## PSQI SCORING
+The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
 
-# PSQI DATASET
-```{r ---> PSQI dataset}
+```{r ---> PSQI dataset, eval=TRUE, echo=FALSE, message=FALSE}
 #		PSQI DATA
 # gather psqi variables into separate spreadsheet:
 dat.psqi <- dat1[,c(1,425,769,
@@ -158,7 +172,7 @@ dat.psqi <- dat1[,c(1,425,769,
 					  grep("psqi", colnames(dat1)))]
 #grep("timestamp", colnames(dat.raw))
 
-colnames(dat.psqi)
+# colnames(dat.psqi)
 # label(dat.psqi)
 # view(dat.psqi)
 
@@ -193,14 +207,14 @@ dat.psqi <- dat.psqi %>% select(1:45,
 
 dat.psqi <- dat.psqi %>% select(1:2,group.factor,everything())
 
-colnames(dat.psqi)
+# colnames(dat.psqi)
 
-write.csv(dat.psqi, "PSQI_rawData_13April2020.csv", row.names = FALSE)
+# write.csv(dat.psqi, "PSQI_rawData_13April2020.csv", row.names = FALSE)
 
 # ls()
 ```
 
-```{r ---> chr to num}
+```{r ---> chr to num, eval=TRUE, echo=FALSE}
 dat.psqi$psqi_2 <- as.numeric(dat.psqi$psqi_2)
 dat.psqi$psqi_4 <- as.numeric(dat.psqi$psqi_4)
 dat.psqi$psqi_5a <- as.numeric(dat.psqi$psqi_5a)
@@ -227,15 +241,12 @@ dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
 ```
 
 
-# PSQI SCORING
-The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
-
 ```{r ---> pqsi sanity check, eval=FALSE, echo=FALSE}
 # z <- data[which(dat.psqi$TIB == 19, ) ]
 ```
 
-
-```{r ---> Time in bed}
+Time in bed (TIB)
+```{r ---> Time in bed, eval=TRUE, echo=FALSE}
 dat.psqi$bedtime  <- dat.psqi$psqi_1
 dat.psqi$bt.sleep <- dat.psqi$psqi_1a.factor
 dat.psqi$waketime <- dat.psqi$psqi_3
@@ -259,25 +270,26 @@ dat.psqi <- dat.psqi %>%
 
 #		CRUDE FIX FOR THE 24+ HOUR ISSUE
 dat.psqi$TIB  <- as.numeric(dat.psqi$`Time in bed`)
-round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
-					  dat.psqi$TIB,
-					  dat.psqi$TIB - 24), 2)
+# round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
+					  # dat.psqi$TIB,
+					  # dat.psqi$TIB - 24), 2)
 
 
 # write.csv(dat.psqi, "PSQI_rawData_April2020_v1.csv", row.names = FALSE)
 
 currentDate <- format(Sys.time(), "%F_%H-%M")
-write_csv(dat.psqi,
-		  paste("PSQI_rawData_",currentDate,".csv",sep=""),
-		  na = "NA",
-		  col_names = TRUE, quote_escape = "double")
+# write_csv(dat.psqi,
+# 		  paste("PSQI_rawData_",currentDate,".csv",sep=""),
+# 		  na = "NA",
+# 		  col_names = TRUE, quote_escape = "double")
 
 
 # colnames(dat.psqi)
 
 ```
 
-```{r ---> COMP 1}
+Comp 1
+```{r ---> COMP 1, eval=TRUE, echo=FALSE}
 #		COMPONENT 1 = QUESTION 9
 dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 
@@ -293,8 +305,8 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 # colnames(dat.psqi)
 ```
 
-
-```{r ---> COMP 2}
+Comp 2
+```{r ---> COMP 2, eval=TRUE, echo=FALSE}
 # Component 2: Sleep latency—questions 2 and 5a
 
 dat.psqi$Q2 <- dat.psqi$psqi_2
@@ -345,7 +357,8 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 # colnames(dat.psqi)
 ```
 
-```{r ---> COMP 3}
+Comp 3
+```{r ---> COMP 3, eval=TRUE, echo=FALSE}
 # Component 3: Sleep duration—question 4
 
 dat.psqi$Q4 <- as.numeric(dat.psqi$psqi_4)
@@ -365,7 +378,8 @@ dat.psqi <- dat.psqi %>% relocate(Q4, .before = psqi_Comp1)
 # colnames(dat.psqi)
 ```
 
-```{r ---> COMP 4}
+Comp 4
+```{r ---> COMP 4, eval=TRUE, echo=FALSE}
 # Component 4: Sleep efficiency—questions 1, 3, and 4
 # Sleep efficiency = (# hours slept/# hours in bed) X 100% 
 #	= (Q4 / TIB) * 100
@@ -394,7 +408,9 @@ dat.psqi <- dat.psqi %>% relocate(SE, .before = psqi_Comp1)
 # colnames(dat.psqi)
 ```
 
-```{r ---> COMP 5}
+
+Comp 5
+```{r ---> COMP 5, eval=TRUE, echo=FALSE}
 # Sum of 5b to 5j scores, Component 5 score
 # 0, 0
 # 1-9, 1
@@ -492,8 +508,8 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
 ```
 
 
-
-```{r ---> COMP 6}
+Comp 6
+```{r ---> COMP 6, eval=TRUE, echo=FALSE}
 # Component 6: Use of sleep medication—question 6
 # Response to Q6, Component 6 score
 # Not during past month, 0
@@ -507,8 +523,8 @@ dat.psqi$psqi_Comp6 <- as.numeric(dat.psqi$psqi_6)
 ```
 
 
-
-```{r ---> COMP 7}
+Comp 7
+```{r ---> COMP 7, eval=TRUE, echo=FALSE}
 # 	Component 7: SUM Daytime dysfunction—questions 7 and 8
 # Sum of Q7 and Q8 subscores, COMPONENT SCORE 
 # 0,0
@@ -549,8 +565,8 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp7, .after = last_col())
 
 
 
-
-```{r ---> GLOBAL Score}
+PSQI Global
+```{r ---> GLOBAL Score, eval=TRUE, echo=FALSE}
 # Global PSQI Score: Sum of seven component scores:
 
 dat.psqi  <- dat.psqi %>%
@@ -563,14 +579,14 @@ dat.psqi  <- dat.psqi %>%
 	ungroup()
 
 
-colnames(dat.psqi)
+# colnames(dat.psqi)
 
 ```
 
 
 
 
-```{r ---> RENAME COMPS}
+```{r ---> RENAME COMPS, eval=TRUE, echo=FALSE}
 #		RENAME THE PSQI COMPONENTS
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] <- 'slpQual'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] <- 'slpLat'
@@ -580,18 +596,18 @@ names(dat.psqi)[names(dat.psqi) == 'psqi_Comp5'] <- 'slpDist'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp6'] <- 'slpMeds'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp7'] <- 'slpDayFcn'
 
-colnames(dat.psqi)
+# colnames(dat.psqi)
 
 currentDate <- format(Sys.time(), "%F_%H-%M")
-write_csv(dat.psqi,
-		  paste("PSQI_scored_",currentDate,".csv",sep=""),
-		  na = "NA",
-		  col_names = TRUE, quote_escape = "double")
+# write_csv(dat.psqi,
+# 		  paste("PSQI_scored_",currentDate,".csv",sep=""),
+# 		  na = "NA",
+# 		  col_names = TRUE, quote_escape = "double")
 
 ```
 
 MERGE BACK INTO MAIN DATASET
-```{r ---> REINTEGRATE}
+```{r ---> REINTEGRATE, eval=TRUE, echo=FALSE}
 #		COMBINING 2 DATASETS
 
 #		CREATING SMALL PSQI DATASET
@@ -610,7 +626,8 @@ dat1 <- merge(dat1, psqiSM, by = "ID")
 
 
 ## FINAL DATASETS
-```{r ---> DATA TO ANALYZE, comment=""}
+All data has been updated, processed, clean and scored  
+```{r ---> DATA TO ANALYZE, eval=TRUE, echo=FALSE, comment=""}
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
@@ -633,9 +650,9 @@ dat.pain <- dat.SM %>%
 
 
 #		WRITE SMALL DATASET
-write_csv(dat.SM, "dat.SM.csv",
-		  na = "NA", append = FALSE,
-		  col_names = TRUE, quote_escape = "double")
+# write_csv(dat.SM, "dat.SM.csv",
+# 		  na = "NA", append = FALSE,
+# 		  col_names = TRUE, quote_escape = "double")
 
 
 
@@ -643,15 +660,15 @@ write_csv(dat.SM, "dat.SM.csv",
 
 
 smallData <- paste("dat.SM2_",currentDate,".csv",sep="") 
-write_csv(dat.SM, smallData,
-		  na = "NA",
-		  col_names = TRUE, quote_escape = "double") 
-
-currentDate <- format(Sys.time(), "%F_%H-%M")
-write_csv(dat.SM,
-		  paste("dat.SM_",currentDate,".csv",sep=""),
-		  na = "NA",
-		  col_names = TRUE, quote_escape = "double") 
+# write_csv(dat.SM, smallData,
+# 		  na = "NA",
+# 		  col_names = TRUE, quote_escape = "double") 
+# 
+# currentDate <- format(Sys.time(), "%F_%H-%M")
+# write_csv(dat.SM,
+# 		  paste("dat.SM_",currentDate,".csv",sep=""),
+# 		  na = "NA",
+# 		  col_names = TRUE, quote_escape = "double") 
 
 #		TO RECREATE A DATASET
 # dput(head(dat.time, 20))
@@ -661,9 +678,9 @@ write_csv(dat.SM,
 ```
 
 
-
-
-```{r ---> QA DATA}
+## DATA QA
+The variable slpDist has little to no variance
+```{r ---> QA DATA, eval=TRUE, echo=FALSE}
 # dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
 # 
 # summarise(dat.SM)
@@ -681,8 +698,10 @@ nearZeroVar(dat.pain,
 
 
 
-##	EXAMINE DATA
-```{r ---> DESCRIPTIVES}
+# EXAMINE DATA
+
+## MEANS
+```{r ---> DESCRIPTIVES, eval=TRUE, echo=FALSE}
 summary(dat.SM) # Quick overview
 
 #		MEANS AND SDs
@@ -690,17 +709,19 @@ dat.SM.smry <- dat.SM %>%
 	group_by(group.factor) %>% 
 	summarise_all(. , list(mean=mean, sd=sd))
 
-dat.SM.smry
+# dat.SM.smry
 
-write_csv(dat.SM.smry, "dat.SM.smry.csv",
-		  na = "NA", append = FALSE,
-		  col_names = TRUE, quote_escape = "double")
+# write_csv(dat.SM.smry, "dat.SM.smry.csv",
+# 		  na = "NA", append = FALSE,
+# 		  col_names = TRUE, quote_escape = "double")
 
-
+# dat.SM.smry  %>% 
+# 	gt()
 
 ```
 
-```{r ---> ANOVA with PostHoc, eval=TRUE, echo=TRUE}
+## ANOVA (Main effect of group)
+```{r ---> ANOVA with PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
 #	PostHoc DOES WORK
 
 # construct anova model for each column of dat1[, my_outcome_variables]
@@ -717,26 +738,14 @@ model_summaries <- dat1[,c("slpQual", "slpLat", "slpDur",
       tukey = TukeyHSD(x)
     )
   })
-```
 
-```{r ---> ACCESS ANOVA RESULTS, eval=TRUE, echo=TRUE}
 ####		THIS RETURNS THE RESULTS OF THE OVERALL ANOVA	####
 GetModels <- function(l) l$model
 Models <- purrr::map(model_summaries, GetModels) %>% 
   purrr::map_dfr(broom::tidy, .id = "Name")
-head(Models)
+# head(Models)
 
 ####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
-Models %>%
-	dplyr::select("term" , "df", "p.value")  %>%
-	gt() %>% 
-	fmt_number(
-		columns = vars("p.value"),
-		decimals = 4
-	)
-
-# zModel <- 
-
 filter(Models,  term !="Residuals") %>%
 	dplyr::select("Name" , "p.value")  %>%
 	gt(rowname_col = "Name") %>%
@@ -747,32 +756,20 @@ filter(Models,  term !="Residuals") %>%
 		decimals = 4
 	)
 
-
-
 ```
 
-
-
-
-
-
-
-```{r ---> ACCESS POSTHOC RESULTS, eval=FALSE, echo=FALSE}
+## PostHoc 
+```{r ---> ACCESS POSTHOC RESULTS, eval=TRUE, echo=FALSE, message=FALSE}
 GetTukeys <- function(m) m$tukey
 Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>% 
 	purrr::map_dfr(broom::tidy, .id = "Name")
-head(Tukeys)
-Tukeys
+# head(Tukeys)
+# Tukeys
 
 names(Tukeys)[names(Tukeys) == 'Name'] <- 'Var'
 names(Tukeys)[names(Tukeys) == 'estimate'] <- 'diff'
 
-
-# TukeyTable <- 
-# Tukeys %>% 
-# Tukeys %>% 
-# dplyr::select(Tukeys, !starts_with("te")) %>%
-
+####		THIS PUT THE PostHoc TESTS INTO A TABLE		####
 select(Tukeys, -term) %>% 
 	gt(groupname_col = "Var") %>% 
 	tab_header(
@@ -786,22 +783,12 @@ select(Tukeys, -term) %>%
 		columns = vars("adj.p.value"),
 		decimals = 4)
 
-z_table1 %>% 
-	gt(rowname_col = "row")  %>% 
-	tab_header(
-		title = md("**BDI**"),
-		subtitle = md("ANOVA PostHoc")) %>% 
-	tab_stubhead(label = "Comparisons")  %>% 
-	fmt_number(
-		columns = vars("diff", "lwr", "upr"),
-		decimals = 2)
-
-
-
-class(Tukeys$diff)
-# dplyr::select("term" , "df", "p.value")  %>%
-
 ```
+
+
+
+
+
 
 
 
@@ -820,7 +807,7 @@ Models %>%
 
 ```
 
-```{r ---> GT tables ver 1,eval=TRUE, echo=TRUE}
+```{r ---> GT tables ver 1,eval=FALSE, echo=FALSE}
 z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
 z_table1 <- as.data.frame(z_table1)
 z_table1$row <- c("CLBP-HC", "FM-HC", 

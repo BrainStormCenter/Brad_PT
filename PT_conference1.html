@@ -367,1081 +367,100 @@ summary {
 
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#abstract">ABSTRACT</a></li>
+<li><a href="#data">DATA</a><ul>
+<li><a href="#clean-data">CLEAN DATA</a></li>
+<li><a href="#psqi-scoring">PSQI SCORING</a></li>
+<li><a href="#final-datasets">FINAL DATASETS</a></li>
+<li><a href="#data-qa">DATA QA</a></li>
+</ul></li>
+<li><a href="#examine-data">EXAMINE DATA</a><ul>
+<li><a href="#means">MEANS</a></li>
+<li><a href="#anova-main-effect-of-group">ANOVA (Main effect of group)</a></li>
+<li><a href="#posthoc">PostHoc</a></li>
+</ul></li>
+</ul>
+</div>
 
-<pre class="r"><code># library(readxl) # This is used to import data from excel
-library(gt)
-library(broom)
-library(glue)
-library(doBy)
-library(lubridate)</code></pre>
-<pre><code>
-Attaching package: 'lubridate'</code></pre>
-<pre><code>The following objects are masked from 'package:base':
-
-    date, intersect, setdiff, union</code></pre>
-<pre class="r"><code>library(psych)
-library(corrplot)</code></pre>
-<pre><code>corrplot 0.84 loaded</code></pre>
-<pre class="r"><code>library(colorspace)
-library(ez)</code></pre>
-<pre><code>Registered S3 methods overwritten by 'lme4':
-  method                          from
-  cooks.distance.influence.merMod car 
-  influence.merMod                car 
-  dfbeta.influence.merMod         car 
-  dfbetas.influence.merMod        car </code></pre>
-<pre class="r"><code>library(Hmisc)</code></pre>
-<pre><code>Loading required package: lattice</code></pre>
-<pre><code>Loading required package: survival</code></pre>
-<pre><code>Loading required package: Formula</code></pre>
-<pre><code>Loading required package: ggplot2</code></pre>
-<pre><code>
-Attaching package: 'ggplot2'</code></pre>
-<pre><code>The following objects are masked from 'package:psych':
-
-    %+%, alpha</code></pre>
-<pre><code>
-Attaching package: 'Hmisc'</code></pre>
-<pre><code>The following object is masked from 'package:psych':
-
-    describe</code></pre>
-<pre><code>The following object is masked from 'package:gt':
-
-    html</code></pre>
-<pre><code>The following objects are masked from 'package:base':
-
-    format.pval, units</code></pre>
-<pre class="r"><code>library(modelr)</code></pre>
-<pre><code>
-Attaching package: 'modelr'</code></pre>
-<pre><code>The following object is masked from 'package:broom':
-
-    bootstrap</code></pre>
-<pre class="r"><code># library(fuzzyjoin)
-# library(reshape2)
-library(varhandle)
-library(multcomp)</code></pre>
-<pre><code>Loading required package: mvtnorm</code></pre>
-<pre><code>Loading required package: TH.data</code></pre>
-<pre><code>Loading required package: MASS</code></pre>
-<pre><code>
-Attaching package: 'TH.data'</code></pre>
-<pre><code>The following object is masked from 'package:MASS':
-
-    geyser</code></pre>
-<pre class="r"><code>library(car)</code></pre>
-<pre><code>Loading required package: carData</code></pre>
-<pre><code>
-Attaching package: 'car'</code></pre>
-<pre><code>The following object is masked from 'package:psych':
-
-    logit</code></pre>
-<pre class="r"><code># library(lattice)
-# library(Formula)
-# library(Hmisc)
-library(readr)
-library(ggpubr)</code></pre>
-<pre><code>Loading required package: magrittr</code></pre>
-<pre class="r"><code>library(skimr)
-library(tidyverse)</code></pre>
-<pre><code>── Attaching packages ───────────────────────────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
-<pre><code>✓ tibble  3.0.0           ✓ dplyr   0.8.99.9002
-✓ tidyr   1.0.2           ✓ stringr 1.4.0      
-✓ purrr   0.3.3           ✓ forcats 0.5.0      </code></pre>
-<pre><code>── Conflicts ──────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
-x ggplot2::%+%()           masks psych::%+%()
-x ggplot2::alpha()         masks psych::alpha()
-x lubridate::as.difftime() masks base::as.difftime()
-x modelr::bootstrap()      masks broom::bootstrap()
-x dplyr::collapse()        masks glue::collapse()
-x lubridate::date()        masks base::date()
-x tidyr::extract()         masks magrittr::extract()
-x dplyr::filter()          masks stats::filter()
-x lubridate::intersect()   masks base::intersect()
-x dplyr::lag()             masks stats::lag()
-x dplyr::recode()          masks car::recode()
-x dplyr::select()          masks MASS::select()
-x purrr::set_names()       masks magrittr::set_names()
-x lubridate::setdiff()     masks base::setdiff()
-x purrr::some()            masks car::some()
-x dplyr::src()             masks Hmisc::src()
-x dplyr::summarize()       masks Hmisc::summarize()
-x lubridate::union()       masks base::union()</code></pre>
-<pre class="r"><code>library(reprex)
-library(here)</code></pre>
-<pre><code>here() starts at /Users/jcraggs/Documents/GitHub/Brad_PT</code></pre>
-<pre class="r"><code>here()</code></pre>
-<pre><code>[1] &quot;/Users/jcraggs/Documents/GitHub/Brad_PT&quot;</code></pre>
-<pre class="r"><code>dr_here(show_reason = FALSE)</code></pre>
-<pre><code>here() starts at /Users/jcraggs/Documents/GitHub/Brad_PT</code></pre>
-<pre class="r"><code># library(ez) Not working for some reason March 17, 2020
-# library(readr)        # ALREADY IN TIDYVERSE
-# library(ggplot2)      # ALREADY IN TIDYVERSE
-# library(dplyr)        # ALREADY IN TIDYVERSE</code></pre>
-<pre class="r"><code>##  different color series
-col1 &lt;- colorRampPalette(c(&quot;#7F0000&quot;, &quot;red&quot;, &quot;#FF7F00&quot;,
-                           &quot;yellow&quot;, &quot;white&quot;,&quot;cyan&quot;,
-                           &quot;#007FFF&quot;, &quot;blue&quot;,&quot;#00007F&quot;))
-col2 &lt;- colorRampPalette(c(&quot;#67001F&quot;, &quot;#B2182B&quot;,
-                           &quot;#D6604D&quot;, &quot;#F4A582&quot;,
-                           &quot;#FDDBC7&quot;, &quot;#FFFFFF&quot;,
-                           &quot;#D1E5F0&quot;, &quot;#92C5DE&quot;,
-                           &quot;#4393C3&quot;, &quot;#2166AC&quot;, 
-                           &quot;#053061&quot;))
-col3 &lt;- colorRampPalette(c(&quot;red&quot;, &quot;white&quot;, &quot;blue&quot;))
-col4 &lt;- colorRampPalette(c(&quot;#7F0000&quot;, &quot;red&quot;, &quot;#FF7F00&quot;, 
-                           &quot;yellow&quot;, &quot;#7FFF7F&quot;,
-                           &quot;cyan&quot;, &quot;#007FFF&quot;, &quot;blue&quot;,
-                           &quot;#00007F&quot;))
-wb &lt;- c(&quot;white&quot;, &quot;black&quot;)</code></pre>
-<pre class="r"><code># currentDate &lt;- format(Sys.Date(), &quot;%d_%X_%Y&quot;)
-currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
-
-
-date.time.append &lt;- function(str, sep = '_', date.format =&quot;%Y_%m_%d_%H_%M_%S&quot;) {
-stopifnot(is.character(str))
-return(paste(str, format(Sys.time(), date.format), sep = sep))  
-}
-
-# TO USE THIS FUNCTION JUST ADD A STRING WITHIN THE PARENTHESESSS AS BELOW
-# date.time.append(&quot;fileName&quot;)</code></pre>
+<div id="abstract" class="section level1">
+<h1>ABSTRACT</h1>
+<p><strong>Introduction</strong>: Chronic pain (CP) is a widespread and costly condition, affecting nearly 100 million Americans and costing over $600 billion annually. Evidence suggests that compared to healthy controls (HC), chronic pain populations experience problems with sleep and depression. Less understood is how whether these problems are differentially experienced by different chronic pain conditions (i.e., chronic low back pain and fibrimyalgia). To address this questions, questionnaire data regarding sleep, depression and pain were collected from healthy controls (HC, n=50) Fibromyalgia (FM, n=44), and chronic low back pain (CLBP, n=64) groups.</p>
+<p><strong>Methods</strong>: An ANOVA with Tukey Honest Significant Differences (TukeyHSD) testing was carried out using RStudio (Version 1.2.5033). The overall test for a main effect of group was significant for all but two variables (i.e., Total time in bed and overall daytime functioning). PostHoc follow up testing using TukeyHSD revealed the presence of significant group differences for all but the same two variables listed above. However, the FM-HC comparison trended toward significance with p ≤ 0.07.</p>
+</div>
+<div id="data" class="section level1">
+<h1>DATA</h1>
 <pre class="r"><code>#       IMPORT DATA FROM GITHUB
 data &lt;- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/Brad_PT/master/PT_data_13042020.csv'), header = TRUE)
 data &lt;- as_tibble(data)</code></pre>
-<pre class="r"><code>#       CLEANING AND PRESERVING ORIGINAL DATA
-
-data %&gt;% count(group)</code></pre>
-<pre><code># A tibble: 5 x 2
-  group     n
-* &lt;int&gt; &lt;int&gt;
-1     0     1
-2     1    53
-3     2    80
-4     3    52
-5    NA     2</code></pre>
-<pre class="r"><code>dat1  &lt;- filter(data, group != 0, group != &quot;NA&quot;, data$bdi1 != &quot;NA&quot;)
-dat1$group.factor = factor(dat1$group,levels=c(&quot;1&quot;,&quot;2&quot;,&quot;3&quot;))
-levels(dat1$group.factor)=c(&quot;HC&quot;,&quot;CLBP&quot;,&quot;FM&quot;, na.rm = TRUE)
-# names(dat1)[names(dat1) == 'gp.fct'] &lt;- 'group.factor'
-#       REPLACE HC McGILL TOTAL &quot;NA&quot; WITH 0
-dat1$mcgill_total  &lt;- coalesce(dat1$mcgill_total, 0L)
-
-#       CLEAN ESS BY REMOVING &quot;NA&quot;
-dat1   &lt;- filter(dat1, ess_total != &quot;NA&quot;)
-
-dat1$ess_total &lt;- as.numeric(dat1$ess_total)
-dat1$bdi_total &lt;- as.numeric(dat1$bdi_total)
-dat1$mcgill_total &lt;- as.numeric(dat1$mcgill_total)
-
-dat1 %&gt;% count(group.factor)</code></pre>
+<div id="clean-data" class="section level2">
+<h2>CLEAN DATA</h2>
+<p>Number of subjects per group</p>
 <pre><code># A tibble: 3 x 2
   group.factor     n
 * &lt;fct&gt;        &lt;int&gt;
 1 HC              50
 2 CLBP            64
 3 FM              44</code></pre>
-<div id="psqi-dataset" class="section level1">
-<h1>PSQI DATASET</h1>
-<pre class="r"><code>#       PSQI DATA
-# gather psqi variables into separate spreadsheet:
-dat.psqi &lt;- dat1[,c(1,425,769,
-                      grep(&quot;pittsburgh&quot;, colnames(dat1)),
-                      grep(&quot;psqi&quot;, colnames(dat1)))]
-#grep(&quot;timestamp&quot;, colnames(dat.raw))
-
-colnames(dat.psqi)</code></pre>
-<pre><code> [1] &quot;ID&quot;                                            
- [2] &quot;sex.factor&quot;                                    
- [3] &quot;group.factor&quot;                                  
- [4] &quot;pittsburgh_sleep_quality_index_complete&quot;       
- [5] &quot;pittsburgh_sleep_quality_index_complete.factor&quot;
- [6] &quot;psqi_1&quot;                                        
- [7] &quot;psqi_1a&quot;                                       
- [8] &quot;psqi_2&quot;                                        
- [9] &quot;psqi_3&quot;                                        
-[10] &quot;psqi_3a&quot;                                       
-[11] &quot;psqi_4&quot;                                        
-[12] &quot;psqi_5a&quot;                                       
-[13] &quot;psqi_5b&quot;                                       
-[14] &quot;psqi_5c&quot;                                       
-[15] &quot;psqi_5d&quot;                                       
-[16] &quot;psqi_5e&quot;                                       
-[17] &quot;psqi_5f&quot;                                       
-[18] &quot;psqi_5g&quot;                                       
-[19] &quot;psqi_5h&quot;                                       
-[20] &quot;psqi_5i&quot;                                       
-[21] &quot;psqi_5other&quot;                                   
-[22] &quot;psqi_5othera&quot;                                  
-[23] &quot;psqi_6&quot;                                        
-[24] &quot;psqi_7&quot;                                        
-[25] &quot;psqi_8a&quot;                                       
-[26] &quot;psqi_8b&quot;                                       
-[27] &quot;psqi_9&quot;                                        
-[28] &quot;psqi_10&quot;                                       
-[29] &quot;psqi_10a&quot;                                      
-[30] &quot;psqi_10b&quot;                                      
-[31] &quot;psqi_10c&quot;                                      
-[32] &quot;psqi_10d&quot;                                      
-[33] &quot;psqi_10e&quot;                                      
-[34] &quot;psqi_10e1&quot;                                     
-[35] &quot;psqi_component1&quot;                               
-[36] &quot;psqi_calcforcomponent2&quot;                        
-[37] &quot;psqi_component2&quot;                               
-[38] &quot;psqi_component3&quot;                               
-[39] &quot;psqi_calcforcomponent5&quot;                        
-[40] &quot;psqi_component5&quot;                               
-[41] &quot;psqi_component6&quot;                               
-[42] &quot;psqi_component7&quot;                               
-[43] &quot;psqi_1a.factor&quot;                                
-[44] &quot;psqi_3a.factor&quot;                                
-[45] &quot;psqi_5a.factor&quot;                                
-[46] &quot;psqi_5b.factor&quot;                                
-[47] &quot;psqi_5c.factor&quot;                                
-[48] &quot;psqi_5d.factor&quot;                                
-[49] &quot;psqi_5e.factor&quot;                                
-[50] &quot;psqi_5f.factor&quot;                                
-[51] &quot;psqi_5g.factor&quot;                                
-[52] &quot;psqi_5h.factor&quot;                                
-[53] &quot;psqi_5i.factor&quot;                                
-[54] &quot;psqi_5othera.factor&quot;                           
-[55] &quot;psqi_6.factor&quot;                                 
-[56] &quot;psqi_7.factor&quot;                                 
-[57] &quot;psqi_8a.factor&quot;                                
-[58] &quot;psqi_8b.factor&quot;                                
-[59] &quot;psqi_9.factor&quot;                                 
-[60] &quot;psqi_10.factor&quot;                                
-[61] &quot;psqi_10a.factor&quot;                               
-[62] &quot;psqi_10b.factor&quot;                               
-[63] &quot;psqi_10c.factor&quot;                               
-[64] &quot;psqi_10d.factor&quot;                               
-[65] &quot;psqi_10e1.factor&quot;                              </code></pre>
-<pre class="r"><code># label(dat.psqi)
-# view(dat.psqi)
-
-#   REORGANIZE VARIABLES
-dat.psqi &lt;- dat.psqi %&gt;% select(1:7,43,everything()) 
-dat.psqi &lt;- dat.psqi %&gt;% select(1:11,44,everything()) 
-dat.psqi &lt;- dat.psqi %&gt;% select(1:14,45,everything()) 
-dat.psqi &lt;- dat.psqi %&gt;% select(1:16,46,everything()) 
-dat.psqi &lt;- dat.psqi %&gt;% select(1:18,47,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:20,48,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:22,49,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:24,50,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:26,51,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:28,52,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:30,53,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:32,54,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:35,55,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:37,56,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:39,57,everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:41,psqi_8b.factor,
-                                psqi_9, psqi_9.factor,
-                                everything())
-dat.psqi &lt;- dat.psqi %&gt;% select(1:45,
-                                psqi_10.factor,
-                                psqi_10a, psqi_10a.factor,
-                                psqi_10b, psqi_10b.factor,
-                                psqi_10c, psqi_10c.factor,
-                                psqi_10d, psqi_10d.factor,
-                                psqi_10e, 
-                                psqi_10e1, psqi_10e1.factor,
-                                everything())
-
-dat.psqi &lt;- dat.psqi %&gt;% select(1:2,group.factor,everything())
-
-colnames(dat.psqi)</code></pre>
-<pre><code> [1] &quot;ID&quot;                                            
- [2] &quot;sex.factor&quot;                                    
- [3] &quot;group.factor&quot;                                  
- [4] &quot;pittsburgh_sleep_quality_index_complete&quot;       
- [5] &quot;pittsburgh_sleep_quality_index_complete.factor&quot;
- [6] &quot;psqi_1&quot;                                        
- [7] &quot;psqi_1a&quot;                                       
- [8] &quot;psqi_1a.factor&quot;                                
- [9] &quot;psqi_2&quot;                                        
-[10] &quot;psqi_3&quot;                                        
-[11] &quot;psqi_3a&quot;                                       
-[12] &quot;psqi_3a.factor&quot;                                
-[13] &quot;psqi_4&quot;                                        
-[14] &quot;psqi_5a&quot;                                       
-[15] &quot;psqi_5a.factor&quot;                                
-[16] &quot;psqi_5b&quot;                                       
-[17] &quot;psqi_5b.factor&quot;                                
-[18] &quot;psqi_5c&quot;                                       
-[19] &quot;psqi_5c.factor&quot;                                
-[20] &quot;psqi_5d&quot;                                       
-[21] &quot;psqi_5d.factor&quot;                                
-[22] &quot;psqi_5e&quot;                                       
-[23] &quot;psqi_5e.factor&quot;                                
-[24] &quot;psqi_5f&quot;                                       
-[25] &quot;psqi_5f.factor&quot;                                
-[26] &quot;psqi_5g&quot;                                       
-[27] &quot;psqi_5g.factor&quot;                                
-[28] &quot;psqi_5h&quot;                                       
-[29] &quot;psqi_5h.factor&quot;                                
-[30] &quot;psqi_5i&quot;                                       
-[31] &quot;psqi_5i.factor&quot;                                
-[32] &quot;psqi_5other&quot;                                   
-[33] &quot;psqi_5othera.factor&quot;                           
-[34] &quot;psqi_5othera&quot;                                  
-[35] &quot;psqi_6&quot;                                        
-[36] &quot;psqi_6.factor&quot;                                 
-[37] &quot;psqi_7&quot;                                        
-[38] &quot;psqi_7.factor&quot;                                 
-[39] &quot;psqi_8a&quot;                                       
-[40] &quot;psqi_8a.factor&quot;                                
-[41] &quot;psqi_8b&quot;                                       
-[42] &quot;psqi_8b.factor&quot;                                
-[43] &quot;psqi_9&quot;                                        
-[44] &quot;psqi_9.factor&quot;                                 
-[45] &quot;psqi_10&quot;                                       
-[46] &quot;psqi_10.factor&quot;                                
-[47] &quot;psqi_10a&quot;                                      
-[48] &quot;psqi_10a.factor&quot;                               
-[49] &quot;psqi_10b&quot;                                      
-[50] &quot;psqi_10b.factor&quot;                               
-[51] &quot;psqi_10c&quot;                                      
-[52] &quot;psqi_10c.factor&quot;                               
-[53] &quot;psqi_10d&quot;                                      
-[54] &quot;psqi_10d.factor&quot;                               
-[55] &quot;psqi_10e&quot;                                      
-[56] &quot;psqi_10e1&quot;                                     
-[57] &quot;psqi_10e1.factor&quot;                              
-[58] &quot;psqi_component1&quot;                               
-[59] &quot;psqi_calcforcomponent2&quot;                        
-[60] &quot;psqi_component2&quot;                               
-[61] &quot;psqi_component3&quot;                               
-[62] &quot;psqi_calcforcomponent5&quot;                        
-[63] &quot;psqi_component5&quot;                               
-[64] &quot;psqi_component6&quot;                               
-[65] &quot;psqi_component7&quot;                               </code></pre>
-<pre class="r"><code>write.csv(dat.psqi, &quot;PSQI_rawData_13April2020.csv&quot;, row.names = FALSE)
-
-# ls()</code></pre>
-<pre class="r"><code>dat.psqi$psqi_2 &lt;- as.numeric(dat.psqi$psqi_2)
-dat.psqi$psqi_4 &lt;- as.numeric(dat.psqi$psqi_4)
-dat.psqi$psqi_5a &lt;- as.numeric(dat.psqi$psqi_5a)
-dat.psqi$psqi_5b &lt;- as.numeric(dat.psqi$psqi_5b)
-dat.psqi$psqi_5c &lt;- as.numeric(dat.psqi$psqi_5c)
-dat.psqi$psqi_5d &lt;- as.numeric(dat.psqi$psqi_5d)
-dat.psqi$psqi_5e &lt;- as.numeric(dat.psqi$psqi_5e)
-dat.psqi$psqi_5f &lt;- as.numeric(dat.psqi$psqi_5f)
-dat.psqi$psqi_5g &lt;- as.numeric(dat.psqi$psqi_5g)
-dat.psqi$psqi_5h &lt;- as.numeric(dat.psqi$psqi_5h)
-dat.psqi$psqi_5i &lt;- as.numeric(dat.psqi$psqi_5i)
-dat.psqi$psqi_5othera &lt;- as.numeric(dat.psqi$psqi_5othera)
-dat.psqi$psqi_7 &lt;- as.numeric(dat.psqi$psqi_7)
-dat.psqi$psqi_8a &lt;- as.numeric(dat.psqi$psqi_8a)
-
-dat.psqi$psqi_9 &lt;- as.numeric(dat.psqi$psqi_9)
-dat.psqi$psqi_component1 &lt;- as.numeric(dat.psqi$psqi_component1)
-
-
-#       REPLACE &quot;NA&quot; WITH 0
-dat.psqi$psqi_5othera &lt;- dat.psqi$psqi_5othera %&gt;% replace_na(0)</code></pre>
 </div>
-<div id="psqi-scoring" class="section level1">
-<h1>PSQI SCORING</h1>
+<div id="psqi-scoring" class="section level2">
+<h2>PSQI SCORING</h2>
 <p>The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality.</p>
-<pre class="r"><code>dat.psqi$bedtime  &lt;- dat.psqi$psqi_1
-dat.psqi$bt.sleep &lt;- dat.psqi$psqi_1a.factor
-dat.psqi$waketime &lt;- dat.psqi$psqi_3
-dat.psqi$wt.wake &lt;- dat.psqi$psqi_3a.factor
-
-#       FOR FORUM HELP VERSION #1
-#       GOING TO SLEEP AND WAKING UP ON THE SAME DAY RESULTS IN 24+ HOURS
-dat.psqi &lt;- dat.psqi %&gt;%
-    mutate_all(.funs = as.character) %&gt;%
-    mutate_at(.vars = c(&quot;bt.sleep&quot;, &quot;wt.wake&quot;),
-              .funs = ~ gsub(pattern = &quot;.&quot;,
-                           replacement = &quot;&quot;,
-                           x = .x,
-                           fixed = TRUE)) %&gt;%
-    mutate(Sleep = as.POSIXct(x = paste(bedtime, bt.sleep),
-                              format = &quot;%I:%M %p&quot;),
-           Wake = as.POSIXct(x = paste(waketime, wt.wake),
-                          format = &quot;%I:%M %p&quot;) +
-            as.difftime(tim = 1, units = &quot;days&quot;),
-           `Time in bed` = Wake - Sleep)
-
-#       CRUDE FIX FOR THE 24+ HOUR ISSUE
-dat.psqi$TIB  &lt;- as.numeric(dat.psqi$`Time in bed`)
-round(dat.psqi$TIB  &lt;- if_else(dat.psqi$TIB &lt; 24,
-                      dat.psqi$TIB,
-                      dat.psqi$TIB - 24), 2)</code></pre>
-<pre><code>  [1]  7.00  7.50  8.50  8.00  9.50  8.50  7.50  8.50  7.50  7.00  9.00  8.00
- [13]  8.00  8.00  7.00  8.50  8.00  8.50  8.75  8.00  8.00  8.00  7.50  8.25
- [25]  6.00  6.00  7.50  9.00  8.50  9.00  6.50  9.00  6.00  7.00  7.25  7.00
- [37]  8.00  7.50  9.00  9.00  6.75  6.50  8.00  6.50  8.00  7.00  6.00  7.75
- [49]  8.50  8.50  8.50  7.00  8.00  9.00 10.50  9.50  5.50  7.00  7.50  6.50
- [61]  9.00  7.00  8.00  7.00  8.00  9.25  8.25  7.00  8.50  7.75  6.50  8.00
- [73]  6.50  6.50  8.50  8.00  8.00  7.50  6.00  9.00  6.50 10.50  7.50  9.00
- [85]  8.00  9.25  8.50  8.00  9.00 12.00  8.00  6.50  6.75  8.50 10.00  9.00
- [97]  8.50  7.00  5.00  9.50  7.00  7.00  7.50  7.50 10.00  7.00  8.85  8.25
-[109]  8.00  8.00 11.00  8.00  9.00  9.00  6.50  5.50  7.00  7.50  8.50  8.00
-[121]  9.00 10.00  8.00  8.50  7.50  8.25  7.00  7.00  6.25  7.50  8.50  6.50
-[133]  7.75  7.00 12.00  7.00  7.00  9.75  7.00  7.00  7.00  7.17  9.00  9.00
-[145]  8.00 12.00  6.00  7.50  9.00  8.00  8.50  9.00  7.00  8.00  4.50 10.00
-[157]  8.02  8.50</code></pre>
-<pre class="r"><code># write.csv(dat.psqi, &quot;PSQI_rawData_April2020_v1.csv&quot;, row.names = FALSE)
-
-currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
-write_csv(dat.psqi,
-          paste(&quot;PSQI_rawData_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;),
-          na = &quot;NA&quot;,
-          col_names = TRUE, quote_escape = &quot;double&quot;)
-
-
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code>#       COMPONENT 1 = QUESTION 9
-dat.psqi$psqi_Comp1 &lt;- as.numeric(dat.psqi$psqi_component1)
-
-#       SCORE QUESTION 1
-# Component 1: Subjective sleep quality—question 9
-# Response, Component Score to Q9 
-# Very good, 0
-# Fairly good, 1
-# Fairly bad, 2
-# Very bad, 3
-
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp1, .after = last_col())
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code># Component 2: Sleep latency—questions 2 and 5a
-
-dat.psqi$Q2 &lt;- dat.psqi$psqi_2
-dat.psqi$Q5a &lt;- dat.psqi$psqi_5a
-
-dat.psqi  &lt;- dat.psqi %&gt;%
-    mutate(
-        Q2score1 = case_when(
-            Q2 &lt;= 15 ~ 0,
-            Q2 &gt;= 16 &amp; Q2 &lt;= 30 ~ 1,
-            Q2 &gt;= 31 &amp; Q2 &lt;= 60 ~ 2,
-            Q2 &gt; 60 ~ 3,
-            TRUE ~ as.numeric(Q2)
-        )
-    )
-
-dat.psqi &lt;- dat.psqi %&gt;% 
-    mutate(
-        Q5aScore1 = case_when(
-            Q5a == 1 ~ 0,
-            Q5a == 2 ~ 1,
-            Q5a == 3 ~ 2,
-            Q5a == 4 ~ 3,
-            TRUE ~ as.numeric(Q5a)
-        )
-    )
-
-
-dat.psqi  &lt;- dat.psqi %&gt;%
-    rowwise() %&gt;%
-    mutate(
-        Q2and5 = sum(c(Q2score1, Q5aScore1), na.rm = TRUE)
-    ) %&gt;%
-    ungroup()
-
-dat.psqi &lt;- dat.psqi %&gt;% 
-    mutate(
-        psqi_Comp2 = case_when(
-            Q2and5 == 0 ~ 0,
-            Q2and5 &gt;= 1 &amp; Q2and5 &lt;= 2 ~ 1,
-            Q2and5 &gt;= 3 &amp; Q2and5 &lt;= 4 ~ 2,
-            Q2and5 &gt;= 5 &amp; Q2and5 &lt;= 6 ~ 3,
-            TRUE ~ as.numeric(Q2and5)
-        )
-    )
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp1, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp2, .after = last_col())
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code># Component 3: Sleep duration—question 4
-
-dat.psqi$Q4 &lt;- as.numeric(dat.psqi$psqi_4)
-
-dat.psqi  &lt;- dat.psqi %&gt;%
-    mutate(
-        psqi_Comp3 = case_when(
-            Q4 &gt; 7 ~ 0,
-            Q4 &gt;= 6 &amp; Q4 &lt;= 7 ~ 1,
-            Q4 &gt;= 5 &amp; Q4 &lt; 6 ~ 2,
-            Q4 &lt; 5 ~ 3,
-            TRUE ~ as.numeric(Q4)
-        )
-    )
-
-dat.psqi &lt;- dat.psqi %&gt;% relocate(Q4, .before = psqi_Comp1)
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code># Component 4: Sleep efficiency—questions 1, 3, and 4
-# Sleep efficiency = (# hours slept/# hours in bed) X 100% 
-#   = (Q4 / TIB) * 100
-# hours slept—question 4
-# hours in bed—calculated from responses to questions 1 and 3
-#   Sleep efficiency, Component score 
-#       &gt; 85%, 0    
-#       75-84%, 1
-#       65-74%, 2
-#       &lt; 65%, 3
-
-dat.psqi$SE &lt;- (dat.psqi$Q4 / dat.psqi$TIB) * 100
-
-dat.psqi  &lt;- dat.psqi %&gt;%
-    mutate(
-        psqi_Comp4 = case_when(
-            SE &gt;= 85 ~ 0,
-            SE &gt;= 75 &amp; SE &lt; 85 ~ 1,
-            SE &gt;= 65 &amp; SE &lt; 75 ~ 2,
-            SE &lt; 65 ~ 3,
-            TRUE ~ as.numeric(SE)
-        )
-    )
-
-dat.psqi &lt;- dat.psqi %&gt;% relocate(SE, .before = psqi_Comp1)
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code># Sum of 5b to 5j scores, Component 5 score
-# 0, 0
-# 1-9, 1
-# 10-18, 2 
-# 19-27, 3
-
-
-###     NEED TO DO THIS TWICE FOR SOME REASON   ####
-dat.psqi$psqi_2 &lt;- as.numeric(dat.psqi$psqi_2)
-dat.psqi$psqi_4 &lt;- as.numeric(dat.psqi$psqi_4)
-dat.psqi$psqi_5a &lt;- as.numeric(dat.psqi$psqi_5a)
-dat.psqi$psqi_5b &lt;- as.numeric(dat.psqi$psqi_5b)
-dat.psqi$psqi_5c &lt;- as.numeric(dat.psqi$psqi_5c)
-dat.psqi$psqi_5d &lt;- as.numeric(dat.psqi$psqi_5d)
-dat.psqi$psqi_5e &lt;- as.numeric(dat.psqi$psqi_5e)
-dat.psqi$psqi_5f &lt;- as.numeric(dat.psqi$psqi_5f)
-dat.psqi$psqi_5g &lt;- as.numeric(dat.psqi$psqi_5g)
-dat.psqi$psqi_5h &lt;- as.numeric(dat.psqi$psqi_5h)
-dat.psqi$psqi_5i &lt;- as.numeric(dat.psqi$psqi_5i)
-dat.psqi$psqi_5othera &lt;- as.numeric(dat.psqi$psqi_5othera)
-dat.psqi$psqi_7 &lt;- as.numeric(dat.psqi$psqi_7)
-dat.psqi$psqi_8a &lt;- as.numeric(dat.psqi$psqi_8a)
-
-dat.psqi$psqi_9 &lt;- as.numeric(dat.psqi$psqi_9)
-dat.psqi$psqi_component1 &lt;- as.numeric(dat.psqi$psqi_component1)
-
-dat.psqi$psqi_5j &lt;- dat.psqi$psqi_5othera # copy variable
-
-#       REARRANGE COLUMNS - AGAIN
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5othera, .before = psqi_5b)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5b, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5c, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5d, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5e, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5f, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5g, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5h, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5i, .before = psqi_Comp1)
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_5j, .before = psqi_Comp1)
-
-
-#       RESCORE THE RESPONSES - ORIG = 1-4; NEW = 0-3
-#       THIS REPLACES THE VALUES IN THE ORIGINAL VARIABLES
-# dat.psqi &lt;- dat.psqi %&gt;% 
-#   mutate_at(vars(matches(&quot;psqi_5[b-i]$&quot;)), ~ . - 1)
-
-#       RESCORING THE LONG WAY
-dat.psqi$Q5b &lt;- dat.psqi$psqi_5b -1
-dat.psqi$Q5c &lt;- dat.psqi$psqi_5c -1
-dat.psqi$Q5d &lt;- dat.psqi$psqi_5d -1
-dat.psqi$Q5e &lt;- dat.psqi$psqi_5e -1
-dat.psqi$Q5f &lt;- dat.psqi$psqi_5f -1
-dat.psqi$Q5g &lt;- dat.psqi$psqi_5g -1
-dat.psqi$Q5h &lt;- dat.psqi$psqi_5h -1
-dat.psqi$Q5i &lt;- dat.psqi$psqi_5i -1
-dat.psqi$Q5j &lt;- dat.psqi$psqi_5j 
-
-#       SUMMING THE SCORES
-dat.psqi  &lt;- dat.psqi %&gt;%
-    rowwise() %&gt;%
-    mutate(
-        Q5s = sum(c(Q5b, Q5c, Q5d, Q5e, Q5f, Q5g, Q5h, Q5i, Q5j), na.rm = TRUE)
-    ) %&gt;%
-    ungroup()
-
-
-# Sum of 5b to 5j scores, Component 5 score
-# 0, 0
-# 1-9, 1
-# 10-18, 2 
-# 19-27, 3
-#       CONVERTING TO COMPONENT SCORE
-dat.psqi &lt;- dat.psqi %&gt;% 
-    mutate(
-        psqi_Comp5 = case_when(
-            Q5s &lt; 1 ~ 0,
-            Q5s &gt;= 1 &amp; Q5s &lt;=9 ~ 1,
-            Q5s &gt;= 10 &amp; Q5s &lt;=18 ~ 1,
-            Q5s &gt;= 19 &amp; Q5s &lt;=27 ~ 1,
-            TRUE ~ as.numeric(Q5s)
-        )
-    )
-
-
-#       ORGANIZING COLUMNS
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp1, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp2, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp3, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp4, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp5, .after = last_col())
-
-
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code># Component 6: Use of sleep medication—question 6
-# Response to Q6, Component 6 score
-# Not during past month, 0
-# Less than once a week, 1 
-# Once or twice a week, 2
-# Three or more times a week, 3
-
-dat.psqi$psqi_Comp6 &lt;- as.numeric(dat.psqi$psqi_6)
-# colnames(dat.psqi)</code></pre>
-<pre class="r"><code>#   Component 7: SUM Daytime dysfunction—questions 7 and 8
-# Sum of Q7 and Q8 subscores, COMPONENT SCORE 
-# 0,0
-# 1-2 1 
-# 3-4 2 
-# 5-6 3
-
-#       SUM QUESTIONS 7 AND 8a
-dat.psqi  &lt;- dat.psqi %&gt;%
-    rowwise() %&gt;%
-    mutate(
-        Q7and8a = sum(c(psqi_7, psqi_8a), na.rm = TRUE)
-    ) %&gt;%
-    ungroup()
-
-#       SCORE COMPONENT 7
-dat.psqi  &lt;- dat.psqi %&gt;%
-    mutate(
-        psqi_Comp7 = case_when(
-            Q7and8a &gt; 1 ~ 0,
-            Q7and8a &gt;= 1 &amp; Q7and8a &lt;= 2 ~ 1,
-            Q7and8a &gt;= 3 &amp; Q7and8a &lt;= 4 ~ 2,
-            Q7and8a &gt;= 5 &amp; Q7and8a &lt;= 6 ~ 3,
-            TRUE ~ as.numeric(Q7and8a)
-        )
-    )
-
-#       ORGANIZING COLUMNS
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp1, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp2, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp3, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp4, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp5, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp6, .after = last_col())
-dat.psqi &lt;- dat.psqi %&gt;% relocate(psqi_Comp7, .after = last_col())</code></pre>
-<pre class="r"><code># Global PSQI Score: Sum of seven component scores:
-
-dat.psqi  &lt;- dat.psqi %&gt;%
-    rowwise() %&gt;%
-    mutate(
-        psqi_Global = sum(c(psqi_Comp1, psqi_Comp2, psqi_Comp3,
-                            psqi_Comp4, psqi_Comp5, psqi_Comp6,
-                            psqi_Comp7), na.rm = TRUE)
-    ) %&gt;%
-    ungroup()
-
-
-colnames(dat.psqi)</code></pre>
-<pre><code>  [1] &quot;ID&quot;                                            
-  [2] &quot;sex.factor&quot;                                    
-  [3] &quot;group.factor&quot;                                  
-  [4] &quot;pittsburgh_sleep_quality_index_complete&quot;       
-  [5] &quot;pittsburgh_sleep_quality_index_complete.factor&quot;
-  [6] &quot;psqi_1&quot;                                        
-  [7] &quot;psqi_1a&quot;                                       
-  [8] &quot;psqi_1a.factor&quot;                                
-  [9] &quot;psqi_2&quot;                                        
- [10] &quot;psqi_3&quot;                                        
- [11] &quot;psqi_3a&quot;                                       
- [12] &quot;psqi_3a.factor&quot;                                
- [13] &quot;psqi_4&quot;                                        
- [14] &quot;psqi_5a&quot;                                       
- [15] &quot;psqi_5a.factor&quot;                                
- [16] &quot;psqi_5othera&quot;                                  
- [17] &quot;psqi_5b.factor&quot;                                
- [18] &quot;psqi_5c.factor&quot;                                
- [19] &quot;psqi_5d.factor&quot;                                
- [20] &quot;psqi_5e.factor&quot;                                
- [21] &quot;psqi_5f.factor&quot;                                
- [22] &quot;psqi_5g.factor&quot;                                
- [23] &quot;psqi_5h.factor&quot;                                
- [24] &quot;psqi_5i.factor&quot;                                
- [25] &quot;psqi_5other&quot;                                   
- [26] &quot;psqi_5othera.factor&quot;                           
- [27] &quot;psqi_6&quot;                                        
- [28] &quot;psqi_6.factor&quot;                                 
- [29] &quot;psqi_7&quot;                                        
- [30] &quot;psqi_7.factor&quot;                                 
- [31] &quot;psqi_8a&quot;                                       
- [32] &quot;psqi_8a.factor&quot;                                
- [33] &quot;psqi_8b&quot;                                       
- [34] &quot;psqi_8b.factor&quot;                                
- [35] &quot;psqi_9&quot;                                        
- [36] &quot;psqi_9.factor&quot;                                 
- [37] &quot;psqi_10&quot;                                       
- [38] &quot;psqi_10.factor&quot;                                
- [39] &quot;psqi_10a&quot;                                      
- [40] &quot;psqi_10a.factor&quot;                               
- [41] &quot;psqi_10b&quot;                                      
- [42] &quot;psqi_10b.factor&quot;                               
- [43] &quot;psqi_10c&quot;                                      
- [44] &quot;psqi_10c.factor&quot;                               
- [45] &quot;psqi_10d&quot;                                      
- [46] &quot;psqi_10d.factor&quot;                               
- [47] &quot;psqi_10e&quot;                                      
- [48] &quot;psqi_10e1&quot;                                     
- [49] &quot;psqi_10e1.factor&quot;                              
- [50] &quot;psqi_component1&quot;                               
- [51] &quot;psqi_calcforcomponent2&quot;                        
- [52] &quot;psqi_component2&quot;                               
- [53] &quot;psqi_component3&quot;                               
- [54] &quot;psqi_calcforcomponent5&quot;                        
- [55] &quot;psqi_component5&quot;                               
- [56] &quot;psqi_component6&quot;                               
- [57] &quot;psqi_component7&quot;                               
- [58] &quot;bedtime&quot;                                       
- [59] &quot;bt.sleep&quot;                                      
- [60] &quot;waketime&quot;                                      
- [61] &quot;wt.wake&quot;                                       
- [62] &quot;Sleep&quot;                                         
- [63] &quot;Wake&quot;                                          
- [64] &quot;Time in bed&quot;                                   
- [65] &quot;TIB&quot;                                           
- [66] &quot;Q2&quot;                                            
- [67] &quot;Q5a&quot;                                           
- [68] &quot;Q2score1&quot;                                      
- [69] &quot;Q5aScore1&quot;                                     
- [70] &quot;Q2and5&quot;                                        
- [71] &quot;Q4&quot;                                            
- [72] &quot;SE&quot;                                            
- [73] &quot;psqi_5b&quot;                                       
- [74] &quot;psqi_5c&quot;                                       
- [75] &quot;psqi_5d&quot;                                       
- [76] &quot;psqi_5e&quot;                                       
- [77] &quot;psqi_5f&quot;                                       
- [78] &quot;psqi_5g&quot;                                       
- [79] &quot;psqi_5h&quot;                                       
- [80] &quot;psqi_5i&quot;                                       
- [81] &quot;psqi_5j&quot;                                       
- [82] &quot;Q5b&quot;                                           
- [83] &quot;Q5c&quot;                                           
- [84] &quot;Q5d&quot;                                           
- [85] &quot;Q5e&quot;                                           
- [86] &quot;Q5f&quot;                                           
- [87] &quot;Q5g&quot;                                           
- [88] &quot;Q5h&quot;                                           
- [89] &quot;Q5i&quot;                                           
- [90] &quot;Q5j&quot;                                           
- [91] &quot;Q5s&quot;                                           
- [92] &quot;Q7and8a&quot;                                       
- [93] &quot;psqi_Comp1&quot;                                    
- [94] &quot;psqi_Comp2&quot;                                    
- [95] &quot;psqi_Comp3&quot;                                    
- [96] &quot;psqi_Comp4&quot;                                    
- [97] &quot;psqi_Comp5&quot;                                    
- [98] &quot;psqi_Comp6&quot;                                    
- [99] &quot;psqi_Comp7&quot;                                    
-[100] &quot;psqi_Global&quot;                                   </code></pre>
-<pre class="r"><code>#       RENAME THE PSQI COMPONENTS
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] &lt;- 'slpQual'
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] &lt;- 'slpLat'
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp3'] &lt;- 'slpDur'
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp4'] &lt;- 'slpEff'
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp5'] &lt;- 'slpDist'
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp6'] &lt;- 'slpMeds'
-names(dat.psqi)[names(dat.psqi) == 'psqi_Comp7'] &lt;- 'slpDayFcn'
-
-colnames(dat.psqi)</code></pre>
-<pre><code>  [1] &quot;ID&quot;                                            
-  [2] &quot;sex.factor&quot;                                    
-  [3] &quot;group.factor&quot;                                  
-  [4] &quot;pittsburgh_sleep_quality_index_complete&quot;       
-  [5] &quot;pittsburgh_sleep_quality_index_complete.factor&quot;
-  [6] &quot;psqi_1&quot;                                        
-  [7] &quot;psqi_1a&quot;                                       
-  [8] &quot;psqi_1a.factor&quot;                                
-  [9] &quot;psqi_2&quot;                                        
- [10] &quot;psqi_3&quot;                                        
- [11] &quot;psqi_3a&quot;                                       
- [12] &quot;psqi_3a.factor&quot;                                
- [13] &quot;psqi_4&quot;                                        
- [14] &quot;psqi_5a&quot;                                       
- [15] &quot;psqi_5a.factor&quot;                                
- [16] &quot;psqi_5othera&quot;                                  
- [17] &quot;psqi_5b.factor&quot;                                
- [18] &quot;psqi_5c.factor&quot;                                
- [19] &quot;psqi_5d.factor&quot;                                
- [20] &quot;psqi_5e.factor&quot;                                
- [21] &quot;psqi_5f.factor&quot;                                
- [22] &quot;psqi_5g.factor&quot;                                
- [23] &quot;psqi_5h.factor&quot;                                
- [24] &quot;psqi_5i.factor&quot;                                
- [25] &quot;psqi_5other&quot;                                   
- [26] &quot;psqi_5othera.factor&quot;                           
- [27] &quot;psqi_6&quot;                                        
- [28] &quot;psqi_6.factor&quot;                                 
- [29] &quot;psqi_7&quot;                                        
- [30] &quot;psqi_7.factor&quot;                                 
- [31] &quot;psqi_8a&quot;                                       
- [32] &quot;psqi_8a.factor&quot;                                
- [33] &quot;psqi_8b&quot;                                       
- [34] &quot;psqi_8b.factor&quot;                                
- [35] &quot;psqi_9&quot;                                        
- [36] &quot;psqi_9.factor&quot;                                 
- [37] &quot;psqi_10&quot;                                       
- [38] &quot;psqi_10.factor&quot;                                
- [39] &quot;psqi_10a&quot;                                      
- [40] &quot;psqi_10a.factor&quot;                               
- [41] &quot;psqi_10b&quot;                                      
- [42] &quot;psqi_10b.factor&quot;                               
- [43] &quot;psqi_10c&quot;                                      
- [44] &quot;psqi_10c.factor&quot;                               
- [45] &quot;psqi_10d&quot;                                      
- [46] &quot;psqi_10d.factor&quot;                               
- [47] &quot;psqi_10e&quot;                                      
- [48] &quot;psqi_10e1&quot;                                     
- [49] &quot;psqi_10e1.factor&quot;                              
- [50] &quot;psqi_component1&quot;                               
- [51] &quot;psqi_calcforcomponent2&quot;                        
- [52] &quot;psqi_component2&quot;                               
- [53] &quot;psqi_component3&quot;                               
- [54] &quot;psqi_calcforcomponent5&quot;                        
- [55] &quot;psqi_component5&quot;                               
- [56] &quot;psqi_component6&quot;                               
- [57] &quot;psqi_component7&quot;                               
- [58] &quot;bedtime&quot;                                       
- [59] &quot;bt.sleep&quot;                                      
- [60] &quot;waketime&quot;                                      
- [61] &quot;wt.wake&quot;                                       
- [62] &quot;Sleep&quot;                                         
- [63] &quot;Wake&quot;                                          
- [64] &quot;Time in bed&quot;                                   
- [65] &quot;TIB&quot;                                           
- [66] &quot;Q2&quot;                                            
- [67] &quot;Q5a&quot;                                           
- [68] &quot;Q2score1&quot;                                      
- [69] &quot;Q5aScore1&quot;                                     
- [70] &quot;Q2and5&quot;                                        
- [71] &quot;Q4&quot;                                            
- [72] &quot;SE&quot;                                            
- [73] &quot;psqi_5b&quot;                                       
- [74] &quot;psqi_5c&quot;                                       
- [75] &quot;psqi_5d&quot;                                       
- [76] &quot;psqi_5e&quot;                                       
- [77] &quot;psqi_5f&quot;                                       
- [78] &quot;psqi_5g&quot;                                       
- [79] &quot;psqi_5h&quot;                                       
- [80] &quot;psqi_5i&quot;                                       
- [81] &quot;psqi_5j&quot;                                       
- [82] &quot;Q5b&quot;                                           
- [83] &quot;Q5c&quot;                                           
- [84] &quot;Q5d&quot;                                           
- [85] &quot;Q5e&quot;                                           
- [86] &quot;Q5f&quot;                                           
- [87] &quot;Q5g&quot;                                           
- [88] &quot;Q5h&quot;                                           
- [89] &quot;Q5i&quot;                                           
- [90] &quot;Q5j&quot;                                           
- [91] &quot;Q5s&quot;                                           
- [92] &quot;Q7and8a&quot;                                       
- [93] &quot;slpQual&quot;                                       
- [94] &quot;slpLat&quot;                                        
- [95] &quot;slpDur&quot;                                        
- [96] &quot;slpEff&quot;                                        
- [97] &quot;slpDist&quot;                                       
- [98] &quot;slpMeds&quot;                                       
- [99] &quot;slpDayFcn&quot;                                     
-[100] &quot;psqi_Global&quot;                                   </code></pre>
-<pre class="r"><code>currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
-write_csv(dat.psqi,
-          paste(&quot;PSQI_scored_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;),
-          na = &quot;NA&quot;,
-          col_names = TRUE, quote_escape = &quot;double&quot;)</code></pre>
+<p>Time in bed (TIB)</p>
+<p>Comp 1</p>
+<p>Comp 2</p>
+<p>Comp 3</p>
+<p>Comp 4</p>
+<p>Comp 5</p>
+<p>Comp 6</p>
+<p>Comp 7</p>
+<p>PSQI Global</p>
 <p>MERGE BACK INTO MAIN DATASET</p>
-<pre class="r"><code>#       COMBINING 2 DATASETS
-
-#       CREATING SMALL PSQI DATASET
-psqiSM  &lt;- dat.psqi %&gt;% dplyr::select(&quot;ID&quot;,&quot;TIB&quot;,&quot;slpQual&quot;,
-                                      &quot;slpLat&quot;, &quot;slpDur&quot;,
-                                      &quot;slpEff&quot;, &quot;slpDist&quot;,
-                                      &quot;slpMeds&quot;,&quot;slpDayFcn&quot;,
-                                      &quot;psqi_Global&quot;)
-#       MERGE BACK INTO MAIN DATASET
-dat1 &lt;- merge(dat1, psqiSM, by = &quot;ID&quot;)
-
-# ls()
-# colnames(dat1)</code></pre>
+</div>
 <div id="final-datasets" class="section level2">
 <h2>FINAL DATASETS</h2>
-<pre class="r"><code>#       CREATING SMALL DATASETS
-# datSM1  &lt;- dat1 %&gt;% dplyr::select(&quot;ID&quot;,&quot;group.factor&quot;,&quot;ess_total&quot;, &quot;bdi_total&quot;, &quot;mcgill_total&quot;)
-dat.SM  &lt;- dat1 %&gt;% dplyr::select(&quot;group.factor&quot;,&quot;slpQual&quot;,
-                                  &quot;slpLat&quot;, &quot;slpDur&quot;,
-                                  &quot;slpEff&quot;, &quot;slpDist&quot;,
-                                  &quot;slpMeds&quot;,&quot;slpDayFcn&quot;,
-                                  &quot;psqi_Global&quot;,&quot;ess_total&quot;,
-                                  &quot;bdi_total&quot;, &quot;mcgill_total&quot;,
-                                  &quot;TIB&quot;)
-
-dat.HC &lt;- dat.SM %&gt;%
-    filter(group.factor == &quot;HC&quot;)
-dat.FM &lt;- dat.SM %&gt;%
-    filter(group.factor == &quot;FM&quot;)
-dat.CLBP &lt;- dat.SM %&gt;%
-    filter(group.factor == &quot;CLBP&quot;)
-dat.pain &lt;- dat.SM %&gt;%
-    filter(group.factor == &quot;CLBP&quot; | group.factor == &quot;FM&quot;)
-
-
-#       WRITE SMALL DATASET
-write_csv(dat.SM, &quot;dat.SM.csv&quot;,
-          na = &quot;NA&quot;, append = FALSE,
-          col_names = TRUE, quote_escape = &quot;double&quot;)
-
-
-
-# You could use the paste function to define the filename with date appended to it. See the example below: 
-
-
-smallData &lt;- paste(&quot;dat.SM2_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;) 
-write_csv(dat.SM, smallData,
-          na = &quot;NA&quot;,
-          col_names = TRUE, quote_escape = &quot;double&quot;) 
-
-currentDate &lt;- format(Sys.time(), &quot;%F_%H-%M&quot;)
-write_csv(dat.SM,
-          paste(&quot;dat.SM_&quot;,currentDate,&quot;.csv&quot;,sep=&quot;&quot;),
-          na = &quot;NA&quot;,
-          col_names = TRUE, quote_escape = &quot;double&quot;) 
-
-#       TO RECREATE A DATASET
-# dput(head(dat.time, 20))
-# dput(datSM1)
-#       NOT ALL SUBJECTS HAVE COMPLETE DATA
-#       DONE AS OF March 31, 2020</code></pre>
-<pre class="r"><code># dat.SM.smry &lt;- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
-# 
-# summarise(dat.SM)
-
-#       LOOKING AT VARIANCE AMONG VARIABLES
-library(caret)</code></pre>
-<pre><code>
-Attaching package: 'caret'</code></pre>
-<pre><code>The following object is masked from 'package:purrr':
-
-    lift</code></pre>
-<pre><code>The following object is masked from 'package:survival':
-
-    cluster</code></pre>
-<pre class="r"><code>nearZeroVar(dat.pain,
-            uniqueCut = 2,
-            names = TRUE)</code></pre>
-<pre><code>[1] &quot;slpDist&quot;</code></pre>
-<pre class="r"><code>#   slpDist has little to no variance</code></pre>
+<p>All data has been updated, processed, clean and scored</p>
 </div>
-<div id="examine-data" class="section level2">
-<h2>EXAMINE DATA</h2>
-<pre class="r"><code>summary(dat.SM) # Quick overview</code></pre>
-<pre><code> group.factor    slpQual          slpLat          slpDur      slpEff      
- HC  :50      Min.   :0.000   Min.   :0.000   Min.   :0   Min.   :0.0000  
- CLBP:64      1st Qu.:1.000   1st Qu.:1.000   1st Qu.:0   1st Qu.:0.0000  
- FM  :44      Median :1.000   Median :1.000   Median :1   Median :0.0000  
- TRUE: 0      Mean   :1.222   Mean   :1.487   Mean   :1   Mean   :0.7278  
-              3rd Qu.:2.000   3rd Qu.:2.000   3rd Qu.:1   3rd Qu.:1.0000  
-              Max.   :3.000   Max.   :3.000   Max.   :3   Max.   :3.0000  
-    slpDist         slpMeds         slpDayFcn       psqi_Global    
- Min.   :0.000   Min.   :0.0000   Min.   :0.0000   Min.   : 1.000  
- 1st Qu.:1.000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.: 4.000  
- Median :1.000   Median :0.0000   Median :0.0000   Median : 6.000  
- Mean   :0.981   Mean   :0.7911   Mean   :0.2152   Mean   : 6.424  
- 3rd Qu.:1.000   3rd Qu.:1.7500   3rd Qu.:0.0000   3rd Qu.: 8.000  
- Max.   :1.000   Max.   :3.0000   Max.   :1.0000   Max.   :16.000  
-   ess_total        bdi_total      mcgill_total       TIB        
- Min.   : 0.000   Min.   : 0.00   Min.   : 0.0   Min.   : 4.500  
- 1st Qu.: 4.000   1st Qu.: 1.25   1st Qu.: 0.0   1st Qu.: 7.000  
- Median : 6.500   Median : 7.00   Median :18.0   Median : 8.000  
- Mean   : 6.943   Mean   : 9.62   Mean   :20.5   Mean   : 7.929  
- 3rd Qu.: 9.000   3rd Qu.:14.00   3rd Qu.:39.0   3rd Qu.: 8.500  
- Max.   :18.000   Max.   :41.00   Max.   :67.0   Max.   :12.000  </code></pre>
-<pre class="r"><code>#       MEANS AND SDs
-dat.SM.smry &lt;- dat.SM %&gt;% 
-    group_by(group.factor) %&gt;% 
-    summarise_all(. , list(mean=mean, sd=sd))
-
-dat.SM.smry</code></pre>
-<pre><code># A tibble: 3 x 25
-  group.factor slpQual_mean slpLat_mean slpDur_mean slpEff_mean slpDist_mean
-* &lt;fct&gt;               &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;       &lt;dbl&gt;        &lt;dbl&gt;
-1 HC                   0.76        1.14       0.8         0.4           0.94
-2 CLBP                 1.20        1.36       0.859       0.562         1   
-3 FM                   1.77        2.07       1.43        1.34          1   
-# … with 19 more variables: slpMeds_mean &lt;dbl&gt;, slpDayFcn_mean &lt;dbl&gt;,
-#   psqi_Global_mean &lt;dbl&gt;, ess_total_mean &lt;dbl&gt;, bdi_total_mean &lt;dbl&gt;,
-#   mcgill_total_mean &lt;dbl&gt;, TIB_mean &lt;dbl&gt;, slpQual_sd &lt;dbl&gt;, slpLat_sd &lt;dbl&gt;,
-#   slpDur_sd &lt;dbl&gt;, slpEff_sd &lt;dbl&gt;, slpDist_sd &lt;dbl&gt;, slpMeds_sd &lt;dbl&gt;,
-#   slpDayFcn_sd &lt;dbl&gt;, psqi_Global_sd &lt;dbl&gt;, ess_total_sd &lt;dbl&gt;,
-#   bdi_total_sd &lt;dbl&gt;, mcgill_total_sd &lt;dbl&gt;, TIB_sd &lt;dbl&gt;</code></pre>
-<pre class="r"><code>write_csv(dat.SM.smry, &quot;dat.SM.smry.csv&quot;,
-          na = &quot;NA&quot;, append = FALSE,
-          col_names = TRUE, quote_escape = &quot;double&quot;)</code></pre>
-<pre class="r"><code>#   PostHoc DOES WORK
-
-# construct anova model for each column of dat1[, my_outcome_variables]
-model_summaries &lt;- dat1[,c(&quot;slpQual&quot;, &quot;slpLat&quot;, &quot;slpDur&quot;,
-                           &quot;slpEff&quot;, &quot;slpDist&quot;,&quot;slpMeds&quot;,
-                           &quot;slpDayFcn&quot;,&quot;psqi_Global&quot;,&quot;ess_total&quot;,
-                           &quot;bdi_total&quot;, &quot;mcgill_total&quot;,
-                           &quot;TIB&quot;)] %&gt;%
-  purrr::map(~ aov(.x ~ group.factor, data = dat1))  %&gt;%
-  # append the TukeyHSD CI estimates
-  purrr::map(function(x) {
-    list(
-      model = x,
-      tukey = TukeyHSD(x)
-    )
-  })
-
-#       TO ACCESS THE RESULTS
-summary(model_summaries$bdi_total$model)</code></pre>
-<pre><code>              Df Sum Sq Mean Sq F value   Pr(&gt;F)    
-group.factor   2   3894  1947.1   32.84 1.29e-12 ***
-Residuals    155   9191    59.3                     
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-<pre class="r"><code>print(round(model_summaries$bdi_total$tukey$group.factor, 4))</code></pre>
-<pre><code>           diff    lwr     upr p adj
-CLBP-HC  6.8650 3.4255 10.3045 0e+00
-FM-HC   12.8536 9.0869 16.6204 0e+00
-FM-CLBP  5.9886 2.4199  9.5573 3e-04</code></pre>
-<pre class="r"><code># print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-# print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-# signif(model_summaries$bdi_total$tukey$group.factor, 3)</code></pre>
-<pre class="r"><code>z_table1 &lt;- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))</code></pre>
-<pre><code>          diff   lwr    upr     p adj
-CLBP-HC  6.865 3.426 10.300 1.534e-05
-FM-HC   12.850 9.087 16.620 5.429e-13
-FM-CLBP  5.989 2.420  9.557 3.202e-04</code></pre>
-<pre class="r"><code>z_table1 &lt;- as.data.frame(z_table1)
-z_table1$row &lt;- c(&quot;CLBP-HC&quot;, &quot;FM-HC&quot;, 
-                  &quot;FM-CLBP&quot;)
-
-z_table1 %&gt;% 
-    # dplyr::select(&quot;row&quot; , &quot;diff&quot;, &quot;p adj&quot;)  %&gt;% 
-    gt(rowname_col = &quot;row&quot;)  %&gt;% 
-    tab_header(
-        title = md(&quot;**BDI**&quot;),
-        subtitle = md(&quot;ANOVA PostHoc&quot;)) %&gt;% 
-    tab_stubhead(label = &quot;Comparisons&quot;) </code></pre>
+<div id="data-qa" class="section level2">
+<h2>DATA QA</h2>
+<p>The variable slpDist has little to no variance</p>
+<pre><code>[1] &quot;slpDist&quot;</code></pre>
+</div>
+</div>
+<div id="examine-data" class="section level1">
+<h1>EXAMINE DATA</h1>
+<div id="means" class="section level2">
+<h2>MEANS</h2>
+<pre><code> group.factor    slpQual          slpLat          slpDur      slpEff     
+ HC  :50      Min.   :0.000   Min.   :0.000   Min.   :0   Min.   :0.000  
+ CLBP:64      1st Qu.:1.000   1st Qu.:1.000   1st Qu.:0   1st Qu.:0.000  
+ FM  :44      Median :1.000   Median :1.000   Median :1   Median :1.000  
+ TRUE: 0      Mean   :1.222   Mean   :1.487   Mean   :1   Mean   :1.424  
+              3rd Qu.:2.000   3rd Qu.:2.000   3rd Qu.:1   3rd Qu.:3.000  
+              Max.   :3.000   Max.   :3.000   Max.   :3   Max.   :3.000  
+    slpDist         slpMeds         slpDayFcn       psqi_Global   
+ Min.   :0.000   Min.   :0.0000   Min.   :0.0000   Min.   : 1.00  
+ 1st Qu.:1.000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.: 5.00  
+ Median :1.000   Median :0.0000   Median :0.0000   Median : 7.00  
+ Mean   :0.981   Mean   :0.7911   Mean   :0.2152   Mean   : 7.12  
+ 3rd Qu.:1.000   3rd Qu.:1.7500   3rd Qu.:0.0000   3rd Qu.: 9.00  
+ Max.   :1.000   Max.   :3.0000   Max.   :1.0000   Max.   :16.00  
+   ess_total        bdi_total      mcgill_total       TIB       
+ Min.   : 0.000   Min.   : 0.00   Min.   : 0.0   Min.   : 6.00  
+ 1st Qu.: 4.000   1st Qu.: 1.25   1st Qu.: 0.0   1st Qu.: 7.75  
+ Median : 6.500   Median : 7.00   Median :18.0   Median : 8.50  
+ Mean   : 6.943   Mean   : 9.62   Mean   :20.5   Mean   :15.37  
+ 3rd Qu.: 9.000   3rd Qu.:14.00   3rd Qu.:39.0   3rd Qu.:30.50  
+ Max.   :18.000   Max.   :41.00   Max.   :67.0   Max.   :35.00  </code></pre>
+</div>
+<div id="anova-main-effect-of-group" class="section level2">
+<h2>ANOVA (Main effect of group)</h2>
 <style>html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
 }
 
-#cesantvckc .gt_table {
+#nrssnzjuxo .gt_table {
   display: table;
   border-collapse: collapse;
   margin-left: auto;
@@ -1464,7 +483,7 @@ z_table1 %&gt;%
   border-left-color: #D3D3D3;
 }
 
-#cesantvckc .gt_heading {
+#nrssnzjuxo .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1476,7 +495,7 @@ z_table1 %&gt;%
   border-right-color: #D3D3D3;
 }
 
-#cesantvckc .gt_title {
+#nrssnzjuxo .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1486,7 +505,7 @@ z_table1 %&gt;%
   border-bottom-width: 0;
 }
 
-#cesantvckc .gt_subtitle {
+#nrssnzjuxo .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1496,13 +515,13 @@ z_table1 %&gt;%
   border-top-width: 0;
 }
 
-#cesantvckc .gt_bottom_border {
+#nrssnzjuxo .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#cesantvckc .gt_col_headings {
+#nrssnzjuxo .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1517,7 +536,7 @@ z_table1 %&gt;%
   border-right-color: #D3D3D3;
 }
 
-#cesantvckc .gt_col_heading {
+#nrssnzjuxo .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1537,7 +556,7 @@ z_table1 %&gt;%
   overflow-x: hidden;
 }
 
-#cesantvckc .gt_column_spanner_outer {
+#nrssnzjuxo .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1549,15 +568,15 @@ z_table1 %&gt;%
   padding-right: 4px;
 }
 
-#cesantvckc .gt_column_spanner_outer:first-child {
+#nrssnzjuxo .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#cesantvckc .gt_column_spanner_outer:last-child {
+#nrssnzjuxo .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#cesantvckc .gt_column_spanner {
+#nrssnzjuxo .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1569,7 +588,7 @@ z_table1 %&gt;%
   width: 100%;
 }
 
-#cesantvckc .gt_group_heading {
+#nrssnzjuxo .gt_group_heading {
   padding: 8px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1591,7 +610,7 @@ z_table1 %&gt;%
   vertical-align: middle;
 }
 
-#cesantvckc .gt_empty_group_heading {
+#nrssnzjuxo .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1606,19 +625,19 @@ z_table1 %&gt;%
   vertical-align: middle;
 }
 
-#cesantvckc .gt_striped {
+#nrssnzjuxo .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#cesantvckc .gt_from_md > :first-child {
+#nrssnzjuxo .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#cesantvckc .gt_from_md > :last-child {
+#nrssnzjuxo .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#cesantvckc .gt_row {
+#nrssnzjuxo .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1637,7 +656,7 @@ z_table1 %&gt;%
   overflow-x: hidden;
 }
 
-#cesantvckc .gt_stub {
+#nrssnzjuxo .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1649,7 +668,7 @@ z_table1 %&gt;%
   padding-left: 12px;
 }
 
-#cesantvckc .gt_summary_row {
+#nrssnzjuxo .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1659,7 +678,7 @@ z_table1 %&gt;%
   padding-right: 5px;
 }
 
-#cesantvckc .gt_first_summary_row {
+#nrssnzjuxo .gt_first_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1669,7 +688,7 @@ z_table1 %&gt;%
   border-top-color: #D3D3D3;
 }
 
-#cesantvckc .gt_grand_summary_row {
+#nrssnzjuxo .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1679,7 +698,7 @@ z_table1 %&gt;%
   padding-right: 5px;
 }
 
-#cesantvckc .gt_first_grand_summary_row {
+#nrssnzjuxo .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1689,7 +708,7 @@ z_table1 %&gt;%
   border-top-color: #D3D3D3;
 }
 
-#cesantvckc .gt_table_body {
+#nrssnzjuxo .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1698,7 +717,7 @@ z_table1 %&gt;%
   border-bottom-color: #D3D3D3;
 }
 
-#cesantvckc .gt_footnotes {
+#nrssnzjuxo .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1712,13 +731,13 @@ z_table1 %&gt;%
   border-right-color: #D3D3D3;
 }
 
-#cesantvckc .gt_footnote {
+#nrssnzjuxo .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding: 4px;
 }
 
-#cesantvckc .gt_sourcenotes {
+#nrssnzjuxo .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1732,84 +751,756 @@ z_table1 %&gt;%
   border-right-color: #D3D3D3;
 }
 
-#cesantvckc .gt_sourcenote {
+#nrssnzjuxo .gt_sourcenote {
   font-size: 90%;
   padding: 4px;
 }
 
-#cesantvckc .gt_left {
+#nrssnzjuxo .gt_left {
   text-align: left;
 }
 
-#cesantvckc .gt_center {
+#nrssnzjuxo .gt_center {
   text-align: center;
 }
 
-#cesantvckc .gt_right {
+#nrssnzjuxo .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#cesantvckc .gt_font_normal {
+#nrssnzjuxo .gt_font_normal {
   font-weight: normal;
 }
 
-#cesantvckc .gt_font_bold {
+#nrssnzjuxo .gt_font_bold {
   font-weight: bold;
 }
 
-#cesantvckc .gt_font_italic {
+#nrssnzjuxo .gt_font_italic {
   font-style: italic;
 }
 
-#cesantvckc .gt_super {
+#nrssnzjuxo .gt_super {
   font-size: 65%;
 }
 
-#cesantvckc .gt_footnote_marks {
+#nrssnzjuxo .gt_footnote_marks {
   font-style: italic;
   font-size: 65%;
 }
 </style>
-<div id="cesantvckc" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+<div id="nrssnzjuxo" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
   <thead class="gt_header">
     <tr>
-      <th colspan="5" class="gt_heading gt_title gt_font_normal" style><strong>BDI</strong></th>
+      <th colspan="2" class="gt_heading gt_title gt_font_normal" style>Main effect of group</th>
     </tr>
     <tr>
-      <th colspan="5" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border" style>ANOVA PostHoc</th>
+      <th colspan="2" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border" style></th>
     </tr>
   </thead>
   <thead class="gt_col_headings">
     <tr>
-      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">Comparisons</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">diff</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">lwr</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">upr</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">p adj</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1"></th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">p.value</th>
     </tr>
   </thead>
   <tbody class="gt_table_body">
     <tr>
-      <td class="gt_row gt_left gt_stub">CLBP-HC</td>
-      <td class="gt_row gt_right">6.865</td>
-      <td class="gt_row gt_right">3.426</td>
-      <td class="gt_row gt_right">10.300</td>
-      <td class="gt_row gt_right">1.534e-05</td>
+      <td class="gt_row gt_left gt_stub">slpQual</td>
+      <td class="gt_row gt_right">0.0000</td>
     </tr>
     <tr>
-      <td class="gt_row gt_left gt_stub">FM-HC</td>
-      <td class="gt_row gt_right">12.850</td>
-      <td class="gt_row gt_right">9.087</td>
-      <td class="gt_row gt_right">16.620</td>
-      <td class="gt_row gt_right">5.429e-13</td>
+      <td class="gt_row gt_left gt_stub">slpLat</td>
+      <td class="gt_row gt_right">0.0000</td>
     </tr>
     <tr>
-      <td class="gt_row gt_left gt_stub">FM-CLBP</td>
-      <td class="gt_row gt_right">5.989</td>
-      <td class="gt_row gt_right">2.420</td>
-      <td class="gt_row gt_right">9.557</td>
-      <td class="gt_row gt_right">3.202e-04</td>
+      <td class="gt_row gt_left gt_stub">slpDur</td>
+      <td class="gt_row gt_right">0.0002</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">slpEff</td>
+      <td class="gt_row gt_right">0.3185</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">slpDist</td>
+      <td class="gt_row gt_right">0.0365</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">slpMeds</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">slpDayFcn</td>
+      <td class="gt_row gt_right">0.0906</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">psqi_Global</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">ess_total</td>
+      <td class="gt_row gt_right">0.0060</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">bdi_total</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">mcgill_total</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left gt_stub">TIB</td>
+      <td class="gt_row gt_right">0.8649</td>
+    </tr>
+  </tbody>
+  
+  
+</table></div>
+</div>
+<div id="posthoc" class="section level2">
+<h2>PostHoc</h2>
+<style>html {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', 'Fira Sans', 'Droid Sans', Arial, sans-serif;
+}
+
+#jojlpgkyks .gt_table {
+  display: table;
+  border-collapse: collapse;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#jojlpgkyks .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 0;
+  padding-bottom: 4px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#jojlpgkyks .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#jojlpgkyks .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#jojlpgkyks .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#jojlpgkyks .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#jojlpgkyks .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#jojlpgkyks .gt_group_heading {
+  padding: 8px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#jojlpgkyks .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#jojlpgkyks .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#jojlpgkyks .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#jojlpgkyks .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#jojlpgkyks .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#jojlpgkyks .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 12px;
+}
+
+#jojlpgkyks .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jojlpgkyks .gt_first_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#jojlpgkyks .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding: 4px;
+}
+
+#jojlpgkyks .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#jojlpgkyks .gt_sourcenote {
+  font-size: 90%;
+  padding: 4px;
+}
+
+#jojlpgkyks .gt_left {
+  text-align: left;
+}
+
+#jojlpgkyks .gt_center {
+  text-align: center;
+}
+
+#jojlpgkyks .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#jojlpgkyks .gt_font_normal {
+  font-weight: normal;
+}
+
+#jojlpgkyks .gt_font_bold {
+  font-weight: bold;
+}
+
+#jojlpgkyks .gt_font_italic {
+  font-style: italic;
+}
+
+#jojlpgkyks .gt_super {
+  font-size: 65%;
+}
+
+#jojlpgkyks .gt_footnote_marks {
+  font-style: italic;
+  font-size: 65%;
+}
+</style>
+<div id="jojlpgkyks" style="overflow-x:auto;overflow-y:auto;width:auto;height:auto;"><table class="gt_table">
+  <thead class="gt_header">
+    <tr>
+      <th colspan="5" class="gt_heading gt_title gt_font_normal" style><em>PostHoc</em></th>
+    </tr>
+    <tr>
+      <th colspan="5" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border" style></th>
+    </tr>
+  </thead>
+  <thead class="gt_col_headings">
+    <tr>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1">comparison</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">diff</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">conf.low</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">conf.high</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1">adj.p.value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpQual</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.44</td>
+      <td class="gt_row gt_right">0.12</td>
+      <td class="gt_row gt_right">0.77</td>
+      <td class="gt_row gt_right">0.0041</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">1.01</td>
+      <td class="gt_row gt_right">0.66</td>
+      <td class="gt_row gt_right">1.37</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">0.57</td>
+      <td class="gt_row gt_right">0.23</td>
+      <td class="gt_row gt_right">0.91</td>
+      <td class="gt_row gt_right">0.0003</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpLat</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.22</td>
+      <td class="gt_row gt_right">&minus;0.15</td>
+      <td class="gt_row gt_right">0.58</td>
+      <td class="gt_row gt_right">0.3321</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">0.93</td>
+      <td class="gt_row gt_right">0.53</td>
+      <td class="gt_row gt_right">1.33</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">0.71</td>
+      <td class="gt_row gt_right">0.33</td>
+      <td class="gt_row gt_right">1.09</td>
+      <td class="gt_row gt_right">0.0001</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpDur</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.06</td>
+      <td class="gt_row gt_right">&minus;0.30</td>
+      <td class="gt_row gt_right">0.42</td>
+      <td class="gt_row gt_right">0.9178</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">0.63</td>
+      <td class="gt_row gt_right">0.24</td>
+      <td class="gt_row gt_right">1.02</td>
+      <td class="gt_row gt_right">0.0005</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">0.57</td>
+      <td class="gt_row gt_right">0.20</td>
+      <td class="gt_row gt_right">0.94</td>
+      <td class="gt_row gt_right">0.0010</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpEff</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.01</td>
+      <td class="gt_row gt_right">&minus;0.58</td>
+      <td class="gt_row gt_right">0.60</td>
+      <td class="gt_row gt_right">0.9994</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">0.36</td>
+      <td class="gt_row gt_right">&minus;0.29</td>
+      <td class="gt_row gt_right">1.01</td>
+      <td class="gt_row gt_right">0.3862</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">0.35</td>
+      <td class="gt_row gt_right">&minus;0.26</td>
+      <td class="gt_row gt_right">0.97</td>
+      <td class="gt_row gt_right">0.3634</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpDist</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.06</td>
+      <td class="gt_row gt_right">&minus;0.00</td>
+      <td class="gt_row gt_right">0.12</td>
+      <td class="gt_row gt_right">0.0512</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">0.06</td>
+      <td class="gt_row gt_right">&minus;0.01</td>
+      <td class="gt_row gt_right">0.13</td>
+      <td class="gt_row gt_right">0.0829</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">0.00</td>
+      <td class="gt_row gt_right">&minus;0.06</td>
+      <td class="gt_row gt_right">0.06</td>
+      <td class="gt_row gt_right">1.0000</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpMeds</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.26</td>
+      <td class="gt_row gt_right">&minus;0.21</td>
+      <td class="gt_row gt_right">0.72</td>
+      <td class="gt_row gt_right">0.3912</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">1.32</td>
+      <td class="gt_row gt_right">0.81</td>
+      <td class="gt_row gt_right">1.83</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">1.06</td>
+      <td class="gt_row gt_right">0.57</td>
+      <td class="gt_row gt_right">1.54</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">slpDayFcn</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">&minus;0.08</td>
+      <td class="gt_row gt_right">&minus;0.26</td>
+      <td class="gt_row gt_right">0.10</td>
+      <td class="gt_row gt_right">0.5443</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">&minus;0.19</td>
+      <td class="gt_row gt_right">&minus;0.39</td>
+      <td class="gt_row gt_right">0.01</td>
+      <td class="gt_row gt_right">0.0732</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">&minus;0.11</td>
+      <td class="gt_row gt_right">&minus;0.29</td>
+      <td class="gt_row gt_right">0.08</td>
+      <td class="gt_row gt_right">0.3896</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">psqi_Global</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.97</td>
+      <td class="gt_row gt_right">&minus;0.40</td>
+      <td class="gt_row gt_right">2.33</td>
+      <td class="gt_row gt_right">0.2184</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">4.12</td>
+      <td class="gt_row gt_right">2.63</td>
+      <td class="gt_row gt_right">5.62</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">3.16</td>
+      <td class="gt_row gt_right">1.74</td>
+      <td class="gt_row gt_right">4.58</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">ess_total</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">0.97</td>
+      <td class="gt_row gt_right">&minus;0.57</td>
+      <td class="gt_row gt_right">2.52</td>
+      <td class="gt_row gt_right">0.2986</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">2.33</td>
+      <td class="gt_row gt_right">0.63</td>
+      <td class="gt_row gt_right">4.02</td>
+      <td class="gt_row gt_right">0.0041</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">1.35</td>
+      <td class="gt_row gt_right">&minus;0.25</td>
+      <td class="gt_row gt_right">2.96</td>
+      <td class="gt_row gt_right">0.1177</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">bdi_total</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">6.87</td>
+      <td class="gt_row gt_right">3.43</td>
+      <td class="gt_row gt_right">10.30</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">12.85</td>
+      <td class="gt_row gt_right">9.09</td>
+      <td class="gt_row gt_right">16.62</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">5.99</td>
+      <td class="gt_row gt_right">2.42</td>
+      <td class="gt_row gt_right">9.56</td>
+      <td class="gt_row gt_right">0.0003</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">mcgill_total</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">23.38</td>
+      <td class="gt_row gt_right">17.90</td>
+      <td class="gt_row gt_right">28.86</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">34.01</td>
+      <td class="gt_row gt_right">28.01</td>
+      <td class="gt_row gt_right">40.01</td>
+      <td class="gt_row gt_right">0.0000</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">10.63</td>
+      <td class="gt_row gt_right">4.94</td>
+      <td class="gt_row gt_right">16.32</td>
+      <td class="gt_row gt_right">0.0001</td>
+    </tr>
+    <tr class="gt_group_heading_row">
+      <td colspan="5" class="gt_group_heading">TIB</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">CLBP-HC</td>
+      <td class="gt_row gt_right">&minus;0.44</td>
+      <td class="gt_row gt_right">&minus;5.35</td>
+      <td class="gt_row gt_right">4.48</td>
+      <td class="gt_row gt_right">0.9757</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-HC</td>
+      <td class="gt_row gt_right">&minus;1.22</td>
+      <td class="gt_row gt_right">&minus;6.60</td>
+      <td class="gt_row gt_right">4.17</td>
+      <td class="gt_row gt_right">0.8546</td>
+    </tr>
+    <tr>
+      <td class="gt_row gt_left">FM-CLBP</td>
+      <td class="gt_row gt_right">&minus;0.78</td>
+      <td class="gt_row gt_right">&minus;5.88</td>
+      <td class="gt_row gt_right">4.32</td>
+      <td class="gt_row gt_right">0.9310</td>
     </tr>
   </tbody>
   
