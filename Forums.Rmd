@@ -1,0 +1,89 @@
+---
+title: "Forums"
+author: "Jason"
+date: "4/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## This contains code to and from various forums
+```{r ---> Overall ANOVA with PostHoc testing, eval=TRUE, echo=TRUE}
+library(gt)
+library(tidyverse)
+library(reprex)
+library(here)
+here()
+dr_here(show_reason = FALSE)
+#	PostHoc DOES WORK
+
+# construct anova model for each column of dat[, my_outcome_variables]
+z_dat <- iris
+
+z_model_summaries <- z_dat[1:4] %>%
+  purrr::map(~ aov(.x ~ Species, data = z_dat))  %>%
+  # append the TukeyHSD CI estimates
+  purrr::map(function(x) {
+    list(
+      model = x,
+      tukey = TukeyHSD(x)
+    )
+  })
+
+
+
+
+```
+
+
+
+```{r ---> RETURN TABLES OF RESULTS}
+####		THIS RETURNS THE RESULTS OF THE OVERALL ANOVA	####
+GetModels <- function(l) l$model
+z_Models <- purrr::map(z_model_summaries, GetModels) %>% 
+  purrr::map_dfr(broom::tidy, .id = "Name")
+head(z_Models)
+
+##		TABLE OF OVERALL EFFECTS
+filter(z_Models,  term !="Residuals") %>%
+	dplyr::select("Name" , "p.value")  %>%
+	gt(rowname_col = "Name") %>%
+	tab_header(
+		title = md("Main effect of group"))  %>% 
+	fmt_number(
+		columns = vars("p.value"),
+		decimals = 4
+	)
+
+
+####		RETRIEVE POSTHOC COMPARISONS		####
+GetTukeys <- function(m) m$tukey
+z_Tukeys  <- purrr::map(z_model_summaries, GetTukeys)  %>% 
+	purrr::map_dfr(broom::tidy, .id = "Name")
+head(z_Tukeys)
+
+####		SIMPLE RENAME		####
+names(z_Tukeys)[names(z_Tukeys) == 'Name'] <- 'Var'
+names(z_Tukeys)[names(z_Tukeys) == 'estimate'] <- 'diff'
+
+####		GT TABLE OF POSTHOC COMPARISONS
+select(z_Tukeys, -term) %>% 
+	gt(groupname_col = "Var") %>% 
+	tab_header(
+		title = md("*PostHoc*")
+		) %>% 
+	tab_stubhead(label = "Group Comps") %>% 
+	fmt_number(
+		columns = vars("diff", "conf.low", "conf.high"),
+		decimals = 2)  %>% 
+	fmt_number(#,
+		columns = vars("adj.p.value"),
+		decimals = 4)
+
+
+
+
+```

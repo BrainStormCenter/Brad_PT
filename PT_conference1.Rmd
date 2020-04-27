@@ -16,6 +16,8 @@ knitr::opts_chunk$set(echo = TRUE, comment="")
 ```{r ---> Libraries}
 # library(readxl) # This is used to import data from excel
 library(gt)
+library(knitr)
+library(kableExtra)
 library(broom)
 library(glue)
 library(doBy)
@@ -715,25 +717,99 @@ model_summaries <- dat1[,c("slpQual", "slpLat", "slpDur",
       tukey = TukeyHSD(x)
     )
   })
+```
 
-#		TO ACCESS THE RESULTS
-summary(model_summaries$bdi_total$model)
-print(round(model_summaries$bdi_total$tukey$group.factor, 4))
-# print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-# print(signif(model_summaries$bdi_total$tukey$group.factor, 3))
-# signif(model_summaries$bdi_total$tukey$group.factor, 3)
-
-
-
+```{r ---> ACCESS ANOVA RESULTS, eval=TRUE, echo=TRUE}
+####		THIS RETURNS THE RESULTS OF THE OVERALL ANOVA	####
 GetModels <- function(l) l$model
 Models <- purrr::map(model_summaries, GetModels) %>% 
   purrr::map_dfr(broom::tidy, .id = "Name")
 head(Models)
 
+####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
+Models %>%
+	dplyr::select("term" , "df", "p.value")  %>%
+	gt() %>% 
+	fmt_number(
+		columns = vars("p.value"),
+		decimals = 4
+	)
+
+# zModel <- 
+
+filter(Models,  term !="Residuals") %>%
+	dplyr::select("Name" , "p.value")  %>%
+	gt(rowname_col = "Name") %>%
+	tab_header(
+		title = md("Main effect of group"))  %>% 
+	fmt_number(
+		columns = vars("p.value"),
+		decimals = 4
+	)
+
+
 
 ```
 
-```{r ---> Model tables}
+
+
+
+
+
+
+```{r ---> ACCESS POSTHOC RESULTS, eval=FALSE, echo=FALSE}
+GetTukeys <- function(m) m$tukey
+Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>% 
+	purrr::map_dfr(broom::tidy, .id = "Name")
+head(Tukeys)
+Tukeys
+
+names(Tukeys)[names(Tukeys) == 'Name'] <- 'Var'
+names(Tukeys)[names(Tukeys) == 'estimate'] <- 'diff'
+
+
+# TukeyTable <- 
+# Tukeys %>% 
+# Tukeys %>% 
+# dplyr::select(Tukeys, !starts_with("te")) %>%
+
+select(Tukeys, -term) %>% 
+	gt(groupname_col = "Var") %>% 
+	tab_header(
+		title = md("*PostHoc*")
+		) %>% 
+	tab_stubhead(label = "Group Comps") %>% 
+	fmt_number(
+		columns = vars("diff", "conf.low", "conf.high"),
+		decimals = 2)  %>% 
+	fmt_number(#,
+		columns = vars("adj.p.value"),
+		decimals = 4)
+
+z_table1 %>% 
+	gt(rowname_col = "row")  %>% 
+	tab_header(
+		title = md("**BDI**"),
+		subtitle = md("ANOVA PostHoc")) %>% 
+	tab_stubhead(label = "Comparisons")  %>% 
+	fmt_number(
+		columns = vars("diff", "lwr", "upr"),
+		decimals = 2)
+
+
+
+class(Tukeys$diff)
+# dplyr::select("term" , "df", "p.value")  %>%
+
+```
+
+
+
+
+```{r ---> ANOVA RESULTS TABLES, eval=FALSE, echo=FALSE}
+##		MOVED TO CHUNK ABOVE	##
+
+####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
 Models %>%
 	dplyr::select("term" , "df", "p.value")  %>%
 	gt() %>% 
@@ -751,13 +827,16 @@ z_table1$row <- c("CLBP-HC", "FM-HC",
 				  "FM-CLBP")
 
 z_table1 %>% 
-	# dplyr::select("row" , "diff", "p adj")  %>% 
 	gt(rowname_col = "row")  %>% 
 	tab_header(
 		title = md("**BDI**"),
 		subtitle = md("ANOVA PostHoc")) %>% 
-	tab_stubhead(label = "Comparisons") 
+	tab_stubhead(label = "Comparisons")  %>% 
+	fmt_number(
+		columns = vars("diff", "lwr", "upr"),
+		decimals = 2)
 
+	# dplyr::select("row" , "diff", "p adj")  %>% 
 ```
 
 

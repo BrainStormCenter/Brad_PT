@@ -2,9 +2,9 @@
 title: "Run PT analyses"
 author: "Jason"
 date: "March 17, 2020"
-output:
-  html_document: default
-  self_contained: no
+output: html_document
+  # html_document: default
+  # self_contained: no
 created: 3/17/2020
 ---
 
@@ -50,204 +50,285 @@ dr_here(show_reason = FALSE)
 # Small dataset
 # data <- read.csv(url('https://github.com/BrainStormCenter/Brad_PT/blob/master/smData_v1.csv'), header = TRUE)
 
-source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
+# source('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r')
 
 ```
 
 
-```{r ---> Clean data}
-#		GROUPS
-data %>% count(group)
 
-dat1  <- filter(data, group != 0) 
+Several packages support making beautiful tables with R, such as
 
-dat1 %>% count(group)
+* [xtable](https://cran.r-project.org/web/packages/xtable/)
+* [stargazer](https://cran.r-project.org/web/packages/stargazer/)
+* [pander](http://rapporter.github.io/pander/)
+* [tables](https://cran.r-project.org/web/packages/tables/)
+* [ascii](http://eusebe.github.io/ascii/)
+* etc.
 
-dat1$group.factor = factor(dat1$group,levels=c("1","2","3"))
+It is also very easy to make tables with knitr's `kable` function:
 
-levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE)
 
-names(dat1)[names(dat1) == 'participant_id'] <- 'ID'
 
-dat1 %>% count(group.factor)
+```{r ---> knit a table, echo=FALSE, results = 'asis' }
+library(knitr)
 
-#		DONE AS OF March 17, 2020
+kable(mtcars[1:5, ], caption = " A knitr table")
+
+
+# > kable(head(iris[,1:3]))
+# |  Sepal.Length|  Sepal.Width|  Petal.Length|
+# |-------------:|------------:|-------------:|
+# |           5,1|          3,5|           1,4|
+# |           4,9|          3,0|           1,4|
+# |           4,7|          3,2|           1,3|
+# |           4,6|          3,1|           1,5|
+# |           5,0|          3,6|           1,4|
+# |           5,4|          3,9|           1,7|
+
+
 ```
+
+
+
+
+
+
+<!-- ```{r ---> } -->
+
+
+
+<!-- library(pander) -->
+<!-- pandoc.table(head(iris)[, 1:3]) -->
+
+<!-- pandoc.table(Models[, c("Name", "df", "p.value")]) -->
+
+
+
+<!-- dt <- mtcars[1:3, 1:5] -->
+<!-- pandoc.table(dt$mpg, emphasize.italics.cells = 1) -->
+
+
+<!-- pandoc.table(mtcars, 'Motor Trend Car Road Tests') -->
+<!-- # ------------------------------------------- -->
+<!-- #  Sepal.Length   Sepal.Width   Petal.Length  -->
+<!-- # -------------- ------------- -------------- -->
+<!-- #      5.1            3.5           1.4       -->
+<!-- #  -->
+<!-- #      4.9             3            1.4       -->
+<!-- #  -->
+<!-- #      4.7            3.2           1.3       -->
+<!-- #  -->
+<!-- #      4.6            3.1           1.5       -->
+<!-- #  -->
+<!-- #       5             3.6           1.4       -->
+<!-- #  -->
+<!-- #      5.4            3.9           1.7       -->
+<!-- # ------------------------------------------- -->
+
+
+
+
+<!-- ``` -->
+
+
+
+
+
+
+
+<!-- ```{r ---> Clean data} -->
+<!-- #		GROUPS -->
+<!-- data %>% count(group) -->
+
+<!-- dat1  <- filter(data, group != 0)  -->
+
+<!-- dat1 %>% count(group) -->
+
+<!-- dat1$group.factor = factor(dat1$group,levels=c("1","2","3")) -->
+
+<!-- levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = FALSE) -->
+
+<!-- names(dat1)[names(dat1) == 'participant_id'] <- 'ID' -->
+
+<!-- dat1 %>% count(group.factor) -->
+
+<!-- #		DONE AS OF March 17, 2020 -->
+<!-- ``` -->
 
 ##	EXAMINE DATA
 
-###	BDI
-```{r ---> BDI Summary}
-#		BDI VARIABLES
-dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))]
-view(dat.bdi)
+<!-- ###	BDI -->
+<!-- ```{r ---> BDI Summary} -->
+<!-- #		BDI VARIABLES -->
+<!-- dat.bdi <- dat1[c(1:2,grep("bdi", colnames(dat1)))] -->
+<!-- view(dat.bdi) -->
 
-bdi.smry1  <- dat1 %>%
-	group_by(group.factor) %>%
-	summarise(
-		count = n(),
-		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
-		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
-		# avg.pdi.tot = mean(bdi_total, na.rm = TRUE),
-		# sd.pdi.tot = sd(pdi_total, na.rm = TRUE)
-	)
-view(bdi.smry1)
-```
+<!-- bdi.smry1  <- dat1 %>% -->
+<!-- 	group_by(group.factor) %>% -->
+<!-- 	summarise( -->
+<!-- 		count = n(), -->
+<!-- 		avg.bdi.tot = mean(bdi_total, na.rm = TRUE), -->
+<!-- 		sd.bdi.tot = sd(bdi_total, na.rm = TRUE) -->
+<!-- 		# avg.pdi.tot = mean(bdi_total, na.rm = TRUE), -->
+<!-- 		# sd.pdi.tot = sd(pdi_total, na.rm = TRUE) -->
+<!-- 	) -->
+<!-- view(bdi.smry1) -->
+<!-- ``` -->
 
-```{r ---> ANOVA BDI}
-#		COMPUTE ANOVA OF BDI 
-bdi.aov = aov(bdi_total ~ group.factor, data=dat1)
-# print(bdi.aov)
+<!-- ```{r ---> ANOVA BDI} -->
+<!-- #		COMPUTE ANOVA OF BDI  -->
+<!-- bdi.aov = aov(bdi_total ~ group.factor, data=dat1) -->
+<!-- # print(bdi.aov) -->
 
-#		SUMMARY OF THE ANALYSES
-summary(bdi.aov)
-TukeyHSD(bdi.aov)
-summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
+<!-- #		SUMMARY OF THE ANALYSES -->
+<!-- summary(bdi.aov) -->
+<!-- TukeyHSD(bdi.aov) -->
+<!-- summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey"))) -->
 
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH")
+<!-- pairwise.t.test(dat1$bdi_total, dat1$group.factor, -->
+<!-- 				p.adjust.method = "BH") -->
 
-# 	1. Homogeniety of variances
-# plot(bdi.aov, 1)
+<!-- # 	1. Homogeniety of variances -->
+<!-- # plot(bdi.aov, 1) -->
 
-#	Levene's Test
-leveneTest(bdi_total ~ group.factor, data = dat1)
-
-
-
-
-#	Relaxing the homogeneity of variance assumption
-oneway.test(bdi_total ~ group.factor, data = dat1)
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH",
-				pool.sd = FALSE)
-
-#	2. Normality
-#	plot(bdi.aov, 2) #	Produces errors
-
-#	EXTRACT RESIDUALS
-bdi.aov.resid <- residuals(object = bdi.aov)
-
-#	RUN Shapiro-Wilk normality test
-shapiro.test(x = bdi.aov.resid)
-
-#	Non-parametric alternative to one-way ANOVA test
-kruskal.test(bdi_total ~ group.factor, data = dat1)
-
-#		DONE AS OF March 17, 2020
-```
-
-
-```{r ---> BDI Plots}
-# #		BAR CHART
-# bdi.smry2  <- ggplot(data = dat1,
-# 					   aes(x = group.factor,
-# 					   	y = bdi_total,
-# 					   	fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "Groups") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group")
-# 
-# print(bdi.smry2) # I'm not sure what values are used in the graph
-
-#		BOX PLOT
-# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-# 	geom_boxplot()
-# 
-# 
-# ggboxplot(dat1, x = "group", y = "bdi_total",
-# 		  add = "dotplot")
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  add = "jitter", shape = "group.factor")
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  order = c("FM", "CLBP", "HC"))
-# 
-# ggboxplot(dat1, x = "group.factor", y = "bdi_total",
-# 		  color = "red", fill = "darkblue",
-# 		  order = c("FM", "CLBP", "HC"))
+<!-- #	Levene's Test -->
+<!-- leveneTest(bdi_total ~ group.factor, data = dat1) -->
 
 
 
-# Mean plots
-# ++++++++++++++++++++
-# Plot weight by group
-# Add error bars: mean_se
-# (other values include: mean_sd, mean_ci, median_iqr, ....)
-# ggline(dat1, x = "group.factor", y = "bdi_total", 
-#        add = c("mean_se", "jitter"), 
-#        order = c("FM", "CLBP", "HC"),
-#        ylab = "BDI Total", xlab = "Group")
+
+<!-- #	Relaxing the homogeneity of variance assumption -->
+<!-- oneway.test(bdi_total ~ group.factor, data = dat1) -->
+
+<!-- pairwise.t.test(dat1$bdi_total, dat1$group.factor, -->
+<!-- 				p.adjust.method = "BH", -->
+<!-- 				pool.sd = FALSE) -->
+
+<!-- #	2. Normality -->
+<!-- #	plot(bdi.aov, 2) #	Produces errors -->
+
+<!-- #	EXTRACT RESIDUALS -->
+<!-- bdi.aov.resid <- residuals(object = bdi.aov) -->
+
+<!-- #	RUN Shapiro-Wilk normality test -->
+<!-- shapiro.test(x = bdi.aov.resid) -->
+
+<!-- #	Non-parametric alternative to one-way ANOVA test -->
+<!-- kruskal.test(bdi_total ~ group.factor, data = dat1) -->
+
+<!-- #		DONE AS OF March 17, 2020 -->
+<!-- ``` -->
 
 
-# Box plots - 	NOTY WORKING
-# ++++++++++++++++++++
-# Plot BDI by group and color by group
-# bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total, 
-# 										 fill = group.factor)) +
-# 	geom_boxplot()
+<!-- ```{r ---> BDI Plots} -->
+<!-- # #		BAR CHART -->
+<!-- # bdi.smry2  <- ggplot(data = dat1, -->
+<!-- # 					   aes(x = group.factor, -->
+<!-- # 					   	y = bdi_total, -->
+<!-- # 					   	fill = group.factor)) + -->
+<!-- # 	geom_bar(color = "black", stat = "identity", -->
+<!-- # 			 position = position_dodge(), -->
+<!-- # 			 size = .3) + -->
+<!-- # 	scale_fill_hue(name = "Groups") + -->
+<!-- # 	xlab("Subjects groups") + -->
+<!-- # 	ylab("BDI total") + -->
+<!-- # 	ggtitle("BDI by group") -->
+<!-- #  -->
+<!-- # print(bdi.smry2) # I'm not sure what values are used in the graph -->
 
-	
-# 		  color = "black", fill = 
-# 		  order = c("HC", "CLBP", "FM"),
-#           ylab = "BDI", xlab = "Group")
-
-# dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))]
-# view(dat.totals)
-
-#		DONE AS OF March 17, 2020
-```
-
-```{r ---> boxplot}
-#		BOX PLOT
-# ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) +
-# 	geom_boxplot()
-
-```
-
-
-```{r ---> ANOVA 2}
-TukeyHSD(bdi.aov)
-summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey")))
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH")
-
-# 	1. Homogeniety of variances
-# plot(bdi.aov, 1)
-
-#	Levene's Test
-leveneTest(bdi_total ~ group.factor, data = dat1)
-
-#	Relaxing the homogeneity of variance assumption
-oneway.test(bdi_total ~ group.factor, data = dat1)
-
-pairwise.t.test(dat1$bdi_total, dat1$group.factor,
-				p.adjust.method = "BH",
-				pool.sd = FALSE)
-
-#	2. Normality
-#	plot(bdi.aov, 2) #	Produces errors
-
-#	EXTRACT RESIDUALS
-bdi.aov.resid <- residuals(object = bdi.aov)
-
-#	RUN Shapiro-Wilk normality test
-shapiro.test(x = bdi.aov.resid)
-
-#	Non-parametric alternative to one-way ANOVA test
-kruskal.test(bdi_total ~ group.factor, data = dat1)
+<!-- #		BOX PLOT -->
+<!-- # ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) + -->
+<!-- # 	geom_boxplot() -->
+<!-- #  -->
+<!-- #  -->
+<!-- # ggboxplot(dat1, x = "group", y = "bdi_total", -->
+<!-- # 		  add = "dotplot") -->
+<!-- #  -->
+<!-- # ggboxplot(dat1, x = "group.factor", y = "bdi_total", -->
+<!-- # 		  add = "jitter", shape = "group.factor") -->
+<!-- #  -->
+<!-- # ggboxplot(dat1, x = "group.factor", y = "bdi_total", -->
+<!-- # 		  order = c("FM", "CLBP", "HC")) -->
+<!-- #  -->
+<!-- # ggboxplot(dat1, x = "group.factor", y = "bdi_total", -->
+<!-- # 		  color = "red", fill = "darkblue", -->
+<!-- # 		  order = c("FM", "CLBP", "HC")) -->
 
 
-ggplot(data = dat1) +
-	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total))
-#		DONE AS OF March 17, 2020
+
+<!-- # Mean plots -->
+<!-- # ++++++++++++++++++++ -->
+<!-- # Plot weight by group -->
+<!-- # Add error bars: mean_se -->
+<!-- # (other values include: mean_sd, mean_ci, median_iqr, ....) -->
+<!-- # ggline(dat1, x = "group.factor", y = "bdi_total",  -->
+<!-- #        add = c("mean_se", "jitter"),  -->
+<!-- #        order = c("FM", "CLBP", "HC"), -->
+<!-- #        ylab = "BDI Total", xlab = "Group") -->
 
 
-```
+<!-- # Box plots - 	NOTY WORKING -->
+<!-- # ++++++++++++++++++++ -->
+<!-- # Plot BDI by group and color by group -->
+<!-- # bp <- ggboxplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total,  -->
+<!-- # 										 fill = group.factor)) + -->
+<!-- # 	geom_boxplot() -->
+
+
+<!-- # 		  color = "black", fill =  -->
+<!-- # 		  order = c("HC", "CLBP", "FM"), -->
+<!-- #           ylab = "BDI", xlab = "Group") -->
+
+<!-- # dat.totals <- dat1[c(1:2,grep("_total", colnames(dat1)))] -->
+<!-- # view(dat.totals) -->
+
+<!-- #		DONE AS OF March 17, 2020 -->
+<!-- ``` -->
+
+<!-- ```{r ---> boxplot} -->
+<!-- #		BOX PLOT -->
+<!-- # ggplot(data = dat1, mapping = aes(x = group.factor, y = bdi_total)) + -->
+<!-- # 	geom_boxplot() -->
+
+<!-- ``` -->
+
+
+<!-- ```{r ---> ANOVA 2} -->
+<!-- TukeyHSD(bdi.aov) -->
+<!-- summary(glht(bdi.aov, linfct = mcp(group.factor = "Tukey"))) -->
+
+<!-- pairwise.t.test(dat1$bdi_total, dat1$group.factor, -->
+<!-- 				p.adjust.method = "BH") -->
+
+<!-- # 	1. Homogeniety of variances -->
+<!-- # plot(bdi.aov, 1) -->
+
+<!-- #	Levene's Test -->
+<!-- leveneTest(bdi_total ~ group.factor, data = dat1) -->
+
+<!-- #	Relaxing the homogeneity of variance assumption -->
+<!-- oneway.test(bdi_total ~ group.factor, data = dat1) -->
+
+<!-- pairwise.t.test(dat1$bdi_total, dat1$group.factor, -->
+<!-- 				p.adjust.method = "BH", -->
+<!-- 				pool.sd = FALSE) -->
+
+<!-- #	2. Normality -->
+<!-- #	plot(bdi.aov, 2) #	Produces errors -->
+
+<!-- #	EXTRACT RESIDUALS -->
+<!-- bdi.aov.resid <- residuals(object = bdi.aov) -->
+
+<!-- #	RUN Shapiro-Wilk normality test -->
+<!-- shapiro.test(x = bdi.aov.resid) -->
+
+<!-- #	Non-parametric alternative to one-way ANOVA test -->
+<!-- kruskal.test(bdi_total ~ group.factor, data = dat1) -->
+
+
+<!-- ggplot(data = dat1) + -->
+<!-- 	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = median), y = bdi_total)) -->
+<!-- #		DONE AS OF March 17, 2020 -->
+
+
+<!-- ``` -->
