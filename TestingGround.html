@@ -369,99 +369,297 @@ summary {
 </div>
 
 
+<pre class="r"><code># ## Load example dataset
+# data(tli)
+# 
+# ## Demonstrate data.frame
+# tli.table &lt;- xtable(tli[1:20, ])
+# print(tli.table)
+# print(tli.table, type = &quot;html&quot;)
+# xtable(mtcars)
+# xtable(mtcars, auto = TRUE)</code></pre>
+<div id="table-testing" class="section level1">
+<h1>Table testing</h1>
+<pre class="r"><code>## Load example dataset
+data(tli)</code></pre>
+<pre><code>## Warning in data(tli): data set 'tli' not found</code></pre>
+<pre class="r"><code># ## Demonstrate data.frame
+# tli.table &lt;- xtable(tli[1:20, ])
+# print(tli.table, type = &quot;html&quot;)
+# # print(tli.table, type = &quot;html&quot;)
+# xtable(mtcars)
+# xtable(mtcars, auto = TRUE)
+# 
+# 
+# 
+# 
+# ## Demonstrate aov
+# fm1 &lt;- aov(tlimth ~ sex + ethnicty + grade + disadvg, data = tli)
+# fm1.table &lt;- xtable(fm1)
+# print(fm1.table)
+# print(fm1.table, type = &quot;html&quot;)</code></pre>
+<pre class="r"><code># From: https://bookdown.org/lyzhang10/lzhang_r_tips_book/how-to-deal-with-empty-spaces.html#empty-spaces-in-variable-names
+
+# # Create a dataframe
+# set.seed &lt;- 12345
+# 
+# fk_data &lt;- data.frame(Year = rep(2011:2015, each = 4), 
+#                     AvgScore = round(rnorm(20, mean=50, sd=5), 0),
+#                     Gender = rep(c(&quot;Male&quot;, &quot;Female&quot;), 10))
+# 
+# 
+# 
+# # An extra variable
+# fk_data$&quot;Subject &quot; &lt;- rep( c(rep(&quot;Maths&quot;, 2), rep(&quot;Stats&quot;, 2)), 5 )
+# 
+# 
+# # Make a plot
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ Subject  )  
+# # The above plotting does not work
+# 
+# 
+# 
+# # What about the following
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ &quot;Subject &quot; )
+# # It does not work either
+# 
+# 
+# 
+# # The first fix
+# # We don't remove the space in &quot;Subject &quot;
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ `Subject ` ) # backticks! It works fine here.
+# # Thanks to http://stackoverflow.com/questions/4551424/how-to-refer-to-a-variable-name-with-spaces
+# 
+# 
+# 
+# # The second fix.
+# # We remove the space in &quot;Subject &quot;
+# fk_data$Subject &lt;- fk_data$&quot;Subject &quot; # create a new column/variable
+# fk_data$&quot;Subject &quot; &lt;- NULL # remove the column
+# # Now make the plot
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ Subject )
+# 
+# groups_x_sex &lt;- 
+#   dat.SM %&gt;% 
+#   group_by(group.factor, sex.factor) %&gt;% 
+#   tally()
+# print.data.frame(groups_x_sex)
+# #
+# 
+# ####      testing with kable      ####
+# groups_x_sex %&gt;% kable()
+# </code></pre>
 <pre class="r"><code>library(knitr) 
 library(kableExtra)
 dt &lt;- mtcars[1:5, 1:6]
-kable(dt, &quot;latex&quot;)</code></pre>
-
-<pre class="r"><code># iris %&gt;%
-#        group_by(Species) %&gt;%
-#        summarise_at(vars(starts_with(&quot;Sepal&quot;)), list(mean=mean, sd=sd))
-# </code></pre>
-<div id="scrap" class="section level2">
-<h2>SCRAP</h2>
-<pre class="r"><code># data &lt;- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE)
-
-# spec_csv(&quot;ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r&quot;)
-
-# &quot; col_names = TRUE)
+kable(dt)</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+mpg
+</th>
+<th style="text-align:right;">
+cyl
+</th>
+<th style="text-align:right;">
+disp
+</th>
+<th style="text-align:right;">
+hp
+</th>
+<th style="text-align:right;">
+drat
+</th>
+<th style="text-align:right;">
+wt
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Mazda RX4
+</td>
+<td style="text-align:right;">
+21.0
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+160
+</td>
+<td style="text-align:right;">
+110
+</td>
+<td style="text-align:right;">
+3.90
+</td>
+<td style="text-align:right;">
+2.620
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Mazda RX4 Wag
+</td>
+<td style="text-align:right;">
+21.0
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+160
+</td>
+<td style="text-align:right;">
+110
+</td>
+<td style="text-align:right;">
+3.90
+</td>
+<td style="text-align:right;">
+2.875
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Datsun 710
+</td>
+<td style="text-align:right;">
+22.8
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+108
+</td>
+<td style="text-align:right;">
+93
+</td>
+<td style="text-align:right;">
+3.85
+</td>
+<td style="text-align:right;">
+2.320
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Hornet 4 Drive
+</td>
+<td style="text-align:right;">
+21.4
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+258
+</td>
+<td style="text-align:right;">
+110
+</td>
+<td style="text-align:right;">
+3.08
+</td>
+<td style="text-align:right;">
+3.215
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Hornet Sportabout
+</td>
+<td style="text-align:right;">
+18.7
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+360
+</td>
+<td style="text-align:right;">
+175
+</td>
+<td style="text-align:right;">
+3.15
+</td>
+<td style="text-align:right;">
+3.440
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># z_table2 &lt;- kable(dt, &quot;latex&quot;)
 # 
-# 
-# datSM2 %&gt;% count(group.factor)
-# mean(datSM2$ess_total)
-# datSM2 %&gt;% count(ess_total)
-# 
-
-# summarise(datSM2,
-#         maxESS = max(ess_total, na.rm = TRUE),
-#         avgESS = mean(ess_total, na.rm = TRUE)
-# )
-
-
-
-
-
-
-
-
-
-
-
-
-
-# smallData &lt;- select(dat1, ID, group.factor, bdi_total)
-# 
-# write_csv(smallData,
-#         '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv',
-#         na = &quot;NA&quot;, append = FALSE,
-#         col_names = TRUE, quote_escape = &quot;double&quot;)    
-#       I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
-# dat2 &lt;- arrange(dat1, ID, group.factor, sex)
-# arrange(dat2, ID, group.factor, sex)
-
-#   RENAME VARIABLES
-# df = dataframe
-# old.var.name = The name you don't like anymore
-# new.var.name = The name you want to get
-
-
-
-# dat.full &lt;- read_tsv(&quot;ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r&quot;)
-# dat.full.may &lt;- read.csv(&quot;ImagingPsychometrics_DATA_2017-05-25_1010.csv&quot;, header = TRUE)
-#   THIS WORKS AS OF March 15, 2020
-#a1_Ctr3_voi1_2020_03_12_for_R &lt;- read_tsv(&quot;~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt&quot;, col_names = TRUE)
-
-#a2_SubjectList_2020_03_12 &lt;- read_tsv(&quot;~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/SubjectList_2020_03_12.txt&quot;, col_names = TRUE
-
-
-##  bdi_total
-
-# dat.pdi  &lt;- data[c(1:2,grep(&quot;pdi&quot;, colnames(data)))]
-# 
-# dat.pain  &lt;- data[c(1:2,grep(&quot;pain&quot;, colnames(data)))]
-# 
-# 
-
-
-# dat.bdi2  &lt;- select(dat.bdi,
-#                   ends_with(!= &quot;factor&quot;))
-
-
-
-
-# {r ---&gt; Jon: creating new variables}
-# This works
-# library(dplyr)
-# data1 %&gt;% 
-#   mutate_at(
-#     vars(starts_with(&quot;pos&quot;), starts_with(&quot;neg&quot;)),
-#     ~as.numeric(as.character(.))
-#   ) %&gt;% 
-#   rowwise() %&gt;% 
-#   mutate(
-#     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE)
-#   ) %&gt;% 
-#   ungroup()</code></pre>
+# z_table2 &lt;-  as_tibble(z_table2)
+# z_table2</code></pre>
+<!-- ```{r --->
+<p>} –&gt; <!-- # iris %>% --> <!-- #        group_by(Species) %>% --> <!-- #        summarise_at(vars(starts_with("Sepal")), list(mean=mean, sd=sd)) --> <!-- #  --></p>
+<!-- ``` -->
+<!-- ## SCRAP -->
+<!-- ```{r --->
+<p>Scrap} –&gt;</p>
+<!-- # data <- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE) -->
+<!-- # spec_csv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r") -->
+<!-- # " col_names = TRUE) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # datSM2 %>% count(group.factor) -->
+<!-- # mean(datSM2$ess_total) -->
+<!-- # datSM2 %>% count(ess_total) -->
+<!-- #  -->
+<!-- # summarise(datSM2, -->
+<!-- #        maxESS = max(ess_total, na.rm = TRUE), -->
+<!-- #        avgESS = mean(ess_total, na.rm = TRUE) -->
+<!-- # ) -->
+<!-- # smallData <- select(dat1, ID, group.factor, bdi_total) -->
+<!-- #  -->
+<!-- # write_csv(smallData, -->
+<!-- #        '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv', -->
+<!-- #        na = "NA", append = FALSE, -->
+<!-- #        col_names = TRUE, quote_escape = "double")     -->
+<!-- #      I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW -->
+<!-- # dat2 <- arrange(dat1, ID, group.factor, sex) -->
+<!-- # arrange(dat2, ID, group.factor, sex) -->
+<!-- #  RENAME VARIABLES -->
+<!-- # df = dataframe -->
+<!-- # old.var.name = The name you don't like anymore -->
+<!-- # new.var.name = The name you want to get -->
+<!-- # dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r") -->
+<!-- # dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE) -->
+<!-- #  THIS WORKS AS OF March 15, 2020 -->
+<!-- #a1_Ctr3_voi1_2020_03_12_for_R <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt", col_names = TRUE) -->
+<!-- #a2_SubjectList_2020_03_12 <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/SubjectList_2020_03_12.txt", col_names = TRUE -->
+<!-- ##  bdi_total -->
+<!-- # dat.pdi  <- data[c(1:2,grep("pdi", colnames(data)))] -->
+<!-- #  -->
+<!-- # dat.pain  <- data[c(1:2,grep("pain", colnames(data)))] -->
+<!-- #  -->
+<!-- #  -->
+<!-- # dat.bdi2  <- select(dat.bdi, -->
+<!-- #                  ends_with(!= "factor")) -->
+<!-- # {r --->
+<p>Jon: creating new variables} –&gt; <!-- # This works --> <!-- # library(dplyr) --> <!-- # data1 %>%  --> <!-- #   mutate_at( --> <!-- #     vars(starts_with("pos"), starts_with("neg")), --> <!-- #     ~as.numeric(as.character(.)) --> <!-- #   ) %>%  --> <!-- #   rowwise() %>%  --> <!-- #   mutate( --> <!-- #     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE) --> <!-- #   ) %>%  --> <!-- #   ungroup() --></p>
+<!-- ``` -->
 <pre class="r"><code># dat.factors  &lt;- select_if(dat1, is.factor)
 # colnames(dat.factors)
 

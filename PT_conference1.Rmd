@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE, comment="")
 ```{r ---> Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
 # library(readxl) # This is used to import data from excel
 library(gt)
+library(formattable)
+library(xtable)
 library(caret)
 library(knitr)
 library(kableExtra)
@@ -631,13 +633,13 @@ All data has been updated, processed, clean and scored
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
-dat.SM  <- dat1 %>% dplyr::select("group.factor","slpQual",
-								  "slpLat", "slpDur",
-								  "slpEff", "slpDist",
-								  "slpMeds","slpDayFcn",
-								  "psqi_Global","ess_total",
-								  "bdi_total", "mcgill_total",
-								  "TIB")
+dat.SM  <- dat1 %>% dplyr::select("group.factor",
+								  "slpQual", "slpLat", 
+								  "slpDur", "slpEff", 
+								  "slpDist", "slpMeds",
+								  "slpDayFcn", "psqi_Global",
+								  "ess_total", "bdi_total",
+								  "mcgill_total", "TIB")
 
 dat.HC <- dat.SM %>%
 	filter(group.factor == "HC")
@@ -709,6 +711,33 @@ dat.SM.smry <- dat.SM %>%
 	group_by(group.factor) %>% 
 	summarise_all(. , list(mean=mean, sd=sd))
 
+#		GROUP BY SEX INFORMATION
+groups_x_sex2 <-
+	dat1 %>%
+	group_by(group.factor, sex.factor) %>%
+	tally()
+# print.data.frame(groups_x_sex2)
+
+
+kable(groups_x_sex2) %>% 
+	 kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+
+
+# groups_x_sex %>% gt()
+# 
+# groups_x_sex %>% 
+# 	gt(groupname_col = "group.factor") %>% 
+# 	tab_header(title = md("**Group by Sex**")) %>% 
+# 	tab_stubhead(label = "Group Comps") # %>% 
+	# fmt_number(
+	# 	columns = vars("diff", "conf.low", "conf.high"),
+	# 	decimals = 2)  %>% 
+	# fmt_number(#,
+	# 	columns = vars("adj.p.value"),
+	# 	decimals = 4)
+
 # dat.SM.smry
 
 # write_csv(dat.SM.smry, "dat.SM.smry.csv",
@@ -719,6 +748,7 @@ dat.SM.smry <- dat.SM %>%
 # 	gt()
 
 ```
+
 
 ## ANOVA (Main effect of group)
 ```{r ---> ANOVA with PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
@@ -756,10 +786,54 @@ filter(Models,  term !="Residuals") %>%
 		decimals = 4
 	)
 
+#		kable version??
+
+Models2 <- filter(Models,  term !="Residuals")
+Models2 <- Models2 %>% 
+	dplyr::select("Name" , "p.value")
+
+
+
+
+filter(Models,  term !="Residuals") %>%
+	dplyr::select("Name" , "p.value")  %>%
+	kable() %>% 
+	kable_styling(
+		bootstrap_options = "striped", 
+		full_width = F, position = "left")
+
+
 ```
 
+Conditional tables
+```{r ---> conditional-formating, eval=TRUE, echo=FALSE, message=FALSE}
+Models2 %>%
+	mutate(p.value = 
+		   	cell_spec((formatC(x = p.value, 
+		   					   digits=3, width = 3, 
+									   format='g', flag = "-", drop0trailing = TRUE, 
+									   preserve.width = "common")), "html",
+							  color = ifelse(p.value <= 0.05, 
+							  			   yes="red", no="blue"), escape = F)) %>% 
+	mutate_if(is.numeric, function(x) {
+		cell_spec((formatC(x,digits=2, width=3, 
+						   format="f", flag="-", drop0trailing = FALSE)),
+				  "html")}) %>%
+	kable("html", escape = FALSE, align = "l", 
+		  caption = "ANOVA full model") %>%
+	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
+	footnote(general = "Red = main effect for group") %>% 
+	column_spec(1, bold = T)
+
+
+
+
+
+```
+
+
 ## PostHoc 
-```{r ---> ACCESS POSTHOC RESULTS, eval=TRUE, echo=FALSE, message=FALSE}
+```{r ---> POSTHOC RESULTS, eval=TRUE, echo=FALSE, message=FALSE}
 GetTukeys <- function(m) m$tukey
 Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>% 
 	purrr::map_dfr(broom::tidy, .id = "Name")
@@ -772,9 +846,7 @@ names(Tukeys)[names(Tukeys) == 'estimate'] <- 'diff'
 ####		THIS PUT THE PostHoc TESTS INTO A TABLE		####
 select(Tukeys, -term) %>% 
 	gt(groupname_col = "Var") %>% 
-	tab_header(
-		title = md("*PostHoc*")
-		) %>% 
+	tab_header(title = md("*PostHoc*")) %>% 
 	tab_stubhead(label = "Group Comps") %>% 
 	fmt_number(
 		columns = vars("diff", "conf.low", "conf.high"),
@@ -786,6 +858,7 @@ select(Tukeys, -term) %>%
 ```
 
 
+# END - BEYOND HERE IS EXPLORATORY
 
 
 
@@ -793,23 +866,18 @@ select(Tukeys, -term) %>%
 
 
 
-```{r ---> ANOVA RESULTS TABLES, eval=FALSE, echo=FALSE}
-##		MOVED TO CHUNK ABOVE	##
-
-####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
-Models %>%
-	dplyr::select("term" , "df", "p.value")  %>%
-	gt() %>% 
-	fmt_number(
-		columns = vars("p.value"),
-		decimals = 4
-	)
-
-```
 
 ```{r ---> GT tables ver 1,eval=FALSE, echo=FALSE}
 z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
+
+z_table1
 z_table1 <- as.data.frame(z_table1)
+dim(z_table1)
+names(z_table1)
+
+
+
+
 z_table1$row <- c("CLBP-HC", "FM-HC", 
 				  "FM-CLBP")
 

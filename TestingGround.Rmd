@@ -10,117 +10,247 @@ output: html_document
 ---
 
 
-
 ```{r ---> Creating a LaTeX table with Kable, paged.print=TRUE}
 library(knitr) 
 library(kableExtra)
 dt <- mtcars[1:5, 1:6]
-kable(dt, "latex")
-z_table2 <- kable(dt, "latex")
+kable(dt)
 
-z_table2 <-  as_tibble(z_table2)
-z_table2
+
+groups_x_sex2 <- 
+	dat.SM %>% 
+	group_by(group.factor, sex.factor) %>% 
+	tally()
+#		gt table
+groups_x_sex %>% gt()
+
+
+
+
+
+
+
+# z_table2 <- kable(dt, "latex")
+# 
+# z_table2 <-  as_tibble(z_table2)
+# z_table2
 ```
 
 
 
 
-```{r ---> }
-# iris %>%
-#        group_by(Species) %>%
-#        summarise_at(vars(starts_with("Sepal")), list(mean=mean, sd=sd))
+```{r ---> tables with xtable}
+# ## Load example dataset
+# data(tli)
 # 
+# ## Demonstrate data.frame
+# tli.table <- xtable(tli[1:20, ])
+# print(tli.table)
+# print(tli.table, type = "html")
+# xtable(mtcars)
+# xtable(mtcars, auto = TRUE)
 
 ```
 
 
-##	SCRAP
-```{r ---> Scrap}
+# Table testing
+```{r ---> xtable}
+## Load example dataset
+data(tli)
 
-# data <- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE)
-
-# spec_csv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
-
-# " col_names = TRUE)
+# ## Demonstrate data.frame
+# tli.table <- xtable(tli[1:20, ])
+# print(tli.table, type = "html")
+# # print(tli.table, type = "html")
+# xtable(mtcars)
+# xtable(mtcars, auto = TRUE)
 # 
 # 
-# datSM2 %>% count(group.factor)
-# mean(datSM2$ess_total)
-# datSM2 %>% count(ess_total)
-# 
-
-# summarise(datSM2,
-# 		  maxESS = max(ess_total, na.rm = TRUE),
-# 		  avgESS = mean(ess_total, na.rm = TRUE)
-# )
-
-
-
-
-
-
-
-
-
-
-
-
-
-# smallData <- select(dat1, ID, group.factor, bdi_total)
-# 
-# write_csv(smallData,
-# 		  '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv',
-# 		  na = "NA", append = FALSE,
-# 		  col_names = TRUE, quote_escape = "double")	
-#		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW
-# dat2 <- arrange(dat1, ID, group.factor, sex)
-# arrange(dat2, ID, group.factor, sex)
-
-#	RENAME VARIABLES
-# df = dataframe
-# old.var.name = The name you don't like anymore
-# new.var.name = The name you want to get
-
-
-
-# dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r")
-# dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE)
-#	THIS WORKS AS OF March 15, 2020
-#a1_Ctr3_voi1_2020_03_12_for_R <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt", col_names = TRUE)
-
-#a2_SubjectList_2020_03_12 <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/SubjectList_2020_03_12.txt", col_names = TRUE
-
-
-##  bdi_total
-
-# dat.pdi  <- data[c(1:2,grep("pdi", colnames(data)))]
-# 
-# dat.pain  <- data[c(1:2,grep("pain", colnames(data)))]
 # 
 # 
+# ## Demonstrate aov
+# fm1 <- aov(tlimth ~ sex + ethnicty + grade + disadvg, data = tli)
+# fm1.table <- xtable(fm1)
+# print(fm1.table)
+# print(fm1.table, type = "html")
+```
 
 
-# dat.bdi2  <- select(dat.bdi,
-# 					ends_with(!= "factor"))
+
+
+
+```{r ---> 16-tips-bookdown}
+# From: https://bookdown.org/lyzhang10/lzhang_r_tips_book/how-to-deal-with-empty-spaces.html#empty-spaces-in-variable-names
+
+# # Create a dataframe
+# set.seed <- 12345
+# 
+# fk_data <- data.frame(Year = rep(2011:2015, each = 4), 
+#                     AvgScore = round(rnorm(20, mean=50, sd=5), 0),
+#                     Gender = rep(c("Male", "Female"), 10))
+# 
+# 
+# 
+# # An extra variable
+# fk_data$"Subject " <- rep( c(rep("Maths", 2), rep("Stats", 2)), 5 )
+# 
+# 
+# # Make a plot
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ Subject  )  
+# # The above plotting does not work
+# 
+# 
+# 
+# # What about the following
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ "Subject " )
+# # It does not work either
+# 
+# 
+# 
+# # The first fix
+# # We don't remove the space in "Subject "
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ `Subject ` ) # backticks! It works fine here.
+# # Thanks to http://stackoverflow.com/questions/4551424/how-to-refer-to-a-variable-name-with-spaces
+# 
+# 
+# 
+# # The second fix.
+# # We remove the space in "Subject "
+# fk_data$Subject <- fk_data$"Subject " # create a new column/variable
+# fk_data$"Subject " <- NULL # remove the column
+# # Now make the plot
+# ggplot(fk_data, aes(x = Year, y = AvgScore, group = Gender, colour = Gender)) +
+#   geom_point() +
+#   geom_line() +
+#   facet_grid( . ~ Subject )
+# 
+# groups_x_sex <- 
+# 	dat.SM %>% 
+# 	group_by(group.factor, sex.factor) %>% 
+# 	tally()
+# print.data.frame(groups_x_sex)
+# #
+# 
+# ####		testing with kable		####
+# groups_x_sex %>% kable()
+# 
 
 
 
 
-# {r ---> Jon: creating new variables}
-# This works
-# library(dplyr)
-# data1 %>% 
-#   mutate_at(
-#     vars(starts_with("pos"), starts_with("neg")),
-#     ~as.numeric(as.character(.))
-#   ) %>% 
-#   rowwise() %>% 
-#   mutate(
-#     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE)
-#   ) %>% 
-#   ungroup()
 
 ```
+
+
+
+
+
+
+<!-- ```{r ---> } -->
+<!-- # iris %>% -->
+<!-- #        group_by(Species) %>% -->
+<!-- #        summarise_at(vars(starts_with("Sepal")), list(mean=mean, sd=sd)) -->
+<!-- #  -->
+
+<!-- ``` -->
+
+
+<!-- ##	SCRAP -->
+<!-- ```{r ---> Scrap} -->
+
+<!-- # data <- read_csv('ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r', col_names = TRUE) -->
+
+<!-- # spec_csv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r") -->
+
+<!-- # " col_names = TRUE) -->
+<!-- #  -->
+<!-- #  -->
+<!-- # datSM2 %>% count(group.factor) -->
+<!-- # mean(datSM2$ess_total) -->
+<!-- # datSM2 %>% count(ess_total) -->
+<!-- #  -->
+
+<!-- # summarise(datSM2, -->
+<!-- # 		  maxESS = max(ess_total, na.rm = TRUE), -->
+<!-- # 		  avgESS = mean(ess_total, na.rm = TRUE) -->
+<!-- # ) -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- # smallData <- select(dat1, ID, group.factor, bdi_total) -->
+<!-- #  -->
+<!-- # write_csv(smallData, -->
+<!-- # 		  '/Users/jcraggs/Documents/GitHub/Brad_PT/smData_v1.csv', -->
+<!-- # 		  na = "NA", append = FALSE, -->
+<!-- # 		  col_names = TRUE, quote_escape = "double")	 -->
+<!-- #		I TRIED THIS TO REARRANGE THE VARIABLES BUT IT ISN'T WORKING RIGHT NOW -->
+<!-- # dat2 <- arrange(dat1, ID, group.factor, sex) -->
+<!-- # arrange(dat2, ID, group.factor, sex) -->
+
+<!-- #	RENAME VARIABLES -->
+<!-- # df = dataframe -->
+<!-- # old.var.name = The name you don't like anymore -->
+<!-- # new.var.name = The name you want to get -->
+
+
+
+<!-- # dat.full <- read_tsv("ImagingPsychometrics-BradPTConference_R_2020-03-16_1300.r") -->
+<!-- # dat.full.may <- read.csv("ImagingPsychometrics_DATA_2017-05-25_1010.csv", header = TRUE) -->
+<!-- #	THIS WORKS AS OF March 15, 2020 -->
+<!-- #a1_Ctr3_voi1_2020_03_12_for_R <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/Ctr3_voi1_2020_03_12_for_R.txt", col_names = TRUE) -->
+
+<!-- #a2_SubjectList_2020_03_12 <- read_tsv("~/Box Sync/Lab/Societies/APS/2017/APS2017_NeuroElf/SubjectList_2020_03_12.txt", col_names = TRUE -->
+
+
+<!-- ##  bdi_total -->
+
+<!-- # dat.pdi  <- data[c(1:2,grep("pdi", colnames(data)))] -->
+<!-- #  -->
+<!-- # dat.pain  <- data[c(1:2,grep("pain", colnames(data)))] -->
+<!-- #  -->
+<!-- #  -->
+
+
+<!-- # dat.bdi2  <- select(dat.bdi, -->
+<!-- # 					ends_with(!= "factor")) -->
+
+
+
+
+<!-- # {r ---> Jon: creating new variables} -->
+<!-- # This works -->
+<!-- # library(dplyr) -->
+<!-- # data1 %>%  -->
+<!-- #   mutate_at( -->
+<!-- #     vars(starts_with("pos"), starts_with("neg")), -->
+<!-- #     ~as.numeric(as.character(.)) -->
+<!-- #   ) %>%  -->
+<!-- #   rowwise() %>%  -->
+<!-- #   mutate( -->
+<!-- #     testAvg1 = mean(c(pos_pre1_DMN, pos_pre2_DMN), na.rm = TRUE) -->
+<!-- #   ) %>%  -->
+<!-- #   ungroup() -->
+
+<!-- ``` -->
 
 
 

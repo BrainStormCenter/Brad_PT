@@ -1,0 +1,35 @@
+\documentclass{article}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+<<>>=
+library(knitr)
+library(kableExtra)
+dt <- mtcars[1:5, 1:6]
+@
+
+
+
+
+
+<<>>=
+kable(dt)
+@
+
+<html>
+
+<head>
+<title>Title</title>
+</head>D
+<body>
+
+library(knitr)
+library(kableExtra)
+dt <- mtcars[1:5, 1:6]
+
+</body>
+</html>
+
+
+\end{document}

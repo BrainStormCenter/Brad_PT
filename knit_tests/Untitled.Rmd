@@ -1,0 +1,38 @@
+---
+title: "kable tables"
+author: "Jason"
+date: "4/28/2020"
+output: html_document
+---
+
+library(knitr)
+library(kableExtra)
+dt <- mtcars[1:5, 1:6]
+
+kable(dt)
+
+<html>
+
+<head>
+<title>Title</title>
+</head>
+
+<body>
+
+```{r ---> kable test}
+#<!--begin.rcode
+
+
+library(knitr)
+library(kableExtra)
+dt <- mtcars[1:5, 1:6]
+
+kable(dt)
+
+#end.rcode-->
+
+```
+
+
+</body>
+</html>

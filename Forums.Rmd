@@ -87,3 +87,96 @@ select(z_Tukeys, -term) %>%
 
 
 ```
+
+
+```{r ---> kable-1}
+suppressPackageStartupMessages(library(tidyverse))
+library(kableExtra)
+
+formatme <- tribble(
+  ~estimate, ~P_value, 
+   14.93423,  1.064325e-173, 
+   -5.58189,  3.863223e-08 , 
+   -4.00146,  0.01792431   , 
+   -1.64129,  0.1321123    , 
+   -5.32435,  1.282435e-06 , 
+   -4.81021,  1.634358e-05 , 
+   -0.97118,  0.373213     , 
+   -2.12204,  0.051729     , 
+   -1.88072,  0.1          , 
+   -1.71032,  0.116
+)
+
+
+
+
+
+# formatme %>% 
+#   mutate(
+#     P_value = cell_spec(
+#       if_else(
+#         P_value < 1e-02, 
+#         formatC(P_value, digits = 2, format = "e"),
+#         formatC(P_value, digits = 2, format = "f")
+#       ),
+#       format = "html",
+#       color = ifelse(P_value <= 0.05, yes = "red", no = "blue"),
+#       escape = FALSE)) %>%
+#   mutate_if(
+#     is.numeric, 
+#     function(x) {
+#       cell_spec(
+#         formatC(x, digits = 2, format = "f", drop0trailing = FALSE),
+#         format = "html"
+#       )
+#     }
+#   )
+
+
+# format2 <- formatme 
+
+formatme %>%
+	mutate(
+		P_value = if_else(
+			P_value < 0.01,
+			formatC(P_value, digits = 2, format = "e"),
+			formatC(P_value, digits = 2, format = "f", drop0trailing = FALSE)
+		)
+	) %>%
+	mutate_if(
+		is.numeric,
+		function(x) {
+			formatC(x, digits = 2, format = "f", drop0trailing = FALSE)
+		}
+	)
+
+```
+
+
+```{r ---> kable2 }
+
+
+# format2 %>% 
+#   mutate(
+#     P_value = cell_spec(
+#       if_else(
+#         P_value < 1e-02, 
+#         formatC(P_value, digits = 2, format = "e"),
+#         formatC(P_value, digits = 2, format = "f")
+#       ),
+#       format = "html",
+#       color = ifelse(P_value <= 0.05, yes = "red", no = "blue"),
+#       escape = F
+#     )
+#   ) %>%
+#   mutate_if(
+#     is.numeric, 
+#     function(x) {
+#       cell_spec(
+#         formatC(x, digits = 2, format = "f", drop0trailing = FALSE),
+#         format = "html"
+#       )
+#     }
+#   )
+
+```
