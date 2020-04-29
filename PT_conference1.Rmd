@@ -923,9 +923,9 @@ select(Tukeys, -term, -Var) %>%
   					"ESS Total" = 3, #,
   					"BDI Total" = 3,
   					"McGill Total" = 3,
-  					"Time in Bed" = 3)) %>% 
-	scroll_box(height = "500px")
-  					# ))
+  					"Time in Bed" = 3)) #%>% 
+	# scroll_box(height = "500px")
+  					
 
 
 ```
@@ -933,27 +933,211 @@ select(Tukeys, -term, -Var) %>%
 
 
 # PLOTS
+```{r R-P-value_fcn, eval=TRUE, echo=FALSE, message=FALSE}
+# 		Function to get correletions and p.values in a "long" data frame
+corr.data = function(data) {
+  
+  # Get correlations
+  cor.vals = cor(data)
+  
+  # Get p-values
+  cor.p = cor.mtest(data, conf.level = 0.95)$p
+  rownames(cor.p) = rownames(cor.vals)
+  colnames(cor.p) = colnames(cor.vals)
+  
+  cbind(rowvars=rownames(cor.vals), data.frame(cor.vals)) %>% 
+  	gather(colvars, corr, -rowvars) %>% 
+  	left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
+  			  	gather(colvars, p.value, -rowvars))
+}
 
-## Pain Group
-```{r ---> Pain-corrplot, eval=TRUE, echo=TRUE, message=TRUE}
+
+```
+
+
+### CORR PLOTS
+```{r Pain-Groups, eval=TRUE, echo=FALSE, message=FALSE}
 ######		PAIN GROUPS			####
-#plot(dat.pain)
-# summary(dat.pain)
-# gp.pain <- dat.pain %>% select(!"group.factor")
-# gp.pain <- gp.pain %>% select(!"slpDist", -TIB)
-# plot(gp.pain)
-# pain.cor <- cor(gp.pain)
-# corrplot(pain.cor)
-# 
-# round(pain.cor, 3)
-# 
-# pain.cor.test <- corr.test(gp.pain,
-# 						 use = "pairwise",
-# 						 method = "spearman",
-# 						 adjust = "none",
-# 						 alpha = 0.05,
-# 						 ci = TRUE, minlength = 5)
+dat.pain2 <- dat.pain %>% select(!"group.factor")
+dat.pain2 <- dat.pain2 %>% select(!"slpDist", -TIB)
 
+####		PLOT R AND P VALUES IN A SINGLE GRAPH		####
+###		FROM A FORUM POST IN 2019		###
+
+####		Breaking down the plot		####
+
+corr.data(dat.pain2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + # provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+	# This overlays a grid of varying blue and adds the "corr" legend on the right, 
+	                    # and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 3, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=2.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "Both pain groups",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme_classic() +
+	# theme_cleveland() +
+
+
+
+```
+
+
+
+```{r FM-corrplot, eval=TRUE, echo=FALSE, message=FALSE}
+######		FM GROUP			####
+dat.FM2 <- dat.FM %>% select(!"group.factor", -TIB)
+dat.FM2 <- dat.FM2 %>% select(!"slpDist")
+
+####		Breaking down the plot		####
+
+corr.data(dat.FM2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
+		# provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+			# This overlays a grid of varying blue and adds
+			# the "corr" legend on the right, and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 3, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=2.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "FM pain group",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme_classic() +
+	# theme_cleveland() +
+
+```
+
+
+
+```{r CLBP-corrplot, eval=TRUE, echo=FALSE, message=FALSE}
+######		FM GROUP			####
+dat.CLBP2 <- dat.CLBP %>% select(!"group.factor", -TIB)
+dat.CLBP2 <- dat.CLBP2 %>% select(!"slpDist")
+
+####		Breaking down the plot		####
+
+corr.data(dat.CLBP2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
+		# provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+			# This overlays a grid of varying blue and adds
+			# the "corr" legend on the right, and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 3, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=2.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "CLBP pain group",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme_classic() +
+	# theme_cleveland() +
+
+```
+
+
+```{r HC-corrplot, eval=TRUE, echo=FALSE, message=FALSE}
+######		FM GROUP			####
+dat.HC2 <- dat.HC %>% select(!"group.factor", -TIB)
+dat.HC2 <- dat.HC2 %>% select(!"slpDist")
+
+####		Breaking down the plot		####
+
+corr.data(dat.HC2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
+		# provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+			# This overlays a grid of varying blue and adds
+			# the "corr" legend on the right, and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 3, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=2.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "Healthy control group",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+	# theme_classic() +
+	# theme_cleveland() +
+
+```
+
+
+## BAR PLOTS
+```{r BDI-Group, eval=TRUE, echo=FALSE, message=FALSE}
+#		AVERAGE BDI_TOTAL BY GROUP
+
+bdi.smry <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		)
+view(bdi.smry)
+
+ggplot(data = bdi.smry, aes(x = group.factor,
+							y = avg.bdi.tot,
+							fill = group.factor)) +
+	geom_bar(stat = "identity")
+
+```
+
+
+# END - BEYOND HERE IS EXPLORATORY
+
+
+
+
+```{r Pain-group-Cor, eval=TRUE, echo=FALSE, message=FALSE}
 ####		ADDING GRAPHS TOGETHER		#######
 # corrplot(pain.cor, order = "hclust", type = "upper",
 # 		 # diag = FALSE,
@@ -963,22 +1147,16 @@ select(Tukeys, -term, -Var) %>%
 # 		 tl.col = "black",
 # 		 addshade = "all",
 # 		 tl.cex = .85)
-# corrplot(pain.cor, add = TRUE, type = "lower", 
+# corrplot(pain.cor, add = TRUE, type = "lower",
 # 		 method = "number", order = "hclust",
-# 		 diag = FALSE, tl.pos = "n", 
+# 		 diag = FALSE, tl.pos = "n",
 # 		 col = col1(20),
 # 		 bg = "dark grey",
 # 		 addshade = "all",
 # 		 cl.pos = "n")
 
+
 ```
-
-# END - BEYOND HERE IS EXPLORATORY
-
-
-
-
-
 
 
 

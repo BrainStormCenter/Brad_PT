@@ -61,14 +61,19 @@ pain.cor.test <- corr.test(gp.pain,
 corrplot(pain.cor, order = "hclust", type = "upper",
 		 # diag = FALSE,
 		 col = col1(20),
-		 bg = "dark grey",
+		 bg = "dark grey",		 
+		 # mar = c(5, 8, 8, 5),
 		 tl.pos = "l",
 		 tl.col = "black",
+		 # tl.offset = 1,
 		 addshade = "all",
+		 diag = FALSE,
 		 tl.cex = .85)
 corrplot(pain.cor, add = TRUE, type = "lower", 
+		 mar = c(5, 7, 7, 5),
 		 method = "number", order = "hclust",
-		 diag = FALSE, tl.pos = "n", 
+		 diag = FALSE, 
+		 tl.pos = "n", 
 		 col = col1(20),
 		 bg = "dark grey",
 		 addshade = "all",
@@ -259,19 +264,42 @@ corrplot(acr, add = TRUE, type = "lower", method = "ellipse", order = "AOE",
 # corrplot(M, order = "hclust", addrect = 4, rect.col = "blue")
 # corrplot(M, order = "hclust", hclust.method = "ward.D2", addrect = 4)
 
+a <- dat.HC[,c(-1)]
+plot(a)
+round(cor(a), 2)
+acr <- cor(a)
+
+plot(gp.pain)
+pain.cor <- cor(gp.pain)
+corrplot(pain.cor)
+
+round(pain.cor, 3)
+
+pain.cor.test <- corr.test(gp.pain,
+						 use = "pairwise",
+						 method = "spearman",
+						 adjust = "none",
+						 alpha = 0.05,
+						 ci = TRUE, minlength = 5)
+
+
 ## circle + colorful number
 #		I LIKE THIS VERSION
-corrplot(acr, order = "AOE", type = "upper", tl.pos = "d",
+corrplot(pain.cor, order = "AOE", type = "upper", tl.pos = "d",
 		 bg = "grey",
 		 outline = TRUE,
 		 hclust.method = "ward.D2",
 		 addgrid.col = "blue",
 		 col = col1(200))
-corrplot(acr, add = TRUE, type = "lower", method = "number", order = "AOE",
+corrplot(pain.cor, add = TRUE, type = "lower", method = "number", order = "AOE",
 		 diag = FALSE, tl.pos = "n", cl.pos = "n",
 		 bg = "grey",
 		 outline = TRUE,
 		 col = col1(200))
+
+########		corrplot.mixed 		#########
+
+corrplot.mixed(pain.cor, tl.pos = "lt", insig = "blank") ## I LIKE THIS VERSION AS A START TOO
 
 
 ###################		USING SIGNIFICANCE LEVELS #################
@@ -441,7 +469,7 @@ corr.data = function(data) {
 }
 
 
-corr.data(e) %>% 
+corr.data(pain.cor) %>% 
 	ggplot(aes(colvars, fct_rev(rowvars))) +
 	geom_tile(colour="grey20", aes(fill=corr), size=0.5) +
 	# geom_point(aes(size=p.value, colour=cut(abs(corr), c(0, 0.01, 0.05, 1), include.lowest=TRUE)), pch=15) +
@@ -1273,23 +1301,107 @@ ggline(dat1, x = "group.factor", y = "bdi_total",
 
 
 
-##		PLOTS
+##		BAR PLOTS
 ```{R ---> Bar chart by Group}
-# dat1.gp.BDI  <- ggplot(data = dat1,
-# 						aes(x = group.factor,
-# 							y = bdi_total, pdi_total,
-# 							fill = group.factor)) +
-# 	geom_bar(color = "black", stat = "identity",
-# 			 position = position_dodge(),
-# 			 size = .3) +
-# 	scale_fill_hue(name = "group") +
-# 	xlab("Subjects groups") +
-# 	ylab("BDI total") +
-# 	ggtitle("BDI by group analysis")
+
+#		AVERAGE BDI_TOTAL BY GROUP
+
+bdi.smry <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		)
+view(bdi.smry)
+
+ggplot(data = bdi.smry, aes(x = group.factor, 
+							y = avg.bdi.tot,
+							fill = group.factor)) +
+	geom_bar(stat = "identity")
+
+
 # 
-# print(dat1.gp.BDI)
+# ggplot(data = bdi.smry) +
+# 	geom_bar(mapping = aes(x = group.factor, y = avg.bdi.tot))
+# 
+# 
+# 
+# 
+# dat1 %>% 
+# ggplot(., aes(x = dat1$group.factor,
+# 				 y = bdi_total, fill=dat1$group.facotor)) +
+# 	geom_bar(position = position_dodge(), stat = "identity") 
+# 
+# 
+
+# 
+# ggplot(data = dat1) +
+# 	geom_boxplot(mapping = aes(x = reorder(group.factor, bdi_total, FUN = mean), 
+# 							   y = bdi_total))
+# 
+# 
+# ggplot(data = dat1) +
+# 	stat_summary(
+# 		mapping = aes(x = group.factor, y = bdi_total),
+# 		fun = mean(dat1$bdi_total)
+# 	)
+# 
+# 
+# 
+# ggplot(dat1, aes(bdi_total, fill=group.factor)) +
+# 	geom_bar(position = "dodge")
+# 
+
+
+
+dat1.gp.BDI  <- ggplot(data = dat1,
+						aes(x = group.factor,
+							y = bdi_total,
+							fill = group.factor)) +
+	geom_bar(color = "black", stat = "identity",
+			 position = position_dodge(),
+			 size = .3) +
+	scale_fill_hue(name = "group") +
+	xlab("Subjects groups") +
+	ylab("BDI total") +
+	ggtitle("BDI by group analysis")
+
+print(dat1.gp.BDI)
+
+
+
+
+
 
 ```
+
+
+
+```{r BDI-scores, eval=TRUE, echo=FALSE, message=FALSE}
+bdi.smry1  <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
+		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
+		)
+view(bdi.smry1)
+
+
+dat1 %>% 
+	group_by(group.factor) %>% 
+	summarise(
+		BDI = mean(bdi_total, na.rm = TRUE)
+	)
+
+	view(bdi_total)
+
+group_by(group.factor)  %>% dat1$bdi_total	
+	
+```
+
+
 
 
 ```{r ---> Box plots}

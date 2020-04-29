@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-```{r ---> Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
+```{r Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
 library(knitr)
 library(kableExtra)
 library(tidyverse)
@@ -23,7 +23,7 @@ dr_here(show_reason = FALSE)
 ```
 
 
-```{r ---> Create-data, eval=TRUE, echo=FALSE, message=FALSE}
+```{r Create-data, eval=TRUE, echo=FALSE, message=FALSE}
 
 zq.dat <- structure(list(group = structure(c(1L, 1L, 1L, 1L, 1L, 
 1L, 2L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 
@@ -71,7 +71,7 @@ zq.dat <- structure(list(group = structure(c(1L, 1L, 1L, 1L, 1L,
 
 ```
 
-```{r ---> Demo, eval=TRUE, echo=FALSE, message=FALSE}
+```{r Demo, eval=TRUE, echo=FALSE, message=FALSE}
 #		GROUP BY SEX INFORMATION
 groups_x_sex <- zq.dat %>%
 	group_by(group, sex) %>% 
@@ -85,8 +85,16 @@ groups_x_sex %>%
 
 ```
 
-```{r ---> plots}
-plot(zq.dat)
+```{r McGill, echo=FALSE}
+#	plot some date
+colnames(groups_x_sex)
 
+plot(zq.dat)
+```
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
 
 ```
+

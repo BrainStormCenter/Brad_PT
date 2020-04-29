@@ -185,17 +185,100 @@ corrplot.mixed(M2, tl.pos = "n")
 
 
 
+###			TESTING WITH MY DATA
+M <- cor(mtcars)
+res1 <- cor.mtest(mtcars, conf.level = 0.95)
+ord <- corrMatOrder(M, order = "AOE")
+M2 <- M[ord,ord]
+
+corrplot(M, p.mat = res1$p, insig = "blank")
+corrplot(M, p.mat = res1$p, insig = "p-value")
+corrplot(M, p.mat = res1$p, sig = "p-value", sig.level = 0.05) ## add all p-values
+
+corrplot.mixed(M2)
+
+
+corrplot(M, p.mat = res1$p, insig = "label_sig",
+		 pch.col = "white",
+		 pch = "p<.05", pch.cex = .5, order = "AOE")
+
+
+# matrix of the p-value of the correlation
+p.mat <- cor.mtest(mtcars)$p
+head(p.mat[, 1:5])
+
+# Specialized the insignificant value according to the significant level
+corrplot(M, type = "upper", order = "hclust",
+		 p.mat = p.mat, sig.level = 0.01)
 
 
 
+# Leave blank on no significant coefficient
+corrplot(M, type = "upper", order = "hclust",
+		 p.mat = p.mat, sig.level = 0.01, insig = "blank")
+
+
+col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
+
+## circle + colorful number
+corrplot(M, order = "AOE", type = "upper", tl.pos = "d")
+corrplot(M, add = TRUE, type = "lower", method = "number", order = "AOE",
+		 diag = FALSE, tl.pos = "n", cl.pos = "n")
 
 
 
+corrplot(M, method = "number",
+		 bg = "light gray",
+		 col = col1(100),
+		 add = FALSE,
+		 mar = c(5, 7, 7, 5),
+		 type = "lower",
+		 order = "hclust",
+		 diag = FALSE, tl.pos = "n",
+		 cl.pos = "n")
+
+corrplot(M, method = "color",
+		 bg = "light gray",
+		 col = col1(100),
+		 add = TRUE,
+		 mar = c(5, 7, 7, 5),
+		 type = "upper", order = "hclust", number.cex = .7,
+		 addCoef.col = "white", # Add coefficient of correlation
+		 tl.pos = "n",
+		 tl.col = "black", tl.srt = 90, # Text label color and rotation
+		 # Combine with significance
+		 p.mat = p.mat, sig.level = 0.01, insig = "blank",
+		 # hide correlation coefficient on the principal diagonal
+		 diag = FALSE)
 
 
 
-
-
+####		PLOT OF COEFFICIENTS		####
+corrplot(M, method = "number",
+		 bg = "light gray",
+		 col = col1(100),
+		 add = FALSE,
+		 tl.pos = "lt",
+		 tl.col = "black",
+		 mar = c(5, 7, 7, 5),
+		 type = "lower",
+		 order = "hclust",
+		 diag = FALSE,
+		 cl.pos = "n")
+##		add all p-values		####
+corrplot(M, method = "color", col = col1(100),
+		 add = TRUE,
+		 mar = c(5, 7, 7, 5),
+		 tl.pos = "n",
+		 tl.col = "black",
+		 # tl.cex = 1.5,
+		 type = "upper", order = "hclust",
+		 # number.cex = .5,
+		 number.font = "white",
+		 p.mat = res1$p,
+		 # sig.level = 0.01, #insig = "blank")
+		 insig = "p-value", sig.level = -1,
+		 diag = FALSE)
 
 
 
