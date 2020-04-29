@@ -32,27 +32,70 @@ corrplot(ct$p)
 
 cor(dSM)
 
-corr.matrix <- corr.test(e,
-						 use = "pairwise",
-						 method = "spearman",
-						 adjust = "none",
-						 alpha = 0.05,
-						 ci = TRUE, minlength = 5)
+
 
 
 
 cr <- cor(d)
 corrplot(cr)
 
-#####
-#		PAIN GROUPS
+######		PAIN GROUPS			####
 plot(dat.pain)
 summary(dat.pain)
-e <- dat.pain %>% select(!"group.factor")
-e <- e %>% select(!"slpDist")
-plot(e)
-pcr <- cor(e)
-corrplot(pcr)
+gp.pain <- dat.pain %>% select(!"group.factor")
+gp.pain <- gp.pain %>% select(!"slpDist", -TIB)
+plot(gp.pain)
+pain.cor <- cor(gp.pain)
+corrplot(pain.cor)
+
+round(pain.cor, 3)
+
+pain.cor.test <- corr.test(gp.pain,
+						 use = "pairwise",
+						 method = "spearman",
+						 adjust = "none",
+						 alpha = 0.05,
+						 ci = TRUE, minlength = 5)
+
+####		ADDING GRAPHS TOGETHER		#######
+corrplot(pain.cor, order = "hclust", type = "upper",
+		 # diag = FALSE,
+		 col = col1(20),
+		 bg = "dark grey",
+		 tl.pos = "l",
+		 tl.col = "black",
+		 addshade = "all",
+		 tl.cex = .85)
+corrplot(pain.cor, add = TRUE, type = "lower", 
+		 method = "number", order = "hclust",
+		 diag = FALSE, tl.pos = "n", 
+		 col = col1(20),
+		 bg = "dark grey",
+		 addshade = "all",
+		 cl.pos = "n")
+
+
+
+
+
+corrplot(pain.cor,
+		 add = FALSE,
+		 method = "shade",
+		 diag = FALSE,
+		 type = "upper",
+		 title = 'Pain group',
+		 is.corr = TRUE,
+		 outline = TRUE,
+		 # addgrid.col = "blue",
+		 addCoef.col = TRUE,
+		 addCoefasPercent = TRUE,
+		 col = col1(20),
+		 order = "hclust",
+		 hclust.method = "ward.D2",
+		 addrect = 3,
+		 p.mat = 
+		 rect.col = "red")
+
 
 #####
 #		HC GROUP

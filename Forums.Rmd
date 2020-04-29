@@ -150,6 +150,16 @@ formatme %>%
 		}
 	)
 
+
+
+kable(mtcars[1:10, 1:6], caption = "Group Rows") %>%
+  kable_styling("striped", full_width = F) %>%
+  pack_rows(index = c(" " = 0, "Group 1" = 2, "Group 2" = 3))
+
+kable(mtcars[1:10, 1:6], caption = "Group Rows") %>%
+  kable_styling("striped", full_width = F) %>%
+  pack_rows(index = c(" " = 2, "Group 1" = 2, "Group 2" = 3))
+
 ```
 
 

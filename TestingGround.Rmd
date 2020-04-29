@@ -30,6 +30,8 @@ groups_x_sex %>% gt()
 
 
 
+
+
 # z_table2 <- kable(dt, "latex")
 # 
 # z_table2 <-  as_tibble(z_table2)

@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE, comment="")
 ```{r ---> Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
 # library(readxl) # This is used to import data from excel
 library(gt)
+library(DataExplorer)
 library(formattable)
 library(xtable)
 library(caret)
@@ -701,10 +702,18 @@ nearZeroVar(dat.pain,
 
 
 # EXAMINE DATA
+## Reports
+```{r ---> Exploring-data}
+####				EXPLORING DATA WITH THE DATAEXPLORER PACKAGE
+# library(DataExplorer)
+# create_report(gp.pain)
 
-## MEANS
+```
+
+
+## DESCRIPTIVES
 ```{r ---> DESCRIPTIVES, eval=TRUE, echo=FALSE}
-summary(dat.SM) # Quick overview
+# summary(dat.SM) # Quick overview
 
 #		MEANS AND SDs
 dat.SM.smry <- dat.SM %>% 
@@ -712,16 +721,27 @@ dat.SM.smry <- dat.SM %>%
 	summarise_all(. , list(mean=mean, sd=sd))
 
 #		GROUP BY SEX INFORMATION
-groups_x_sex2 <-
-	dat1 %>%
+groups_x_sex2 <- dat1 %>%
 	group_by(group.factor, sex.factor) %>%
 	tally()
-# print.data.frame(groups_x_sex2)
+
+names(groups_x_sex2)[names(groups_x_sex2) == 'group.factor'] <- 'Group'
+names(groups_x_sex2)[names(groups_x_sex2) == 'sex.factor'] <- 'Sex'
+
+groups_x_sex2 %>% 
+	kable(align = "c", padding = 4) %>% 
+	kable_styling("striped", full_width = F) %>% 
+	collapse_rows(columns = 1:2, valign = "top") %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" )
 
 
-kable(groups_x_sex2) %>% 
-	 kable_styling(bootstrap_options = c("striped", "hover"))
 
+
+
+
+	# pack_rows(index = c(" " = 0,"Healthy" = 2, 
+	# 					"Low Back Pain" = 2,
+	# 					"Fibromyalgia" = 2))
 
 
 
@@ -746,6 +766,27 @@ kable(groups_x_sex2) %>%
 
 # dat.SM.smry  %>% 
 # 	gt()
+
+
+
+
+
+# print.data.frame(groups_x_sex2)
+
+
+# kable(groups_x_sex2) %>% 
+# 	 kable_styling(bootstrap_options = c("striped", "hover"))
+# 
+# 
+# groups_x_sex2 %>% 
+# 	kable() %>% 
+# 	kable_styling("striped", full_width = F) %>% 
+# 	pack_rows(index = c(" " = 0,"Healthy" = 2, 
+# 						"Low Back Pain" = 2,
+# 						"Fibromyalgia" = 2))
+
+
+
 
 ```
 
@@ -776,15 +817,15 @@ Models <- purrr::map(model_summaries, GetModels) %>%
 # head(Models)
 
 ####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
-filter(Models,  term !="Residuals") %>%
-	dplyr::select("Name" , "p.value")  %>%
-	gt(rowname_col = "Name") %>%
-	tab_header(
-		title = md("Main effect of group"))  %>% 
-	fmt_number(
-		columns = vars("p.value"),
-		decimals = 4
-	)
+# filter(Models,  term !="Residuals") %>%
+# 	dplyr::select("Name" , "p.value")  %>%
+# 	gt(rowname_col = "Name") %>%
+# 	tab_header(
+# 		title = md("Main effect of group"))  %>% 
+# 	fmt_number(
+# 		columns = vars("p.value"),
+# 		decimals = 4
+# 	)
 
 #		kable version??
 
@@ -795,18 +836,15 @@ Models2 <- Models2 %>%
 
 
 
-filter(Models,  term !="Residuals") %>%
-	dplyr::select("Name" , "p.value")  %>%
-	kable() %>% 
-	kable_styling(
-		bootstrap_options = "striped", 
-		full_width = F, position = "left")
+# filter(Models,  term !="Residuals") %>%
+# 	dplyr::select("Name" , "p.value")  %>%
+# 	kable() %>% 
+# 	kable_styling(
+# 		bootstrap_options = "striped", 
+# 		full_width = F, position = "left")
 
 
-```
-
-Conditional tables
-```{r ---> conditional-formating, eval=TRUE, echo=FALSE, message=FALSE}
+####			ANOVA TABLE MADE WITH KABLE			####
 Models2 %>%
 	mutate(p.value = 
 		   	cell_spec((formatC(x = p.value, 
@@ -816,15 +854,14 @@ Models2 %>%
 							  color = ifelse(p.value <= 0.05, 
 							  			   yes="red", no="blue"), escape = F)) %>% 
 	mutate_if(is.numeric, function(x) {
-		cell_spec((formatC(x,digits=2, width=3, 
+		cell_spec((formatC(x,digits=3, width=3, 
 						   format="f", flag="-", drop0trailing = FALSE)),
 				  "html")}) %>%
-	kable("html", escape = FALSE, align = "l", 
+	kable("html", escape = FALSE, align = "l", padding = 4,
 		  caption = "ANOVA full model") %>%
 	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
-	footnote(general = "Red = main effect for group") %>% 
-	column_spec(1, bold = T)
-
+	footnote(general = "Red = Significant main effect for group (p ≤ 0.05)")  %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" )
 
 
 
@@ -843,20 +880,98 @@ Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>%
 names(Tukeys)[names(Tukeys) == 'Name'] <- 'Var'
 names(Tukeys)[names(Tukeys) == 'estimate'] <- 'diff'
 
-####		THIS PUT THE PostHoc TESTS INTO A TABLE		####
-select(Tukeys, -term) %>% 
-	gt(groupname_col = "Var") %>% 
-	tab_header(title = md("*PostHoc*")) %>% 
-	tab_stubhead(label = "Group Comps") %>% 
-	fmt_number(
-		columns = vars("diff", "conf.low", "conf.high"),
-		decimals = 2)  %>% 
-	fmt_number(#,
-		columns = vars("adj.p.value"),
-		decimals = 4)
+####		THIS PUT THE PostHoc TESTS INTO A gt TABLE		####
+# select(Tukeys, -term) %>% 
+# 	gt(groupname_col = "Var") %>% 
+# 	tab_header(title = md("*PostHoc*")) %>% 
+# 	tab_stubhead(label = "Group Comps") %>% 
+# 	fmt_number(
+# 		columns = vars("diff", "conf.low", "conf.high"),
+# 		decimals = 2)  %>% 
+# 	fmt_number(#,
+# 		columns = vars("adj.p.value"),
+# 		decimals = 4)
+
+
+####			TABLE USING KABLE			####
+select(Tukeys, -term, -Var) %>%
+	mutate(adj.p.value = 
+		   	cell_spec((formatC(x = adj.p.value, 
+		   					   digits=3, width = 3, 
+									   format='g', flag = "-", drop0trailing = TRUE, 
+									   preserve.width = "common")), "html",
+							  color = ifelse(adj.p.value <= 0.05, 
+							  			   yes="red", no="blue"), escape = F)) %>% 
+	mutate_if(is.numeric, function(x) {
+		cell_spec((formatC(x,digits=3, width=3, 
+						   format="f", flag="-", drop0trailing = FALSE)),
+				  "html")}) %>%
+	kable("html", escape = FALSE, align = "l", 
+		  caption = "PostHoc group comparisons: **See** *Note* at table end",
+		  padding = 2) %>%
+	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
+	footnote(general = "Red = Significant group tests (p ≤ 0.05)")  %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" ) %>% 
+	pack_rows(index = c(" " = 0, "Sleep Quality" = 3, #)) #, 
+  					"Sleep Latency" = 3,
+  					"Sleep Duration" = 3,
+  					"Sleep Efficacy" = 3,
+  					"Sleep Disturbance" = 3,
+  					"Sleep Medications" = 3,
+  					"Sleep Daytime Functioning" = 3,
+  					"PSQI Global" = 3,
+  					"ESS Total" = 3, #,
+  					"BDI Total" = 3,
+  					"McGill Total" = 3,
+  					"Time in Bed" = 3)) %>% 
+	scroll_box(height = "500px")
+  					# ))
+
 
 ```
 
+
+
+# PLOTS
+
+## Pain Group
+```{r ---> Pain-corrplot, eval=TRUE, echo=TRUE, message=TRUE}
+######		PAIN GROUPS			####
+#plot(dat.pain)
+# summary(dat.pain)
+# gp.pain <- dat.pain %>% select(!"group.factor")
+# gp.pain <- gp.pain %>% select(!"slpDist", -TIB)
+# plot(gp.pain)
+# pain.cor <- cor(gp.pain)
+# corrplot(pain.cor)
+# 
+# round(pain.cor, 3)
+# 
+# pain.cor.test <- corr.test(gp.pain,
+# 						 use = "pairwise",
+# 						 method = "spearman",
+# 						 adjust = "none",
+# 						 alpha = 0.05,
+# 						 ci = TRUE, minlength = 5)
+
+####		ADDING GRAPHS TOGETHER		#######
+# corrplot(pain.cor, order = "hclust", type = "upper",
+# 		 # diag = FALSE,
+# 		 col = col1(20),
+# 		 bg = "dark grey",
+# 		 tl.pos = "l",
+# 		 tl.col = "black",
+# 		 addshade = "all",
+# 		 tl.cex = .85)
+# corrplot(pain.cor, add = TRUE, type = "lower", 
+# 		 method = "number", order = "hclust",
+# 		 diag = FALSE, tl.pos = "n", 
+# 		 col = col1(20),
+# 		 bg = "dark grey",
+# 		 addshade = "all",
+# 		 cl.pos = "n")
+
+```
 
 # END - BEYOND HERE IS EXPLORATORY
 
@@ -1072,13 +1187,3 @@ signif(model_summaries$bdi_total$tukey$group.factor, 3)
 
 
 
-
-
-```{r ---> MANOVA, eval=FALSE, echo=FALSE}
-data(mtcars)
-head(mtcars)
-help(manova)
-
-zz_MANOVA <- manova(cbind(mpg, qsec, wt) ~ cyl * gear * carb, data = mtcars)
-summary(zz_MANOVA) 
-```
