@@ -15,9 +15,9 @@ knitr::opts_chunk$set(echo = TRUE, comment="")
 
 ```
 
-```{r ---> Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
+```{r Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
 # library(readxl) # This is used to import data from excel
-library(gt)
+# library(gt)
 library(DataExplorer)
 library(formattable)
 library(xtable)
@@ -58,8 +58,8 @@ dr_here(show_reason = FALSE)
 # library(dplyr) 		# ALREADY IN TIDYVERSE
 ```
 
-```{r ---> Color schemes, eval=TRUE, echo=FALSE, message=FALSE}
-##  different color series
+```{r Functions, eval=TRUE, echo=FALSE, message=FALSE}
+####  different color series		####
 col1 <- colorRampPalette(c("#7F0000", "red", "#FF7F00",
 						   "yellow", "white","cyan",
 						   "#007FFF", "blue","#00007F"))
@@ -76,26 +76,42 @@ col4 <- colorRampPalette(c("#7F0000", "red", "#FF7F00",
 						   "#00007F"))
 wb <- c("white", "black")
 
-
-```
-
-```{r ---> Date for files, eval=TRUE, echo=FALSE, message=FALSE}
-# currentDate <- format(Sys.Date(), "%d_%X_%Y")
+####		DATE VARIABLE		####
 currentDate <- format(Sys.time(), "%F_%H-%M")
 
-
+####		APPEND DATE TO STRING		####
 date.time.append <- function(str, sep = '_', date.format ="%Y_%m_%d_%H_%M_%S") {
 stopifnot(is.character(str))
 return(paste(str, format(Sys.time(), date.format), sep = sep))  
 }
 
-# TO USE THIS FUNCTION JUST ADD A STRING WITHIN THE PARENTHESESSS AS BELOW
-# date.time.append("fileName")
+# 		TO USE THIS FUNCTION JUST ADD A STRING WITHIN THE PARENTHESESSS AS BELOW
+# 		date.time.append("fileName")
 
+
+####		Function to get correletions and p.values in a "long" data frame		####
+corr.data = function(data) {
+  
+  # Get correlations
+  cor.vals = cor(data)
+  
+  # Get p-values
+  cor.p = cor.mtest(data, conf.level = 0.95)$p
+  rownames(cor.p) = rownames(cor.vals)
+  colnames(cor.p) = colnames(cor.vals)
+  
+  cbind(rowvars=rownames(cor.vals), data.frame(cor.vals)) %>% 
+  	gather(colvars, corr, -rowvars) %>% 
+  	left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
+  			  	gather(colvars, p.value, -rowvars))
+}
+
+
+##						END						##
 ```
 
 
-```{r ---> data prep, eval=FALSE, echo=FALSE}
+```{r data prep, eval=FALSE, echo=FALSE}
 ####	THIS IS COMPLETED FOR THE DATA USED HERE AS OF April 23, 2020 		####
 
 
@@ -133,7 +149,7 @@ return(paste(str, format(Sys.time(), date.format), sep = sep))
 
 
 # DATA
-```{r ---> Import data}
+```{r Import data}
 #		IMPORT DATA FROM GITHUB
 data <- read.csv(url('https://raw.githubusercontent.com/BrainStormCenter/Brad_PT/master/PT_data_13042020.csv'), header = TRUE)
 data <- as_tibble(data)
@@ -141,7 +157,7 @@ data <- as_tibble(data)
 
 ## CLEAN DATA
 Number of subjects per group
-```{r ---> Clean data, eval=TRUE, echo=FALSE, message=FALSE}
+```{r VarInfo, eval=TRUE, echo=FALSE, message=FALSE}
 #		CLEANING AND PRESERVING ORIGINAL DATA
 
 # data %>% count(group)
@@ -152,24 +168,30 @@ levels(dat1$group.factor)=c("HC","CLBP","FM", na.rm = TRUE)
 #		REPLACE HC McGILL TOTAL "NA" WITH 0
 dat1$mcgill_total  <- coalesce(dat1$mcgill_total, 0L)
 
-#		CLEAN ESS BY REMOVING "NA"
+##		CLEAN ESS BY REMOVING "NA"		##
 dat1   <- filter(dat1, ess_total != "NA")
 
+##		CHANGE VARIABLE TYPE		##
 dat1$ess_total <- as.numeric(dat1$ess_total)
 dat1$bdi_total <- as.numeric(dat1$bdi_total)
 dat1$mcgill_total <- as.numeric(dat1$mcgill_total)
 
+##						ISI					##
+#		The Insomnia Severity Index score "isi_total" is already computed
+
+##		FINAL SUBJECT COUNT		##
 dat1 %>% count(group.factor)
 
+##						END						##
 ```
 
 
 ## PSQI SCORING
 The global PSQI score is then calculated by totaling the seven component scores, providing an overall score ranging from 0 to 21, where lower scores denote a healthier sleep quality. 
 
-```{r ---> PSQI dataset, eval=TRUE, echo=FALSE, message=FALSE}
+```{r PSQI-Data, eval=TRUE, echo=FALSE, message=FALSE}
 #		PSQI DATA
-# gather psqi variables into separate spreadsheet:
+# gather psqi variables into separate data frame
 dat.psqi <- dat1[,c(1,425,769,
 					  grep("pittsburgh", colnames(dat1)),
 					  grep("psqi", colnames(dat1)))]
@@ -210,14 +232,8 @@ dat.psqi <- dat.psqi %>% select(1:45,
 
 dat.psqi <- dat.psqi %>% select(1:2,group.factor,everything())
 
-# colnames(dat.psqi)
 
-# write.csv(dat.psqi, "PSQI_rawData_13April2020.csv", row.names = FALSE)
-
-# ls()
-```
-
-```{r ---> chr to num, eval=TRUE, echo=FALSE}
+#### 			chr to num, eval=TRUE, echo=FALSE}			####
 dat.psqi$psqi_2 <- as.numeric(dat.psqi$psqi_2)
 dat.psqi$psqi_4 <- as.numeric(dat.psqi$psqi_4)
 dat.psqi$psqi_5a <- as.numeric(dat.psqi$psqi_5a)
@@ -232,7 +248,6 @@ dat.psqi$psqi_5i <- as.numeric(dat.psqi$psqi_5i)
 dat.psqi$psqi_5othera <- as.numeric(dat.psqi$psqi_5othera)
 dat.psqi$psqi_7 <- as.numeric(dat.psqi$psqi_7)
 dat.psqi$psqi_8a <- as.numeric(dat.psqi$psqi_8a)
-
 dat.psqi$psqi_9 <- as.numeric(dat.psqi$psqi_9)
 dat.psqi$psqi_component1 <- as.numeric(dat.psqi$psqi_component1)
 
@@ -241,15 +256,16 @@ dat.psqi$psqi_component1 <- as.numeric(dat.psqi$psqi_component1)
 dat.psqi$psqi_5othera <- dat.psqi$psqi_5othera %>% replace_na(0)
 
 
+####			PSQI TIB SANITY CHECK			####
+# max(dat1$TIB)
+
+#colnames(dat1)
+# z <- data[which(dat.psqi$TIB > 19, ) ]
 ```
 
-
-```{r ---> pqsi sanity check, eval=FALSE, echo=FALSE}
-# z <- data[which(dat.psqi$TIB == 19, ) ]
-```
 
 Time in bed (TIB)
-```{r ---> Time in bed, eval=TRUE, echo=FALSE}
+```{r Time in bed, eval=TRUE, echo=FALSE}
 dat.psqi$bedtime  <- dat.psqi$psqi_1
 dat.psqi$bt.sleep <- dat.psqi$psqi_1a.factor
 dat.psqi$waketime <- dat.psqi$psqi_3
@@ -269,18 +285,52 @@ dat.psqi <- dat.psqi %>%
 		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
 		   				  format = "%I:%M %p") +
 		   	as.difftime(tim = 1, units = "days"),
-		   `Time in bed` = Wake - Sleep)
+		   `Time in bed` = Wake - Sleep) # TIB version 1
 
 #		CRUDE FIX FOR THE 24+ HOUR ISSUE
-dat.psqi$TIB  <- as.numeric(dat.psqi$`Time in bed`)
-# round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
-					  # dat.psqi$TIB,
-					  # dat.psqi$TIB - 24), 2)
+dat.psqi$TIB  <- as.numeric(dat.psqi$`Time in bed`)   # TIB version 2
+round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
+							   dat.psqi$TIB,
+							   dat.psqi$TIB - 24), 2)
+# 
+# dat.psqi$TIB2  <- if_else(dat.psqi$TIB < 24,
+# 							   dat.psqi$TIB,
+# 							   dat.psqi$TIB - 24) # TIB version 3
+# 
+# 
+
+
+# ###			Second version from forum		###
+# dat.psqi <- dat.psqi %>%
+#   mutate(Sleep = if_else(
+#   	bt.sleep == "PM", true = as.POSIXct(x = paste(bedtime, bt.sleep), 
+#   										format = "%I:%M %p"), # time in current date
+#   	false = as.POSIXct(x = paste(bedtime, bt.sleep), 
+#   					   format = "%I:%M %p") + 
+#   		as.difftime(tim = 1, units = "days")), # next day for times at/after midnight
+#          Wake = as.POSIXct(x = paste(waketime, wt.wake),
+#          				  format = "%I:%M %p") +
+#   		as.difftime(tim = 1, units = "days"), # time in current date plus one day, equivalently time in next day
+#   	`Time Difference` = difftime(time1 = Wake,
+#   								 time2 = Sleep,
+#   								 units = "hours")) %>%  # difference of the two times, guaranteed to be in [0, 24)
+# 	print(width = Inf) # TIB version 4
+# 
+# 
+# dat.psqi$TIB <- dat.psqi$`Time Difference`
+# 
+# dat.psqi <- dat.psqi %>% relocate(`Time Difference`, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(`TIB`, .after = last_col())
+# dat.psqi <- dat.psqi %>% relocate(`Time in bed`, .after = last_col())
+# dat.psqi <- dat.psqi %>% relocate(`TIB2`, .after = last_col())
+
+
+
 
 
 # write.csv(dat.psqi, "PSQI_rawData_April2020_v1.csv", row.names = FALSE)
 
-currentDate <- format(Sys.time(), "%F_%H-%M")
+# currentDate <- format(Sys.time(), "%F_%H-%M")
 # write_csv(dat.psqi,
 # 		  paste("PSQI_rawData_",currentDate,".csv",sep=""),
 # 		  na = "NA",
@@ -292,7 +342,7 @@ currentDate <- format(Sys.time(), "%F_%H-%M")
 ```
 
 Comp 1
-```{r ---> COMP 1, eval=TRUE, echo=FALSE}
+```{r COMP 1, eval=TRUE, echo=FALSE}
 #		COMPONENT 1 = QUESTION 9
 dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 
@@ -309,7 +359,7 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 ```
 
 Comp 2
-```{r ---> COMP 2, eval=TRUE, echo=FALSE}
+```{r COMP 2, eval=TRUE, echo=FALSE}
 # Component 2: Sleep latency—questions 2 and 5a
 
 dat.psqi$Q2 <- dat.psqi$psqi_2
@@ -361,7 +411,7 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 ```
 
 Comp 3
-```{r ---> COMP 3, eval=TRUE, echo=FALSE}
+```{r COMP 3, eval=TRUE, echo=FALSE}
 # Component 3: Sleep duration—question 4
 
 dat.psqi$Q4 <- as.numeric(dat.psqi$psqi_4)
@@ -382,7 +432,7 @@ dat.psqi <- dat.psqi %>% relocate(Q4, .before = psqi_Comp1)
 ```
 
 Comp 4
-```{r ---> COMP 4, eval=TRUE, echo=FALSE}
+```{r COMP 4, eval=TRUE, echo=FALSE}
 # Component 4: Sleep efficiency—questions 1, 3, and 4
 # Sleep efficiency = (# hours slept/# hours in bed) X 100% 
 #	= (Q4 / TIB) * 100
@@ -413,7 +463,7 @@ dat.psqi <- dat.psqi %>% relocate(SE, .before = psqi_Comp1)
 
 
 Comp 5
-```{r ---> COMP 5, eval=TRUE, echo=FALSE}
+```{r COMP 5, eval=TRUE, echo=FALSE}
 # Sum of 5b to 5j scores, Component 5 score
 # 0, 0
 # 1-9, 1
@@ -512,7 +562,7 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp5, .after = last_col())
 
 
 Comp 6
-```{r ---> COMP 6, eval=TRUE, echo=FALSE}
+```{r COMP 6, eval=TRUE, echo=FALSE}
 # Component 6: Use of sleep medication—question 6
 # Response to Q6, Component 6 score
 # Not during past month, 0
@@ -527,7 +577,7 @@ dat.psqi$psqi_Comp6 <- as.numeric(dat.psqi$psqi_6)
 
 
 Comp 7
-```{r ---> COMP 7, eval=TRUE, echo=FALSE}
+```{r COMP 7, eval=TRUE, echo=FALSE}
 # 	Component 7: SUM Daytime dysfunction—questions 7 and 8
 # Sum of Q7 and Q8 subscores, COMPONENT SCORE 
 # 0,0
@@ -569,7 +619,7 @@ dat.psqi <- dat.psqi %>% relocate(psqi_Comp7, .after = last_col())
 
 
 PSQI Global
-```{r ---> GLOBAL Score, eval=TRUE, echo=FALSE}
+```{r GLOBAL Score, eval=TRUE, echo=FALSE}
 # Global PSQI Score: Sum of seven component scores:
 
 dat.psqi  <- dat.psqi %>%
@@ -589,7 +639,7 @@ dat.psqi  <- dat.psqi %>%
 
 
 
-```{r ---> RENAME COMPS, eval=TRUE, echo=FALSE}
+```{r RENAME COMPS, eval=TRUE, echo=FALSE}
 #		RENAME THE PSQI COMPONENTS
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] <- 'slpQual'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] <- 'slpLat'
@@ -610,7 +660,7 @@ currentDate <- format(Sys.time(), "%F_%H-%M")
 ```
 
 MERGE BACK INTO MAIN DATASET
-```{r ---> REINTEGRATE, eval=TRUE, echo=FALSE}
+```{r REINTEGRATE, eval=TRUE, echo=FALSE}
 #		COMBINING 2 DATASETS
 
 #		CREATING SMALL PSQI DATASET
@@ -630,7 +680,7 @@ dat1 <- merge(dat1, psqiSM, by = "ID")
 
 ## FINAL DATASETS
 All data has been updated, processed, clean and scored  
-```{r ---> DATA TO ANALYZE, eval=TRUE, echo=FALSE, comment=""}
+```{r DATA TO ANALYZE, eval=TRUE, echo=FALSE, comment=""}
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
@@ -639,8 +689,26 @@ dat.SM  <- dat1 %>% dplyr::select("group.factor",
 								  "slpDur", "slpEff", 
 								  "slpDist", "slpMeds",
 								  "slpDayFcn", "psqi_Global",
-								  "ess_total", "bdi_total",
-								  "mcgill_total", "TIB")
+								  "ess_total", "isi_total",
+								  "bdi_total", "mcgill_total", 
+								  "TIB")
+
+dat_isi_drop  <- dat1 %>% dplyr::select("group.factor",
+								  "slpQual", "slpLat", 
+								  "slpDur", "slpEff", 
+								  "slpDist", "slpMeds",
+								  "slpDayFcn", "psqi_Global",
+								  "ess_total", "isi_total",
+								  "bdi_total", "mcgill_total", 
+								  "TIB")
+
+dat_isi_drop <- dat_isi_drop %>% 
+	na.omit()
+dim(dat_isi_drop)
+
+dat_isi_drop %>% count(group.factor)
+
+
 
 dat.HC <- dat.SM %>%
 	filter(group.factor == "HC")
@@ -652,20 +720,15 @@ dat.pain <- dat.SM %>%
 	filter(group.factor == "CLBP" | group.factor == "FM")
 
 
-#		WRITE SMALL DATASET
-# write_csv(dat.SM, "dat.SM.csv",
-# 		  na = "NA", append = FALSE,
-# 		  col_names = TRUE, quote_escape = "double")
-
 
 
 # You could use the paste function to define the filename with date appended to it. See the example below: 
 
 
 smallData <- paste("dat.SM2_",currentDate,".csv",sep="") 
-# write_csv(dat.SM, smallData,
-# 		  na = "NA",
-# 		  col_names = TRUE, quote_escape = "double") 
+write_csv(dat.SM, smallData,
+		  na = "NA", append = FALSE,
+		  col_names = TRUE, quote_escape = "double")
 # 
 # currentDate <- format(Sys.time(), "%F_%H-%M")
 # write_csv(dat.SM,
@@ -683,14 +746,21 @@ smallData <- paste("dat.SM2_",currentDate,".csv",sep="")
 
 ## DATA QA
 The variable slpDist has little to no variance
-```{r ---> QA DATA, eval=TRUE, echo=FALSE}
+```{r QA DATA, eval=TRUE, echo=FALSE}
 # dat.SM.smry <- by(dat.SM, dat.SM$group.factor, summary, na.rm = TRUE)
 # 
 # summarise(dat.SM)
 
 #		LOOKING AT VARIANCE AMONG VARIABLES
-library(caret)
+nearZeroVar(dat.SM,
+			uniqueCut = 2,
+			names = TRUE)
+
 nearZeroVar(dat.pain,
+			uniqueCut = 2,
+			names = TRUE)
+
+nearZeroVar(dat_isi_drop,
 			uniqueCut = 2,
 			names = TRUE)
 
@@ -703,7 +773,7 @@ nearZeroVar(dat.pain,
 
 # EXAMINE DATA
 ## Reports
-```{r ---> Exploring-data}
+```{r Exploring-data}
 ####				EXPLORING DATA WITH THE DATAEXPLORER PACKAGE
 # library(DataExplorer)
 # create_report(gp.pain)
@@ -712,7 +782,7 @@ nearZeroVar(dat.pain,
 
 
 ## DESCRIPTIVES
-```{r ---> DESCRIPTIVES, eval=TRUE, echo=FALSE}
+```{r DESCRIPTIVES, eval=TRUE, echo=FALSE}
 # summary(dat.SM) # Quick overview
 
 #		MEANS AND SDs
@@ -733,42 +803,6 @@ groups_x_sex2 %>%
 	kable_styling("striped", full_width = F) %>% 
 	collapse_rows(columns = 1:2, valign = "top") %>% 
 	row_spec(0, bold = T, color = "white", background = "#461B7E" )
-
-
-
-
-
-
-	# pack_rows(index = c(" " = 0,"Healthy" = 2, 
-	# 					"Low Back Pain" = 2,
-	# 					"Fibromyalgia" = 2))
-
-
-
-# groups_x_sex %>% gt()
-# 
-# groups_x_sex %>% 
-# 	gt(groupname_col = "group.factor") %>% 
-# 	tab_header(title = md("**Group by Sex**")) %>% 
-# 	tab_stubhead(label = "Group Comps") # %>% 
-	# fmt_number(
-	# 	columns = vars("diff", "conf.low", "conf.high"),
-	# 	decimals = 2)  %>% 
-	# fmt_number(#,
-	# 	columns = vars("adj.p.value"),
-	# 	decimals = 4)
-
-# dat.SM.smry
-
-# write_csv(dat.SM.smry, "dat.SM.smry.csv",
-# 		  na = "NA", append = FALSE,
-# 		  col_names = TRUE, quote_escape = "double")
-
-# dat.SM.smry  %>% 
-# 	gt()
-
-
-
 
 
 # print.data.frame(groups_x_sex2)
@@ -792,14 +826,12 @@ groups_x_sex2 %>%
 
 
 ## ANOVA (Main effect of group)
-```{r ---> ANOVA with PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
-#	PostHoc DOES WORK
-
+```{r ANOVA, eval=TRUE, echo=FALSE, message=FALSE}
 # construct anova model for each column of dat1[, my_outcome_variables]
 model_summaries <- dat1[,c("slpQual", "slpLat", "slpDur",
 						   "slpEff", "slpDist","slpMeds",
-						   "slpDayFcn","psqi_Global","ess_total",
-						   "bdi_total", "mcgill_total",
+						   "slpDayFcn", "psqi_Global","ess_total",
+						   "isi_total", "bdi_total", "mcgill_total",
 						   "TIB")] %>%
   purrr::map(~ aov(.x ~ group.factor, data = dat1))  %>%
   # append the TukeyHSD CI estimates
@@ -816,61 +848,94 @@ Models <- purrr::map(model_summaries, GetModels) %>%
   purrr::map_dfr(broom::tidy, .id = "Name")
 # head(Models)
 
-####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
-# filter(Models,  term !="Residuals") %>%
-# 	dplyr::select("Name" , "p.value")  %>%
-# 	gt(rowname_col = "Name") %>%
-# 	tab_header(
-# 		title = md("Main effect of group"))  %>% 
-# 	fmt_number(
-# 		columns = vars("p.value"),
-# 		decimals = 4
-# 	)
-
-#		kable version??
-
+#		
 Models2 <- filter(Models,  term !="Residuals")
 Models2 <- Models2 %>% 
 	dplyr::select("Name" , "p.value")
 
 
-
-
-# filter(Models,  term !="Residuals") %>%
-# 	dplyr::select("Name" , "p.value")  %>%
-# 	kable() %>% 
-# 	kable_styling(
-# 		bootstrap_options = "striped", 
-# 		full_width = F, position = "left")
-
-
 ####			ANOVA TABLE MADE WITH KABLE			####
 Models2 %>%
 	mutate(p.value = 
-		   	cell_spec((formatC(x = p.value, 
-		   					   digits=3, width = 3, 
-									   format='g', flag = "-", drop0trailing = TRUE, 
-									   preserve.width = "common")), "html",
-							  color = ifelse(p.value <= 0.05, 
-							  			   yes="red", no="blue"), escape = F)) %>% 
+		   	cell_spec(
+		   		(formatC(x = p.value, 
+		   				 digits=3, width = 3, 
+		   				 format='g', flag = "-", drop0trailing = TRUE, 
+		   				 preserve.width = "common")), "html",
+		   		color = ifelse(p.value <= 0.05, 
+		   					   yes="red", no="blue"), escape = F)
+	) %>% 
 	mutate_if(is.numeric, function(x) {
-		cell_spec((formatC(x,digits=3, width=3, 
-						   format="f", flag="-", drop0trailing = FALSE)),
-				  "html")}) %>%
+		cell_spec(
+			(formatC(x,digits=3, width=3, 
+					 format="f", flag="-", drop0trailing = FALSE)),
+			"html")}
+	) %>%
 	kable("html", escape = FALSE, align = "l", padding = 4,
 		  caption = "ANOVA full model") %>%
 	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
 	footnote(general = "Red = Significant main effect for group (p ≤ 0.05)")  %>% 
 	row_spec(0, bold = T, color = "white", background = "#461B7E" )
 
-
-
-
+##		END		##
 ```
 
+```{r ISI-ANOVA, eval=TRUE, echo=FALSE, message=FALSE}
+# construct anova model for each column of dat1[, my_outcome_variables]
+isi_model_summaries <- dat_isi_drop[,c("slpQual", "slpLat", "slpDur",
+						   "slpEff", "slpDist","slpMeds",
+						   "slpDayFcn", "psqi_Global","ess_total",
+						   "isi_total", "bdi_total", "mcgill_total",
+						   "TIB")] %>%
+  purrr::map(~ aov(.x ~ group.factor, data = dat_isi_drop))  %>%
+  # append the TukeyHSD CI estimates
+  purrr::map(function(x) {
+    list(
+      model = x,
+      tukey = TukeyHSD(x)
+    )
+  })
 
-## PostHoc 
-```{r ---> POSTHOC RESULTS, eval=TRUE, echo=FALSE, message=FALSE}
+####		THIS RETURNS THE RESULTS OF THE OVERALL ANOVA	####
+GetModels <- function(l) l$model
+isi_Models <- purrr::map(isi_model_summaries, GetModels) %>% 
+  purrr::map_dfr(broom::tidy, .id = "Name")
+# head(Models)
+
+#		
+isi_Models2 <- filter(isi_Models,  term !="Residuals")
+isi_Models2 <- isi_Models2 %>% 
+	dplyr::select("Name" , "p.value")
+
+
+####			ANOVA TABLE MADE WITH KABLE			####
+isi_Models2 %>%
+	mutate(p.value = 
+		   	cell_spec(
+		   		(formatC(x = p.value, 
+		   				 digits=3, width = 3, 
+		   				 format='g', flag = "-", drop0trailing = TRUE, 
+		   				 preserve.width = "common")), "html",
+		   		color = ifelse(p.value <= 0.05, 
+		   					   yes="red", no="blue"), escape = F)
+	) %>% 
+	mutate_if(is.numeric, function(x) {
+		cell_spec(
+			(formatC(x,digits=3, width=3, 
+					 format="f", flag="-", drop0trailing = FALSE)),
+			"html")}
+	) %>%
+	kable("html", escape = FALSE, align = "l", padding = 4,
+		  caption = "ANOVA full model") %>%
+	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
+	footnote(general = "Red = Significant main effect for group (p ≤ 0.05)")  %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" )
+
+##		END		##
+```
+
+## POSTHOC 
+```{r PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
 GetTukeys <- function(m) m$tukey
 Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>% 
 	purrr::map_dfr(broom::tidy, .id = "Name")
@@ -880,28 +945,17 @@ Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>%
 names(Tukeys)[names(Tukeys) == 'Name'] <- 'Var'
 names(Tukeys)[names(Tukeys) == 'estimate'] <- 'diff'
 
-####		THIS PUT THE PostHoc TESTS INTO A gt TABLE		####
-# select(Tukeys, -term) %>% 
-# 	gt(groupname_col = "Var") %>% 
-# 	tab_header(title = md("*PostHoc*")) %>% 
-# 	tab_stubhead(label = "Group Comps") %>% 
-# 	fmt_number(
-# 		columns = vars("diff", "conf.low", "conf.high"),
-# 		decimals = 2)  %>% 
-# 	fmt_number(#,
-# 		columns = vars("adj.p.value"),
-# 		decimals = 4)
 
 
-####			TABLE USING KABLE			####
+####			PostHoc TABLE USING KABLE			####
 select(Tukeys, -term, -Var) %>%
 	mutate(adj.p.value = 
 		   	cell_spec((formatC(x = adj.p.value, 
 		   					   digits=3, width = 3, 
-									   format='g', flag = "-", drop0trailing = TRUE, 
-									   preserve.width = "common")), "html",
-							  color = ifelse(adj.p.value <= 0.05, 
-							  			   yes="red", no="blue"), escape = F)) %>% 
+		   					   format='g', flag = "-", drop0trailing = TRUE, 
+		   					   preserve.width = "common")), "html",
+		   			  color = ifelse(adj.p.value <= 0.05, 
+		   			  			   yes="red", no="blue"), escape = F)) %>% 
 	mutate_if(is.numeric, function(x) {
 		cell_spec((formatC(x,digits=3, width=3, 
 						   format="f", flag="-", drop0trailing = FALSE)),
@@ -913,23 +967,76 @@ select(Tukeys, -term, -Var) %>%
 	footnote(general = "Red = Significant group tests (p ≤ 0.05)")  %>% 
 	row_spec(0, bold = T, color = "white", background = "#461B7E" ) %>% 
 	pack_rows(index = c(" " = 0, "Sleep Quality" = 3, #)) #, 
-  					"Sleep Latency" = 3,
-  					"Sleep Duration" = 3,
-  					"Sleep Efficacy" = 3,
-  					"Sleep Disturbance" = 3,
-  					"Sleep Medications" = 3,
-  					"Sleep Daytime Functioning" = 3,
-  					"PSQI Global" = 3,
-  					"ESS Total" = 3, #,
-  					"BDI Total" = 3,
-  					"McGill Total" = 3,
-  					"Time in Bed" = 3)) #%>% 
-	# scroll_box(height = "500px")
-  					
+						"Sleep Latency" = 3,
+						"Sleep Duration" = 3,
+						"Sleep Efficacy" = 3,
+						"Sleep Disturbance" = 3,
+						"Sleep Medications" = 3,
+						"Sleep Daytime Functioning" = 3,
+						"PSQI Global" = 3,
+						"ESS Total" = 3, 
+						"ISI Total" = 3,
+						"BDI Total" = 3,
+						"McGill Total" = 3,
+						"Time in Bed" = 3)) #%>% 
+# scroll_box(height = "500px")
+
 
 
 ```
 
+
+
+
+```{r ISI-PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
+GetTukeys <- function(m) m$tukey
+isi_Tukeys  <- purrr::map(isi_model_summaries, GetTukeys)  %>% 
+	purrr::map_dfr(broom::tidy, .id = "Name")
+# head(Tukeys)
+# Tukeys
+
+names(isi_Tukeys)[names(isi_Tukeys) == 'Name'] <- 'Var'
+names(isi_Tukeys)[names(isi_Tukeys) == 'estimate'] <- 'diff'
+
+
+
+####			PostHoc TABLE USING KABLE			####
+select(isi_Tukeys, -term, -Var) %>%
+	mutate(adj.p.value = 
+		   	cell_spec((formatC(x = adj.p.value, 
+		   					   digits=3, width = 3, 
+		   					   format='g', flag = "-", drop0trailing = TRUE, 
+		   					   preserve.width = "common")), "html",
+		   			  color = ifelse(adj.p.value <= 0.05, 
+		   			  			   yes="red", no="blue"), escape = F)) %>% 
+	mutate_if(is.numeric, function(x) {
+		cell_spec((formatC(x,digits=3, width=3, 
+						   format="f", flag="-", drop0trailing = FALSE)),
+				  "html")}) %>%
+	kable("html", escape = FALSE, align = "l", 
+		  caption = "PostHoc group comparisons: **See** *Note* at table end",
+		  padding = 2) %>%
+	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
+	footnote(general = "Red = Significant group tests (p ≤ 0.05)")  %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" ) %>% 
+	pack_rows(index = c(" " = 0, "Sleep Quality" = 3, #)) #, 
+						"Sleep Latency" = 3,
+						"Sleep Duration" = 3,
+						"Sleep Efficacy" = 3,
+						"Sleep Disturbance" = 3,
+						"Sleep Medications" = 3,
+						"Sleep Daytime Functioning" = 3,
+						"PSQI Global" = 3,
+						"ESS Total" = 3, 
+						"ISI Total" = 3,
+						"BDI Total" = 3,
+						"McGill Total" = 3,
+						"Time in Bed" = 3)) #%>% 
+# scroll_box(height = "500px")
+
+
+
+```
 
 
 # PLOTS
@@ -1111,7 +1218,48 @@ corr.data(dat.HC2) %>%
 ```
 
 
-## BAR PLOTS
+
+```{r ISI-Drop-corrplot, eval=TRUE, echo=FALSE, message=FALSE}
+######		FM GROUP			####
+dat_isi_drop2 <- dat_isi_drop %>% select(!"group.factor", -TIB)
+dat_isi_drop2 <- dat_isi_drop %>% select(!"group.factor")
+# dat_isi_drop2 <- dat_isi_drop2 %>% select(!"slpDist")
+
+####		Breaking down the plot		####
+
+corr.data(dat_isi_drop2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
+		# provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+			# This overlays a grid of varying blue and adds
+			# the "corr" legend on the right, and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 3, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=2.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "ISI All groups",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+	# theme_classic() +
+	# theme_cleveland() +
+
+```
+
+
+
+# BAR PLOTS
 ```{r BDI-Group, eval=TRUE, echo=FALSE, message=FALSE}
 #		AVERAGE BDI_TOTAL BY GROUP
 
@@ -1122,7 +1270,7 @@ bdi.smry <- dat1 %>%
 		avg.bdi.tot = mean(bdi_total, na.rm = TRUE),
 		sd.bdi.tot = sd(bdi_total, na.rm = TRUE)
 		)
-view(bdi.smry)
+# view(bdi.smry)
 
 ggplot(data = bdi.smry, aes(x = group.factor,
 							y = avg.bdi.tot,
@@ -1132,12 +1280,98 @@ ggplot(data = bdi.smry, aes(x = group.factor,
 ```
 
 
+
+```{r ISI-Group, eval=TRUE, echo=FALSE, message=FALSE}
+#		AVERAGE BDI_TOTAL BY GROUP
+
+isi.smry <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.isi.tot = mean(isi_total, na.rm = TRUE),
+		sd.isi.tot = sd(isi_total, na.rm = TRUE)
+		)
+# view(bdi.smry)
+isi.smry
+ggplot(data = isi.smry, aes(x = group.factor,
+							y = avg.isi.tot,
+							fill = group.factor)) +
+	geom_bar(stat = "identity")
+
+
+
+```
+
+
+```{r ESS-Group, eval=TRUE, echo=FALSE, message=FALSE}
+#		AVERAGE BDI_TOTAL BY GROUP
+
+ess.smry1 <- dat1 %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.ess.tot = mean(ess_total, na.rm = TRUE),
+		sd.ess.tot = sd(ess_total, na.rm = TRUE)
+		)
+# view(bdi.smry)
+ess.smry1
+ggplot(data = ess.smry1, aes(x = group.factor,
+							y = avg.ess.tot,
+							fill = group.factor)) +
+	geom_bar(stat = "identity")
+
+
+##		different data set
+ess.smry2 <- dat_isi_drop %>%
+	group_by(group.factor) %>%
+	summarise(
+		count = n(),
+		avg.ess.tot = mean(ess_total, na.rm = TRUE),
+		sd.ess.tot = sd(ess_total, na.rm = TRUE)
+		)
+
+ess.smry2
+
+
+
+
+```
+
+
 # END - BEYOND HERE IS EXPLORATORY
 
+```{r CalcTime, eval=TRUE, echo=FALSE, message=FALSE}
+####			THIS DOESN’T WORK AND I DON'T KNOW WHY			####
+
+# 
+# dat.psqi<- dat.psqi %>%
+# 	mutate(Sleep = if_else(bt.sleep == "PM",
+# 						   true = as.POSIXct(x = paste(bedtime, bt.sleep),
+# 						   				  format = "%I:%M %p"), # time in current date
+# 						   false = as.POSIXct(x = paste(bedtime, bt.sleep),
+# 						   				   format = "%I:%M %p") +
+# 						   	as.difftime(tim = 1, units = "days")), # consider next day for times at/after midnight
+# 		   Wake = as.POSIXct(x = paste(waketime, wt.wake),
+# 		   				  format = "%I:%M %p") +
+# 		   	as.difftime(tim = 1, units = "days"), # time in current date plus one day, equivalently time in next day
+# 		   `zTIB` = difftime(time1 = Wake,
+# 		   							 time2 = Sleep,
+# 		   							 units = "hours")) #%>%  # difference of the two times, guaranteed to be in [0, 24)
+# 	# print(width = Inf)
+# 
+# 
+
+# zz.psqi <- zz.psqi %>% relocate(TIB, .after = last_col())
 
 
 
-```{r Pain-group-Cor, eval=TRUE, echo=FALSE, message=FALSE}
+
+
+
+```
+
+
+```{r Pain-group-Cor, eval=FALSE, echo=FALSE, message=FALSE}
 ####		ADDING GRAPHS TOGETHER		#######
 # corrplot(pain.cor, order = "hclust", type = "upper",
 # 		 # diag = FALSE,
@@ -1158,18 +1392,63 @@ ggplot(data = bdi.smry, aes(x = group.factor,
 
 ```
 
+```{r gt-tables, eval=FALSE, echo=FALSE, message=FALSE}
+####		THESE GT TABLES WORK		####
+
+####		THIS PUTS THE OVERALL ANOVA TESTS INTO A TABLE	####
+# filter(Models,  term !="Residuals") %>%
+# 	dplyr::select("Name" , "p.value")  %>%
+# 	gt(rowname_col = "Name") %>%
+# 	tab_header(
+# 		title = md("Main effect of group"))  %>% 
+# 	fmt_number(
+# 		columns = vars("p.value"),
+# 		decimals = 4
+# 	)
+
+###		THIS PUT THE PostHoc TESTS INTO A gt TABLE		###
+# select(Tukeys, -term) %>% 
+# 	gt(groupname_col = "Var") %>% 
+# 	tab_header(title = md("*PostHoc*")) %>% 
+# 	tab_stubhead(label = "Group Comps") %>% 
+# 	fmt_number(
+# 		columns = vars("diff", "conf.low", "conf.high"),
+# 		decimals = 2)  %>% 
+# 	fmt_number(#,
+# 		columns = vars("adj.p.value"),
+# 		decimals = 4)
 
 
-```{r ---> GT tables ver 1,eval=FALSE, echo=FALSE}
+
+# groups_x_sex %>% gt()
+# 
+# groups_x_sex %>% 
+# 	gt(groupname_col = "group.factor") %>% 
+# 	tab_header(title = md("**Group by Sex**")) %>% 
+# 	tab_stubhead(label = "Group Comps") # %>% 
+	# fmt_number(
+	# 	columns = vars("diff", "conf.low", "conf.high"),
+	# 	decimals = 2)  %>% 
+	# fmt_number(#,
+	# 	columns = vars("adj.p.value"),
+	# 	decimals = 4)
+
+# dat.SM.smry
+
+# write_csv(dat.SM.smry, "dat.SM.smry.csv",
+# 		  na = "NA", append = FALSE,
+# 		  col_names = TRUE, quote_escape = "double")
+
+# dat.SM.smry  %>% 
+# 	gt()
+
+
 z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
 
 z_table1
 z_table1 <- as.data.frame(z_table1)
 dim(z_table1)
 names(z_table1)
-
-
-
 
 z_table1$row <- c("CLBP-HC", "FM-HC", 
 				  "FM-CLBP")
@@ -1185,44 +1464,41 @@ z_table1 %>%
 		decimals = 2)
 
 	# dplyr::select("row" , "diff", "p adj")  %>% 
-```
 
-
-
-```{r ---> GT TABLES, eval=FALSE, echo=FALSE}
-z_table0 <- summary(model_summaries$bdi_total$model)
-z_table0 <- as.table(z_table0)
-
-zz <- print(summary(model_summaries$bdi_total$model))
-
-zz1 <- summary.aov(model_summaries$bdi_total$model)
-
-zz2 <- as_data_frame(zz1)
-zz2
-zz1 <- as_tibble(zz)
-
-zz %>% gt()
-
-
-
-# %>% 
+# z_table0 <- summary(model_summaries$bdi_total$model)
+# z_table0 <- as.table(z_table0)
+# 
+# zz <- print(summary(model_summaries$bdi_total$model))
+# 
+# zz1 <- summary.aov(model_summaries$bdi_total$model)
+# zz1
+# 
+# zz2 <- as_data_frame(zz1)
+# zz2
+# zz1 <- as_tibble(zz)
+# 
+# zz %>% gt()
+# 
+# 
+# 
+# # %>% 
+# # 	gt()
+# 
+# z_table0  %>% 
 # 	gt()
-
-z_table0  %>% 
-	gt()
-
-z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
-z_table1 <- as.data.frame(z_table1)
-z_table1$row <- c("CLBP-HC", "FM-HC", 
-				  "FM-CLBP")
-
-z_table1 %>% 
-	# dplyr::select("row" , "diff", "p adj")  %>% 
-	gt(rowname_col = "row")  %>% 
-	tab_header(
-		title = md("**BDI**"),
-		subtitle = md("ANOVA PostHoc")) %>% 
-	tab_stubhead(label = "Comparisons") 
+# 
+# z_table1 <- print(signif(model_summaries$bdi_total$tukey$group.factor, 4))
+# z_table1 <- as.data.frame(z_table1)
+# z_table1$row <- c("CLBP-HC", "FM-HC", 
+# 				  "FM-CLBP")
+# 
+# z_table1 %>% 
+# 	# dplyr::select("row" , "diff", "p adj")  %>% 
+# 	gt(rowname_col = "row")  %>% 
+# 	tab_header(
+# 		title = md("**BDI**"),
+# 		subtitle = md("ANOVA PostHoc")) %>% 
+# 	tab_stubhead(label = "Comparisons") 
 
 
 
@@ -1265,9 +1541,19 @@ z_tab4
 
 ```
 
+```{r kable-tables, eval=FALSE, echo=FALSE, message=FALSE}
 
 
-```{r ---> ANOVA USE THIS, eval=FALSE, echo=FALSE}
+# filter(Models,  term !="Residuals") %>%
+# 	dplyr::select("Name" , "p.value")  %>%
+# 	kable() %>% 
+# 	kable_styling(
+# 		bootstrap_options = "striped", 
+# 		full_width = F, position = "left")
+
+```
+
+```{r ANOVA-works, eval=FALSE, echo=FALSE}
 #		COMPUTE ANOVA OF MULTIPLE VARIABLES
 
 # "group.factor","slpQual",
@@ -1308,7 +1594,7 @@ TukeyHSD(model4)
 TukeyHSD(model5)
 ```
 
-```{r ---> Slack help, eval=FALSE, echo=FALSE}
+```{r Slack help, eval=FALSE, echo=FALSE}
 ####			From russH on Slack		####
 
 # dat1 %>% select(some, columns)  is equivalent to `dat1[, c("some", "columns")]`
