@@ -8,10 +8,8 @@ output:
     toc: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment="")
-
-
+```{r setup, include=FALSE, comment=""}
+knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
@@ -45,6 +43,9 @@ library(multcomp)
 library(readr)
 library(ggpubr)
 # library(skimr)
+# library(plotly)
+library(reshape2)
+library(plyr)
 library(tidyverse)
 library(reprex)
 library(here)
@@ -105,6 +106,136 @@ corr.data = function(data) {
   	left_join(cbind(rowvars=rownames(cor.p), data.frame(cor.p)) %>% 
   			  	gather(colvars, p.value, -rowvars))
 }
+
+####			HELPER FUNCTIONS		####
+#1
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column    
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval: 
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+#2
+## Norms the data within specified groups in a data frame; it normalizes each
+## subject (identified by idvar) so that they have the same mean, within each group
+## specified by betweenvars.
+##   data: a data frame.
+##   idvar: the name of a column that identifies each subject (or matched subjects)
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   betweenvars: a vector containing names of columns that are between-subjects variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+    library(plyr)
+
+    # Measure var on left, idvar + between vars on right of formula.
+    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+     .fun = function(xx, col, na.rm) {
+        c(subjMean = mean(xx[,col], na.rm=na.rm))
+      },
+      measurevar,
+      na.rm
+    )
+
+    # Put the subject means with original data
+    data <- merge(data, data.subjMean)
+
+    # Get the normalized data in a new column
+    measureNormedVar <- paste(measurevar, "_norm", sep="")
+    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+                               mean(data[,measurevar], na.rm=na.rm)
+
+    # Remove this subject mean column
+    data$subjMean <- NULL
+
+    return(data)
+}
+
+#3
+summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+
+  # Ensure that the betweenvars and withinvars are factors
+  factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+    FUN=is.factor, FUN.VALUE=logical(1))
+
+  if (!all(factorvars)) {
+    nonfactorvars <- names(factorvars)[!factorvars]
+    message("Automatically converting the following non-factors to factors: ",
+            paste(nonfactorvars, collapse = ", "))
+    data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
+  }
+
+  # Get the means from the un-normed data
+  datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                     na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Drop all the unused columns (these will be calculated with normed data)
+  datac$sd <- NULL
+  datac$se <- NULL
+  datac$ci <- NULL
+
+  # Norm each subject's data
+  ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+
+  # This is the name of the new column
+  measurevar_n <- paste(measurevar, "_norm", sep="")
+
+  # Collapse the normed data - now we can treat between and within vars the same
+  ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Apply correction from Morey (2008) to the standard error and confidence interval
+  #  Get the product of the number of conditions of within-S variables
+  nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                           FUN.VALUE=numeric(1)))
+  correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
+
+  # Apply the correction factor
+  ndatac$sd <- ndatac$sd * correctionFactor
+  ndatac$se <- ndatac$se * correctionFactor
+  ndatac$ci <- ndatac$ci * correctionFactor
+
+  # Combine the un-normed means with the normed results
+  merge(datac, ndatac)
+}
+
 
 
 ##						END						##
@@ -292,6 +423,7 @@ dat.psqi$TIB  <- as.numeric(dat.psqi$`Time in bed`)   # TIB version 2
 round(dat.psqi$TIB  <- if_else(dat.psqi$TIB < 24,
 							   dat.psqi$TIB,
 							   dat.psqi$TIB - 24), 2)
+
 # 
 # dat.psqi$TIB2  <- if_else(dat.psqi$TIB < 24,
 # 							   dat.psqi$TIB,
@@ -344,6 +476,7 @@ dat.psqi <- dat.psqi %>% relocate(`TIB`, .after = last_col())
 Comp 1
 ```{r COMP 1, eval=TRUE, echo=FALSE}
 #		COMPONENT 1 = QUESTION 9
+dat.psqi$psqi_comp1raw <- as.numeric(dat.psqi$psqi_component1)
 dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 
 #		SCORE QUESTION 1
@@ -354,6 +487,7 @@ dat.psqi$psqi_Comp1 <- as.numeric(dat.psqi$psqi_component1)
 # Fairly bad, 2
 # Very bad, 3
 
+dat.psqi <- dat.psqi %>% relocate(psqi_comp1raw, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 # colnames(dat.psqi)
 ```
@@ -362,9 +496,10 @@ Comp 2
 ```{r COMP 2, eval=TRUE, echo=FALSE}
 # Component 2: Sleep latency—questions 2 and 5a
 
-dat.psqi$Q2 <- dat.psqi$psqi_2
-dat.psqi$Q5a <- dat.psqi$psqi_5a
+dat.psqi$Q2 <- as.numeric(dat.psqi$psqi_2)
+dat.psqi$Q5a <- as.numeric(dat.psqi$psqi_5a)
 
+#		SCALE Q2
 dat.psqi  <- dat.psqi %>%
 	mutate(
 		Q2score1 = case_when(
@@ -375,7 +510,7 @@ dat.psqi  <- dat.psqi %>%
 			TRUE ~ as.numeric(Q2)
 		)
 	)
-
+#		SCALE Q5
 dat.psqi <- dat.psqi %>% 
 	mutate(
 		Q5aScore1 = case_when(
@@ -387,14 +522,17 @@ dat.psqi <- dat.psqi %>%
 		)
 	)
 
-
+#		CALC COMP-2 RAW AND SCALED SCORES
 dat.psqi  <- dat.psqi %>%
 	rowwise() %>%
 	mutate(
+		psqi_comp2raw = sum(c(Q2, Q5a), na.rm = TRUE),
 		Q2and5 = sum(c(Q2score1, Q5aScore1), na.rm = TRUE)
 	) %>%
 	ungroup()
 
+
+	#		RESCALE THE COMP 2 SCALED SCORES
 dat.psqi <- dat.psqi %>% 
 	mutate(
 		psqi_Comp2 = case_when(
@@ -405,6 +543,8 @@ dat.psqi <- dat.psqi %>%
 			TRUE ~ as.numeric(Q2and5)
 		)
 	)
+dat.psqi <- dat.psqi %>% relocate(psqi_comp1raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp2raw, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 # colnames(dat.psqi)
@@ -415,7 +555,9 @@ Comp 3
 # Component 3: Sleep duration—question 4
 
 dat.psqi$Q4 <- as.numeric(dat.psqi$psqi_4)
+dat.psqi$psqi_comp3raw <- as.numeric(dat.psqi$psqi_4)
 
+#		COMP 3 SCALED SCORE
 dat.psqi  <- dat.psqi %>%
 	mutate(
 		psqi_Comp3 = case_when(
@@ -444,6 +586,7 @@ Comp 4
 # 		65-74%, 2
 # 		< 65%, 3
 
+dat.psqi$psqi_comp4raw <- (dat.psqi$Q4 / dat.psqi$TIB) * 100
 dat.psqi$SE <- (dat.psqi$Q4 / dat.psqi$TIB) * 100
 
 dat.psqi  <- dat.psqi %>%
@@ -458,6 +601,14 @@ dat.psqi  <- dat.psqi %>%
 	)
 
 dat.psqi <- dat.psqi %>% relocate(SE, .before = psqi_Comp1)
+dat.psqi <- dat.psqi %>% relocate(psqi_comp1raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp2raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp3raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp4raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_Comp4, .after = last_col())
 # colnames(dat.psqi)
 ```
 
@@ -486,7 +637,6 @@ dat.psqi$psqi_5i <- as.numeric(dat.psqi$psqi_5i)
 dat.psqi$psqi_5othera <- as.numeric(dat.psqi$psqi_5othera)
 dat.psqi$psqi_7 <- as.numeric(dat.psqi$psqi_7)
 dat.psqi$psqi_8a <- as.numeric(dat.psqi$psqi_8a)
-
 dat.psqi$psqi_9 <- as.numeric(dat.psqi$psqi_9)
 dat.psqi$psqi_component1 <- as.numeric(dat.psqi$psqi_component1)
 
@@ -525,6 +675,8 @@ dat.psqi$Q5j <- dat.psqi$psqi_5j
 dat.psqi  <- dat.psqi %>%
 	rowwise() %>%
 	mutate(
+		psqi_comp5raw = sum(c(Q5b, Q5c, Q5d, Q5e, Q5f, 
+							  Q5g, Q5h, Q5i, Q5j), na.rm = TRUE),
 		Q5s = sum(c(Q5b, Q5c, Q5d, Q5e, Q5f, Q5g, Q5h, Q5i, Q5j), na.rm = TRUE)
 	) %>%
 	ungroup()
@@ -549,6 +701,11 @@ dat.psqi <- dat.psqi %>%
 
 
 #		ORGANIZING COLUMNS
+dat.psqi <- dat.psqi %>% relocate(psqi_comp1raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp2raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp3raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp4raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp5raw, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
@@ -570,6 +727,7 @@ Comp 6
 # Once or twice a week, 2
 # Three or more times a week, 3
 
+dat.psqi$psqi_comp6raw <- as.numeric(dat.psqi$psqi_6)
 dat.psqi$psqi_Comp6 <- as.numeric(dat.psqi$psqi_6)
 # colnames(dat.psqi)
 
@@ -589,6 +747,7 @@ Comp 7
 dat.psqi  <- dat.psqi %>%
 	rowwise() %>%
 	mutate(
+		psqi_comp7raw = sum(c(psqi_7, psqi_8a), na.rm = TRUE),
 		Q7and8a = sum(c(psqi_7, psqi_8a), na.rm = TRUE)
 	) %>%
 	ungroup()
@@ -605,7 +764,15 @@ dat.psqi  <- dat.psqi %>%
 		)
 	)
 
+
 #		ORGANIZING COLUMNS
+dat.psqi <- dat.psqi %>% relocate(psqi_comp1raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp2raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp3raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp4raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp5raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp6raw, .after = last_col())
+dat.psqi <- dat.psqi %>% relocate(psqi_comp7raw, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp1, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp2, .after = last_col())
 dat.psqi <- dat.psqi %>% relocate(psqi_Comp3, .after = last_col())
@@ -625,6 +792,9 @@ PSQI Global
 dat.psqi  <- dat.psqi %>%
 	rowwise() %>%
 	mutate(
+		psqi_Globalraw = sum(c(psqi_comp1raw, psqi_comp2raw, psqi_comp3raw,
+							psqi_comp4raw, psqi_comp5raw, psqi_comp6raw,
+							psqi_comp7raw), na.rm = TRUE),
 		psqi_Global = sum(c(psqi_Comp1, psqi_Comp2, psqi_Comp3,
 							psqi_Comp4, psqi_Comp5, psqi_Comp6,
 							psqi_Comp7), na.rm = TRUE)
@@ -641,6 +811,13 @@ dat.psqi  <- dat.psqi %>%
 
 ```{r RENAME COMPS, eval=TRUE, echo=FALSE}
 #		RENAME THE PSQI COMPONENTS
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp1raw'] <- 'slpQualraw'
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp2raw'] <- 'slpLatraw'
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp3raw'] <- 'slpDurraw'
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp4raw'] <- 'slpEffraw'
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp5raw'] <- 'slpDistraw'
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp6raw'] <- 'slpMedsraw'
+names(dat.psqi)[names(dat.psqi) == 'psqi_comp7raw'] <- 'slpDayFcnraw'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp1'] <- 'slpQual'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp2'] <- 'slpLat'
 names(dat.psqi)[names(dat.psqi) == 'psqi_Comp3'] <- 'slpDur'
@@ -651,7 +828,7 @@ names(dat.psqi)[names(dat.psqi) == 'psqi_Comp7'] <- 'slpDayFcn'
 
 # colnames(dat.psqi)
 
-currentDate <- format(Sys.time(), "%F_%H-%M")
+# currentDate <- format(Sys.time(), "%F_%H-%M")
 # write_csv(dat.psqi,
 # 		  paste("PSQI_scored_",currentDate,".csv",sep=""),
 # 		  na = "NA",
@@ -664,23 +841,26 @@ MERGE BACK INTO MAIN DATASET
 #		COMBINING 2 DATASETS
 
 #		CREATING SMALL PSQI DATASET
-psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB","slpQual",
-									  "slpLat", "slpDur",
-									  "slpEff", "slpDist",
-									  "slpMeds","slpDayFcn",
-									  "psqi_Global")
+psqiSM  <- dat.psqi %>% dplyr::select("ID","TIB",
+									  "slpQual", "slpLat", 
+									  "slpDur", "slpEff", 
+									  "slpDist", "slpMeds",
+									  "slpDayFcn", "psqi_Global",
+									  "slpQualraw", "slpLatraw", 
+									  "slpDurraw", "slpEffraw", 
+									  "slpDistraw", "slpMedsraw",
+									  "slpDayFcnraw", "psqi_Globalraw")
 #		MERGE BACK INTO MAIN DATASET
 dat1 <- merge(dat1, psqiSM, by = "ID")
 
-# ls()
 # colnames(dat1)
 
 ```
 
 
-## FINAL DATASETS
-All data has been updated, processed, clean and scored  
-```{r DATA TO ANALYZE, eval=TRUE, echo=FALSE, comment=""}
+## DATASETS
+The PSQI data has been updated, processed, clean and scored  
+```{r Primary-datasets, eval=TRUE, echo=FALSE, comment=""}
 
 #		CREATING SMALL DATASETS
 # datSM1  <- dat1 %>% dplyr::select("ID","group.factor","ess_total", "bdi_total", "mcgill_total")
@@ -689,9 +869,33 @@ dat.SM  <- dat1 %>% dplyr::select("group.factor",
 								  "slpDur", "slpEff", 
 								  "slpDist", "slpMeds",
 								  "slpDayFcn", "psqi_Global",
+								  "slpQualraw", "slpLatraw", 
+								  "slpDurraw", "slpEffraw", 
+								  "slpDistraw", "slpMedsraw",
+								  "slpDayFcnraw", "psqi_Globalraw",
 								  "ess_total", "isi_total",
 								  "bdi_total", "mcgill_total", 
 								  "TIB")
+
+dat.bar.orig  <- dat1 %>% dplyr::select("ID","group.factor",
+								  "slpQual", "slpLat", 
+								  "slpDur", "slpEff", 
+								  "slpDist", "slpMeds",
+								  "slpDayFcn", "psqi_Global",
+								  "ess_total", "isi_total",
+								  "bdi_total", "mcgill_total", 
+								  "TIB")
+dat.bar2.orig  <- dat1 %>% dplyr::select("ID","group.factor",
+										"slpQualraw", "slpLatraw", 
+										"slpDurraw", "slpEffraw", 
+										"slpDistraw", "slpMedsraw",
+										"slpDayFcnraw", "psqi_Globalraw",
+										"ess_total", "isi_total",
+										"bdi_total", "mcgill_total", 
+										"TIB")
+
+
+
 
 dat_isi_drop  <- dat1 %>% dplyr::select("group.factor",
 								  "slpQual", "slpLat", 
@@ -721,20 +925,11 @@ dat.pain <- dat.SM %>%
 
 
 
-
-# You could use the paste function to define the filename with date appended to it. See the example below: 
-
-
 smallData <- paste("dat.SM2_",currentDate,".csv",sep="") 
-write_csv(dat.SM, smallData,
-		  na = "NA", append = FALSE,
-		  col_names = TRUE, quote_escape = "double")
-# 
-# currentDate <- format(Sys.time(), "%F_%H-%M")
-# write_csv(dat.SM,
-# 		  paste("dat.SM_",currentDate,".csv",sep=""),
-# 		  na = "NA",
-# 		  col_names = TRUE, quote_escape = "double") 
+# write_csv(dat.SM, smallData,
+# 		  na = "NA", append = FALSE,
+# 		  col_names = TRUE, quote_escape = "double")
+
 
 #		TO RECREATE A DATASET
 # dput(head(dat.time, 20))
@@ -880,6 +1075,65 @@ Models2 %>%
 ##		END		##
 ```
 
+
+```{r ANOVA, eval=TRUE, echo=FALSE, message=FALSE}
+#		USING PSQI RAW COMPONENT SCORES
+# construct anova model for each column of dat1[, my_outcome_variables]
+model_summary_raw <- dat1[,c("slpQualraw", "slpLatraw", "slpDurraw",
+						   "slpEffraw", "slpDistraw","slpMedsraw",
+						   "slpDayFcnraw", "psqi_Globalraw","ess_total",
+						   "isi_total", "bdi_total", "mcgill_total",
+						   "TIB")] %>%
+  purrr::map(~ aov(.x ~ group.factor, data = dat1))  %>%
+  # append the TukeyHSD CI estimates
+  purrr::map(function(x) {
+    list(
+      model = x,
+      tukey = TukeyHSD(x)
+    )
+  })
+
+####		THIS RETURNS THE RESULTS OF THE OVERALL ANOVA	####
+# GetModels <- function(l) l$model
+Models3 <- purrr::map(model_summary_raw, GetModels) %>% 
+  purrr::map_dfr(broom::tidy, .id = "Name")
+# head(Models)
+
+#		
+Models3 <- filter(Models3,  term !="Residuals")
+Models3 <- Models3 %>% 
+	dplyr::select("Name" , "p.value")
+
+
+####			ANOVA TABLE MADE WITH KABLE			####
+Models3 %>%
+	mutate(p.value = 
+		   	cell_spec(
+		   		(formatC(x = p.value, 
+		   				 digits=3, width = 3, 
+		   				 format='g', flag = "-", drop0trailing = TRUE, 
+		   				 preserve.width = "common")), "html",
+		   		color = ifelse(p.value <= 0.05, 
+		   					   yes="red", no="blue"), escape = F)
+	) %>% 
+	mutate_if(is.numeric, function(x) {
+		cell_spec(
+			(formatC(x,digits=3, width=3, 
+					 format="f", flag="-", drop0trailing = FALSE)),
+			"html")}
+	) %>%
+	kable("html", escape = FALSE, align = "l", padding = 4,
+		  caption = "ANOVA full model") %>%
+	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
+	footnote(general = "Red = Significant main effect for group (p ≤ 0.05)")  %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" )
+
+##		END		##
+```
+
+
+
+
 ```{r ISI-ANOVA, eval=TRUE, echo=FALSE, message=FALSE}
 # construct anova model for each column of dat1[, my_outcome_variables]
 isi_model_summaries <- dat_isi_drop[,c("slpQual", "slpLat", "slpDur",
@@ -986,6 +1240,56 @@ select(Tukeys, -term, -Var) %>%
 ```
 
 
+
+```{r PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
+# GetTukeys <- function(m) m$tukey
+Tukeys3  <- purrr::map(model_summary_raw, GetTukeys)  %>% 
+	purrr::map_dfr(broom::tidy, .id = "Name")
+# head(Tukeys)
+# Tukeys
+
+names(Tukeys3)[names(Tukeys3) == 'Name'] <- 'Var'
+names(Tukeys3)[names(Tukeys3) == 'estimate'] <- 'diff'
+
+
+
+####			PostHoc TABLE USING KABLE			####
+select(Tukeys3, -term, -Var) %>%
+	mutate(adj.p.value = 
+		   	cell_spec((formatC(x = adj.p.value, 
+		   					   digits=3, width = 3, 
+		   					   format='g', flag = "-", drop0trailing = TRUE, 
+		   					   preserve.width = "common")), "html",
+		   			  color = ifelse(adj.p.value <= 0.05, 
+		   			  			   yes="red", no="blue"), escape = F)) %>% 
+	mutate_if(is.numeric, function(x) {
+		cell_spec((formatC(x,digits=3, width=3, 
+						   format="f", flag="-", drop0trailing = FALSE)),
+				  "html")}) %>%
+	kable("html", escape = FALSE, align = "l", 
+		  caption = "PostHoc (PSQI raw) group comparisons: **See** *Note* at table end",
+		  padding = 2) %>%
+	kable_styling(c("striped", "bordered", "hover"), full_width = F) %>%
+	footnote(general = "Red = Significant group tests (p ≤ 0.05)")  %>% 
+	row_spec(0, bold = T, color = "white", background = "#461B7E" ) %>% 
+	pack_rows(index = c(" " = 0, "Sleep Quality" = 3, #)) #, 
+						"Sleep Latency raw" = 3,
+						"Sleep Duration raw" = 3,
+						"Sleep Efficacy raw" = 3,
+						"Sleep Disturbance raw" = 3,
+						"Sleep Medications raw" = 3,
+						"Sleep Daytime Functioning raw" = 3,
+						"PSQI Global raw" = 3,
+						"ESS Total" = 3, 
+						"ISI Total" = 3,
+						"BDI Total" = 3,
+						"McGill Total" = 3,
+						"Time in Bed" = 3)) #%>% 
+# scroll_box(height = "500px")
+
+
+
+```
 
 
 ```{r ISI-PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
@@ -1259,7 +1563,199 @@ isiCorrPlot <- corr.data(dat_isi_drop2) %>%
 
 
 
-# BAR PLOTS
+## BAR PLOTS
+```{r MULTI-BARS-1, eval=TRUE, echo=FALSE, message=FALSE}
+dat.bar.orig  <- dat1 %>% dplyr::select("ID","group.factor",
+								  "slpQual", "slpLat", 
+								  "slpDur", "slpEff", 
+								  "slpDist", "slpMeds",
+								  "slpDayFcn", "psqi_Global",
+								  "ess_total", "isi_total",
+								  "bdi_total", "mcgill_total", 
+								  "TIB")
+
+####			BAR CHART DATA NEED TO BE IN LONG FORMAT		####
+#	select data for 1st bar chart = BDI, ESS, McGill
+dat.bar <- select(dat.bar.orig, ID, group.factor, bdi_total, ess_total, mcgill_total)
+dat.bar$ID <- factor(dat.bar$ID) # ID must be a factor
+
+#	Convert to long format
+bar.long <- gather(dat.bar, condition, measurement, bdi_total:mcgill_total, factor_key=TRUE )
+
+
+bar.long.smry <- summarySEwithin(bar.long, measurevar="measurement", withinvars=c("group.factor", "condition"), idvar="ID")
+
+#		PLOT THE LONG DATA
+ggplot(bar.long.smry, aes(x = Questionnaire, y = measurement, fill = group.factor )) +
+	geom_bar(position = position_dodge(.9), colour = "black", stat = "identity") +
+	geom_errorbar(position = position_dodge(.9), width = .25,
+				  aes(ymin = measurement -ci, ymax = measurement + ci)) +
+	coord_cartesian(ylim = c(0,40)) +
+	scale_fill_manual(values = c("#19c01a", "#1349ec", "#ec1313")) +
+	scale_y_continuous(breaks = waiver()) +
+	geom_hline(yintercept = 0)
+
+#
+
+
+#
+
+```
+
+
+```{r MULTI-BARS-2, eval=TRUE, echo=FALSE, message=FALSE}
+####			BAR CHART DATA NEED TO BE IN LONG FORMAT		####
+#	select data for 1st bar chart
+dat.bar2 <- select(dat.bar2.orig, ID, group.factor, bdi_total, ess_total, mcgill_total)
+dat.bar2$ID <- factor(dat.bar2$ID) # ID must be a factor
+
+#	Convert to long format
+bar.long2 <- gather(dat.bar2, Questionnaire, Scores, 
+				   bdi_total:mcgill_total, factor_key = TRUE )
+
+bar.long2.smry <- summarySEwithin(bar.long2, measurevar = "Scores",
+							withinvars = c("group.factor", "Questionnaire"),
+							idvar = "ID")
+
+#		PLOT THE LONG DATA
+ggplot(bar.long2.smry, aes(x = Questionnaire, y = Scores, fill = group.factor )) +
+	geom_bar(position = position_dodge(.9), colour = "black", stat = "identity") +
+	geom_errorbar(position = position_dodge(.9), width = .25,
+				  aes(ymin = Scores -ci, ymax = Scores + ci)) +
+	coord_cartesian(ylim = c(0,40)) +
+	scale_fill_manual(values = c("#19c01a", "#1349ec", "#ec1313")) +
+	scale_y_continuous(breaks = waiver()) +
+	geom_hline(yintercept = 0)
+
+#
+
+
+#
+
+```
+
+
+
+
+
+
+```{r bars2, eval=TRUE, echo=FALSE, message=FALSE}
+
+
+
+
+vars.2.smry  <- dat1 %>% 
+	group_by(group.factor) %>%
+	summarise(
+		avg.bdi = mean(bdi_total, na.rm = TRUE),
+		avg.ess = mean(ess_total, na.rm = TRUE)
+	)
+
+#
+x1 <- c('bdi', 'ess') # vars
+y1 <- t.vars.2.smry[2:3, 1] # HC
+y2 <- t.vars.2.smry[2:3, 2] # CLBP
+y3 <- t.vars.2.smry[2:3, 3] # FM
+
+zz <- data.frame(x1, y1, y2, y3)
+names(zz)[names(zz) == 'y1'] <- 'HC'
+names(zz)[names(zz) == 'y2'] <- 'CLBP'
+names(zz)[names(zz) == 'y3'] <- 'FM'
+
+
+fig <- plot_ly(zz, x = ~x1, 
+			   y = ~y1, type = 'bar', name = 'HC', 
+			   marker = list(color = 'rgb(255, 0, 0) '))
+fig <- fig %>% add_trace(y = ~y2, name = 'CLBP',
+				 marker = list(color = 'rgb(0, 255, 0)'))
+fig <- fig %>% add_trace(y = ~y3, name = 'FM',
+				 marker = list(color = 'rgb(0, 0, 255)'))
+fig <- fig %>% layout(xaxis = list(title = "Group comparisons",
+								   tickangle = -45),
+					  yaxis = list(title = " "),
+					  margin = list(b = 100),
+					  barmode = 'group')
+
+fig
+
+
+fig2 <- vars.2.smry
+fig2 <- fig2 %>% count("avg.bdi", "group.factor")
+fig2 <- fig2 %>% plot_ly(x = ~avg.bdi, y = ~n, color = ~group.factor)
+fig2
+#
+
+fig3 <- ggplot2::diamonds
+fig3 <- fig3 %>% count(cut, clarity)
+fig3 <- fig3 %>% plot_ly(x = ~cut, y = ~n, color = ~clarity)
+
+
+fig  <- plot_ly(vars.2.smry, 
+				x = ~group.factor,
+				y = ~avg.bdi,
+				type = 'bar',
+				name = 'BDI')
+fig <- fig %>% add_trace(y = ~avg.ess,
+						 name = 'ESS')
+fig  <- fig  %>% layout(yaxis = list(title = 'Mean Scores'),
+						barmode = 'group')
+
+fig2 <- plot_ly(data, x = ~xa, y = ~y1a, type = 'bar', name = 'Primary Product', marker = list(color = 'rgb(49,130,189)'))
+
+fig2
+
+
+xa <- c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')
+y1a <- c(20, 14, 25, 16, 18, 22, 19, 15, 12, 16, 14, 17)
+y2a <- c(19, 14, 22, 14, 16, 19, 15, 14, 10, 12, 12, 16)
+zdata <- data.frame(xa, y1a, y2a)
+
+
+tzz <- t(zz)
+
+
+
+
+
+zz <- mpg
+
+
+# Use dplyr to calculate the average hwy_mpg by class
+z_by_hwy_mpg <- mpg %>% group_by(class) %>% summarise(hwy_mpg = mean(hwy))
+
+ggplot(z_by_hwy_mpg) + 
+    geom_col(aes(x = class, y = hwy_mpg))
+
+
+
+
+
+# Grouped Bar Plot
+counts <- table(mtcars$vs, mtcars$gear)
+barplot(counts, main="Car Distribution by Gears and VS",
+  xlab="Number of Gears", col=c("darkblue","red"),
+  legend = rownames(counts), beside=TRUE)
+
+view(counts)
+
+barplot(vars.2.smry, main = "group.factor by avg.bdi and avg.ess",
+		xlab = "Group Comparisons",
+		col = c("green", "blue", "red"))
+		
+
+ggplot(data = vars.2.smry, aes(x = group.factor)) +
+	geom_bar(stat = "identity")
+
+
+
+t.vars.2.smry <- t(vars.2.smry)
+
+ggplot(data = t.vars.2.smry, aes())
+
+
+```
+
+
 ```{r BDI-Group, eval=TRUE, echo=FALSE, message=FALSE}
 #		AVERAGE BDI_TOTAL BY GROUP
 
