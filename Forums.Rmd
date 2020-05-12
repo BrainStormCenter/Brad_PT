@@ -9,10 +9,85 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## DESCRIPTIVE tables
+```{r Means-sds, eval=TRUE, echo=FALSE, message=FALSE, comment = ""}
+#		This approximates what I want out of a descriptive table.
+library(dplyr)
+library(tidyr)
+library(glue)
+df <- tibble(
+  ob   = 1:4,
+  num1 = c(1,2,3,3),
+  num2 = c(3,4,4,5),
+  cat1 = sample(c(1,0), 4, replace = TRUE),
+  cat2 = sample(c(1,0), 4, replace = TRUE)
+)
+
+result <- bind_rows(
+  
+  df %>% 
+    select(ob, num1, num2) %>%   #select(is.numeric()) requires dplyr 1.0.0
+    pivot_longer(c(-ob)) %>% 
+    group_by(name) %>% 
+    summarize(
+      `Mean (SD)` = glue("{mean(value)} ({sd(value) %>% round(2)})"),
+    ),
+  
+  df %>%  
+    select(ob, cat1, cat2) %>% 
+    pivot_longer(c(-ob,)) %>%
+    group_by(name) %>% 
+    summarise(
+      `%` = mean(value)
+    )
+  
+) %>% 
+    replace_na(
+      list(
+        `Mean (SD)` = "",
+        `%` = "-"
+      )
+    )
+
+
+
+zz <- df
+
+# result <- 
+bind_rows(
+  
+  zz %>% 
+    select(ob, num1, num2) %>%   #select(is.numeric()) requires dplyr 1.0.0
+    pivot_longer(c(-ob)) %>% 
+    group_by(name) %>% 
+    summarize(
+      `Mean (SD)` = glue("{mean(value)} ({sd(value) %>% round(2)})"),
+    )
+  )
+  
+
+ zz %>% 
+    select(ob, num1, num2) %>%   #select(is.numeric()) requires dplyr 1.0.0
+    pivot_longer(c(-ob))
+
+
+anscombe %>%
+ pivot_longer(everything(),
+   names_to = c(".value", "set"),
+   names_pattern = "(.)(.)"
+ )
+  
+```
+
+
+
+
 
 ## This contains code to and from various forums
 May 3, 2020: Issues with summary functions for bar charts
 head(dput(dat.bar),25)
+
+
 
 ```{r bar, eval=TRUE, echo=FALSE, message=FALSE}
 dput(head(dat.bar, 25))
@@ -90,6 +165,82 @@ bar.long.smry <- summarySEwithin(bar.long, measurevar="measurement", withinvars=
 
 ```
 
+
+# CORRELATION PLOTS
+
+```{r CORR-test, eval=TRUE, echo=FALSE, message=FALSE, comment = ""}
+##		USING GGally		##
+
+library(broom)
+reg <- lm(Sepal.Length ~ Sepal.Width + Petal.Length + Petal.Width, data = iris)
+ggcoef(reg)
+d <- as.data.frame(Titanic)
+reg2 <- glm(Survived ~ Sex + Age + Class, family = binomial, data = d, weights = d$Freq)
+ggcoef(reg2, exponentiate = TRUE)
+ggcoef(
+  reg2, exponentiate = TRUE, exclude_intercept = TRUE,
+  errorbar_height = .2, color = "blue", sort = "ascending"
+)
+
+####
+# small function to display plots only if it's interactive
+p_ <- GGally::print_if_interactive
+
+plotList <- list()
+for (i in 1:6) {
+  plotList[[i]] <- ggally_text(paste("Plot #", i, sep = ""))
+}
+pm <- ggmatrix(
+  plotList,
+  2, 3,
+  c("A", "B", "C"),
+  c("D", "E"),
+  byrow = TRUE
+)
+p_(pm)
+
+pm <- ggmatrix(
+  plotList,
+  2, 3,
+  xAxisLabels = c("A", "B", "C"),
+  yAxisLabels = NULL,
+  byrow = FALSE,
+  showXAxisPlotLabels = FALSE
+)
+p_(pm)
+
+
+data(tips, package = "reshape")
+pm <- ggpairs(tips)
+pm
+
+
+##		USING ggplot.multistats		##
+library(ggplot2)
+# Define the variable used for the stats using z
+ggplot_base <- ggplot(iris, aes(Sepal.Width, Sepal.Length, z = Petal.Width))
+# The default is creating `stat(value)` containing the mean
+ggplot_base + stat_summaries_hex(aes(fill = stat(value)), bins = 5)
+# but you can specify your own stats
+ggplot_base + stat_summaries_hex(
+  aes(fill = stat(median), alpha = stat(n)),
+  funs = c('median', n = 'length'),
+  bins = 5)
+#
+
+###		USING glue
+#		trying to make a table of mean(sd)
+name <- "Fred"
+age <- 50
+anniversary <- as.Date("1991-10-12")
+glue('My name is {name},',
+  'my age next year is {age + 1},',
+  'my anniversary is {format(anniversary, "%A, %B %d, %Y")}.')
+
+
+#
+
+```
 
 ```{r LongTEST, eval=TRUE, echo=FALSE, message=FALSE}
 olddata_wide <- read.table(header=TRUE, text='

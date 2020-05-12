@@ -9,7 +9,97 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r fcns, eval=TRUE, echo=FALSE, message=FALSE}
+```{r Psych-lbr, eval=TRUE, echo=FALSE, message=FALSE, comment = ""}
+
+head(sat.act)
+
+describeFast(sat.act)
+describeFast(zz2)
+
+describe(dat.meansd.data, interp = FALSE,
+         skew = FALSE,
+         ranges = FALSE,
+         fast = FALSE)
+
+
+means.data <- dat1 %>% dplyr::select("group.factor",
+                       "slpQual", "slpLat", 
+                       "slpDur", "slpEff", 
+                       "slpDayFcn", "psqi_Global",
+                       "ess_total", "bdi_total", 
+                       "mcgill_total") 
+
+means.data %>% count(group.factor)
+
+means.data2   <- filter(means.data, group.factor != TRUE)
+
+means.data2
+
+
+pedhazur <- structure(list(Group = c(1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 2L,
+2L), X = c(5L, 2L, 4L, 6L, 3L, 8L, 5L, 7L, 9L, 6L), Y = 1:10), .Names = c("Group", "X", "Y"), class = "data.frame", row.names = c(NA, -10L))
+
+ped.stats <- statsBy(pedhazur,"Group")
+ped.stats
+
+print(ped.stats, short = FALSE)
+
+round(ped.stats$mean)
+
+means.stats <- statsBy(means.data2, group = "group.factor")
+
+round(means.stats$mean, means.stats$sd)
+
+#
+
+
+means.stats3 <- describeBy(means.data2,
+           group = "group.factor",
+           interp = FALSE,
+           skew = FALSE,
+           ranges = FALSE,
+           fast = NULL)
+
+means.stats3
+
+
+describeBy(sat.act,sat.act$gender) #just one grouping variable 
+
+#
+describeBy(sat.act,list(sat.act$gender,sat.act$education)) #two grouping variables 
+
+des.mat <- describeBy(sat.act$age,sat.act$education,mat=TRUE) #matrix (data.frame) output 
+
+des.mat
+
+des.mat <- describeBy(sat.act$age,list(sat.act$education,sat.act$gender),
+                 mat=TRUE,digits=2)  #matrix output
+
+```
+
+
+```{r junk, eval=TRUE, echo=FALSE, message=FALSE, comment = ""}
+library(tidyverse)
+
+z1z1 <- tibble(
+  ob   = 1:4,
+  num1 = c(1,2,3,3),
+  num2 = c(3,4,4,5),
+  cat1 = sample(c(1,0), 4, replace = TRUE),
+  cat2 = sample(c(1,0), 4, replace = TRUE)
+)
+
+```
+
+First Header  | Second Header
+------------- | -------------
+`r z1z1[3,1]`  | Content Cell
+Content Cell  | Content Cell
+
+
+
+
+```{r fcns, eval=FALSE, echo=FALSE, message=FALSE}
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
   library(plyr)
@@ -126,7 +216,7 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 ```
 
 
-```{r data, eval=TRUE, echo=FALSE, message=FALSE}
+```{r data, eval=FALSE, echo=FALSE, message=FALSE}
 ##############
 zdata <- read.table(header=TRUE, text='
  Subject RoundMono SquareMono RoundColor SquareColor
