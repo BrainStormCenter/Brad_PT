@@ -8,19 +8,70 @@ output:
     toc: yes
 ---
 
+***
+
+# OVERVIEW
+Question this study addresses:
+
+* Compared to healthy controls (HC), are factors related to sleep and affect the same in different chronic pain groups (i.e., chronic low back pain (CLBP) and fibromyalgia (FM))?
+
+* Measures analyzed  
+  * Pittsburg Sleep Questionnaire  
+  * Epsworth Sleepiness Scale  
+  * Insomnia Severity Index  
+  * McGill Pain Questionnaire  
+  * Beck Depression Inventory  
+
+***
+
+**NOTE: THE ANALYSES CONTAINED HEREIN ARE FOR THE CMS ABSTRACT ONLY.**  
+**ADDITIONAL ANALYSES AND RESULTS FOR THE POSTER WILL BE IN A DIFFERENT FILE.**
+
+## ABSTRACT
+###  Title  
+**Significant differences in sleep and depression among chronic pain groups: Implications for patient education**  
+
+###  Purpose  
+Chronic pain (CP) is a widespread and costly condition, affecting nearly 100 million Americans and costing over $600 billion annually. Evidence suggests that compared to healthy controls (HC), chronic pain populations experience problems with sleep and depression. Less understood is how whether these problems are differentially experienced by different chronic pain conditions (i.e., chronic low back pain and fibrimyalgia). To address this questions, questionnaire data regarding sleep, depression and pain were collected.  
+
+###  Subjects  
+Data was collected from 158 participants (HC = 50, 27 females); CLBP = 64, 41 females; FM = 44, 39 females). This study was approved by the Institutional Review Board at the University of Missouri. 
+
+###  Methods  
+For this study, participants were recruited from the Columbia, Missouri community and surrounding small towns (Ashland, Booneville, and Moberly). Recruitment flyers were posted in clinics that often treat chronic pain diseases and on a weekly news bulletin email distributed to faculty, staff, and students affiliated with MU or university hospital. For the CLBP group, inclusionary criteria were established to incorporate individuals (1) experiencing CLBP for greater than the past 6 months that fulfills at least one of Quebec Task Force and Spinal Disorders diagnostic criteria, (2) no history of a severe psychological or neuropsychological disorder. Specific criteria for the HC group included (1) no history of chronic pain, severe psychological or neuropsychological disorder. All participants for this study provided written consent. 
+
+As part of the study, participants completed a variety of questionnaires that assessed pain, sleep and affect. Specifically, participants completed the Beck Depression Inventory-II (BDI-II), Epworth Sleepiness Scale, McGill-Melzack Pain Questionnaire and Pittsburg Sleep Quality Index (PSQI). A subgroup of participantas also completed the Insomnia Severity Index.
+
+<mark>*This material could probably be dropped*</mark>  
+For all groups, potential participants were excluded if (1) they could not refrain from usage of analgesics the day before and of their scan, (2) tested positive on a pre-MRI metal screening, (3) were pregnant, (4) and/or did not display pain symptoms consistent with Quebec Task Force and Spinal Disorders diagnostic criteria. 
+
+###  Results  
+An ANOVA with Tukey Honest Significant Differences (TukeyHSD) testing was carried out using RStudio (Version 1.2.5033). The overall test for a main effect of group was significant for all but three variables (i.e., Sleef Effiency, Daytime Dysfunction and Total Time in Bed). PostHoc follow up testing using TukeyHSD revealed the presence of significant group differences for all but the same two variables listed above. However, the FM-HC comparison trended toward significance with p ≤ 0.07. 
+
+###  Conclusions  
+
+
+###  Clinical Relevance  
+
+This study supported by NINR grant #R01NR015314
+
+***
+
+
+# START
 ```{r setup, include=FALSE, comment=""}
 knitr::opts_chunk$set(echo = TRUE)
 
 ```
 
 ```{r Libraries, eval=TRUE, echo=FALSE, results=FALSE, collapse=TRUE, message=FALSE}
-library(caret)
+# library(multcomp)
 # library(knitr)
+# library(readr)
+library(caret)
 library(kableExtra)
 library(psych)
 library(corrplot)
-# library(multcomp)
-# library(readr)
 library(janitor)
 library(ggpubr)
 library(ggsignif)
@@ -87,143 +138,6 @@ corr.data = function(data) {
 ```
 
 
-```{r helper-fcns, eval=FALSE, echo=FALSE, message=FALSE}
-
-####			HELPER FUNCTIONS		####
-#1
-## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
-##   data: a data frame.
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   groupvars: a vector containing names of columns that contain grouping variables
-##   na.rm: a boolean that indicates whether to ignore NA's
-##   conf.interval: the percent range of the confidence interval (default is 95%)
-summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
-                      conf.interval=.95, .drop=TRUE) {
-    library(plyr)
-
-    # New version of length which can handle NA's: if na.rm==T, don't count them
-    length2 <- function (x, na.rm=FALSE) {
-        if (na.rm) sum(!is.na(x))
-        else       length(x)
-    }
-
-    # This does the summary. For each group's data frame, return a vector with
-    # N, mean, and sd
-    datac <- ddply(data, groupvars, .drop=.drop,
-      .fun = function(xx, col) {
-        c(N    = length2(xx[[col]], na.rm=na.rm),
-          mean = mean   (xx[[col]], na.rm=na.rm),
-          sd   = sd     (xx[[col]], na.rm=na.rm)
-        )
-      },
-      measurevar
-    )
-
-    # Rename the "mean" column    
-    datac <- rename(datac, c("mean" = measurevar))
-
-    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
-
-    # Confidence interval multiplier for standard error
-    # Calculate t-statistic for confidence interval: 
-    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
-    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
-    datac$ci <- datac$se * ciMult
-
-    return(datac)
-}
-
-#2
-## Norms the data within specified groups in a data frame; it normalizes each
-## subject (identified by idvar) so that they have the same mean, within each group
-## specified by betweenvars.
-##   data: a data frame.
-##   idvar: the name of a column that identifies each subject (or matched subjects)
-##   measurevar: the name of a column that contains the variable to be summariezed
-##   betweenvars: a vector containing names of columns that are between-subjects variables
-##   na.rm: a boolean that indicates whether to ignore NA's
-normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
-                           na.rm=FALSE, .drop=TRUE) {
-    library(plyr)
-
-    # Measure var on left, idvar + between vars on right of formula.
-    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
-     .fun = function(xx, col, na.rm) {
-        c(subjMean = mean(xx[,col], na.rm=na.rm))
-      },
-      measurevar,
-      na.rm
-    )
-
-    # Put the subject means with original data
-    data <- merge(data, data.subjMean)
-
-    # Get the normalized data in a new column
-    measureNormedVar <- paste(measurevar, "_norm", sep="")
-    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
-                               mean(data[,measurevar], na.rm=na.rm)
-
-    # Remove this subject mean column
-    data$subjMean <- NULL
-
-    return(data)
-}
-
-#3
-summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
-                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
-
-  # Ensure that the betweenvars and withinvars are factors
-  factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
-    FUN=is.factor, FUN.VALUE=logical(1))
-
-  if (!all(factorvars)) {
-    nonfactorvars <- names(factorvars)[!factorvars]
-    message("Automatically converting the following non-factors to factors: ",
-            paste(nonfactorvars, collapse = ", "))
-    data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
-  }
-
-  # Get the means from the un-normed data
-  datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
-                     na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
-
-  # Drop all the unused columns (these will be calculated with normed data)
-  datac$sd <- NULL
-  datac$se <- NULL
-  datac$ci <- NULL
-
-  # Norm each subject's data
-  ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
-
-  # This is the name of the new column
-  measurevar_n <- paste(measurevar, "_norm", sep="")
-
-  # Collapse the normed data - now we can treat between and within vars the same
-  ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
-                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
-
-  # Apply correction from Morey (2008) to the standard error and confidence interval
-  #  Get the product of the number of conditions of within-S variables
-  nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
-                           FUN.VALUE=numeric(1)))
-  correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
-
-  # Apply the correction factor
-  ndatac$sd <- ndatac$sd * correctionFactor
-  ndatac$se <- ndatac$se * correctionFactor
-  ndatac$ci <- ndatac$ci * correctionFactor
-
-  # Combine the un-normed means with the normed results
-  merge(datac, ndatac)
-}
-
-
-
-##						END						##
-```
-
-
 ```{r data prep, eval=FALSE, echo=FALSE}
 ####	THIS IS COMPLETED FOR THE DATA USED HERE AS OF April 23, 2020 		####
 
@@ -254,64 +168,6 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 
 ```
 
-# ABSTRACT
-##  Title  
-**Significant differences in sleep and depression among chronic pain groups: Implications for patient education**  
-
-##  Purpose  
-**PURPOSE/HYPOTHESIS**  
-Chronic pain (CP) is a widespread and costly condition, affecting nearly 100 million Americans and costing over $600 billion annually. Evidence suggests that compared to healthy controls (HC), chronic pain populations experience problems with sleep and depression. Less understood is how whether these problems are differentially experienced by different chronic pain conditions (i.e., chronic low back pain and fibrimyalgia). To address this questions, questionnaire data regarding sleep, depression and pain were collected.  
-
-##  Subjects  
-**NUMBER OF SUBJECTS**  
-For this study, participants were recruited from the Columbia, Missouri community and surrounding small towns (Ashland, Booneville, and Moberly). Recruitment flyers were posted in clinics that often treat chronic pain diseases and on a weekly news bulletin email distributed to faculty, staff, and students affiliated with MU or university hospital. For the CLBP group, inclusionary criteria were established to incorporate individuals (1) experiencing CLBP for greater than the past 6 months that fulfills at least one of Quebec Task Force and Spinal Disorders diagnostic criteria, (2) no history of a severe psychological or neuropsychological disorder, 
-Specific criteria for the HC group included (1) no history of chronic pain, severe psychological or neuropsychological disorder, 
-
-For all groups, potential participants were excluded if (1) they could not refrain from usage of analgesics the day before and of their scan, (2) tested positive on a pre-MRI metal screening, (3) were pregnant, (4) and/or did not display pain symptoms consistent with Quebec Task Force and Spinal Disorders diagnostic criteria. 
-
-All participants for this study provided written consent. Data was collected from 158 participants (HC = 50, 27 females); CLBP = 64, 41 females; FM = 44, 39 females). This study was approved by the Institutional Review Board at the University of Missouri. 
-
-
-##  Methods  
-**MATERIALS AND METHODS**  
-As part of the study, participants completed a variety of questionnaires that assessed pain, sleep and affect. Specifically, participants completed the Beck Depression Inventory-II (BDI-II), Epworth Sleepiness Scale, McGill-Melzack Pain Questionnaire and Pittsburg Sleep Quality Index (PSQI). A subgroup of participantas also completed the Insomnia Severity Index.
-
-##  Results  
-**RESULTS**  
-An ANOVA with Tukey Honest Significant Differences (TukeyHSD) testing was carried out using RStudio (Version 1.2.5033). The overall test for a main effect of group was significant for all but three variables (i.e., Sleef Effiency, Daytime Dysfunction and Total Time in Bed). PostHoc follow up testing using TukeyHSD revealed the presence of significant group differences for all but the same two variables listed above. However, the FM-HC comparison trended toward significance with p ≤ 0.07. 
-
-##  Conclusions  
-**CONCLUSIONS**  
-
-##  Clinical Relevance  
-**CLINICAL RELEVANCE**  
-This study supported by NINR grant #R01NR015314
-
-
-
-***
-***
-
-# GOALS
-Questions asked for this study
-
-**Q1**: What is the correlation between sleep and pain measures?  
-* Correlation
-
-**Q2**: Controlling for pain, is there a difference in sleep variables?  
-* ANCOVA  
-* Regression  
-
-***
-
-**NOTE** Add mean and SD for the variables.
-
-# MEASURES
-Pittsburg Sleep Questionnaire  
-Epsworth Sleepiness Scale  
-Insomnia Severity Index  
-McGill Pain Questionnaire  
-Beck Depression Inventory  
 
 # DATA
 Import data from GitHub
@@ -982,8 +838,6 @@ nearZeroVar(dat.sm,
 ```
 
 
-
-
 # SAMPLE DESCRIPTIVES
 Group by sex for overall sample.
 ```{r Demographics, eval=TRUE, echo=FALSE}
@@ -1047,7 +901,7 @@ means.stats
 ```
 
 
-# CORRELATIONS
+#PLOTS
 
 ## CORR PLOTS
 
@@ -1219,11 +1073,84 @@ corr.data(dat.pain2) %>%
 ```
 
 
+```{r CLBP-corrplot, eval=FALSE, echo=FALSE, message=FALSE}
+######		FM GROUP			####
+dat.CLBP2 <- dat.CLBP %>% select(!"group.factor", -TIB)
+dat.CLBP2 <- dat.CLBP2 %>% select(!"slpDist")
+
+####		Breaking down the plot		####
+
+corr.data(dat.CLBP2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
+		# provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+			# This overlays a grid of varying blue and adds
+			# the "corr" legend on the right, and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 1.5, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=1.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "CLBP pain group",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme_classic() +
+	# theme_cleveland() +
+
+```
 
 
-## PLOTS
+```{r HC-corrplot, eval=FALSE, echo=FALSE, message=FALSE}
+######		FM GROUP			####
+dat.HC2 <- dat.HC %>% select(!"group.factor", -TIB)
+dat.HC2 <- dat.HC2 %>% select(!"slpDist")
 
-### BAR PLOTS
+####		Breaking down the plot		####
+
+corr.data(dat.HC2) %>% 
+	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
+		# provides chart area and variable names
+	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
+			# This overlays a grid of varying blue and adds
+			# the "corr" legend on the right, and adds a dark grey grid.
+	# geom_point(aes(size=p.value,
+	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
+	# 			   		   include.lowest=TRUE)), pch=15) +
+	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
+			  position = position_nudge(y = 0.2), # position in the square for values
+			  size = 1.5, # size of text
+			  colour = "black") + # color of text
+	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
+			  position=position_nudge(y=-0.2), # positions p-value
+			  size=1.5, colour="black")  + # color of text
+	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
+						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
+	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
+	labs(title = "Healthy control group",
+		 x="",
+		 y="") +
+	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
+	coord_fixed()
+	# theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
+	# theme_classic() +
+	# theme_cleveland() +
+
+```
+
+
+The end of corr plots
+
+## BAR PLOTS
 ```{r BARS-1, eval=TRUE, echo=FALSE, message=FALSE}
 dat.bar1.orig  <- dat1 %>% dplyr::select("ID","group.factor",
 										 "slpQual", "slpLat", 
@@ -1383,149 +1310,7 @@ ggplot(bar1c.means, aes(x = variable, y = mean, fill = group )) +
 ```
 
 
-
-```{r CLBP-corrplot, eval=FALSE, echo=FALSE, message=FALSE}
-######		FM GROUP			####
-dat.CLBP2 <- dat.CLBP %>% select(!"group.factor", -TIB)
-dat.CLBP2 <- dat.CLBP2 %>% select(!"slpDist")
-
-####		Breaking down the plot		####
-
-corr.data(dat.CLBP2) %>% 
-	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
-		# provides chart area and variable names
-	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
-			# This overlays a grid of varying blue and adds
-			# the "corr" legend on the right, and adds a dark grey grid.
-	# geom_point(aes(size=p.value,
-	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
-	# 			   		   include.lowest=TRUE)), pch=15) +
-	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
-			  position = position_nudge(y = 0.2), # position in the square for values
-			  size = 1.5, # size of text
-			  colour = "black") + # color of text
-	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
-			  position=position_nudge(y=-0.2), # positions p-value
-			  size=1.5, colour="black")  + # color of text
-	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
-						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
-	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
-	labs(title = "CLBP pain group",
-		 x="",
-		 y="") +
-	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
-	coord_fixed()
-	# theme_classic() +
-	# theme_cleveland() +
-
-```
-
-
-```{r HC-corrplot, eval=FALSE, echo=FALSE, message=FALSE}
-######		FM GROUP			####
-dat.HC2 <- dat.HC %>% select(!"group.factor", -TIB)
-dat.HC2 <- dat.HC2 %>% select(!"slpDist")
-
-####		Breaking down the plot		####
-
-corr.data(dat.HC2) %>% 
-	ggplot(aes(colvars, fct_rev(rowvars), check_overlap = TRUE)) + 
-		# provides chart area and variable names
-	geom_tile(colour = "grey20", aes(fill = corr), size = 0.5) + 
-			# This overlays a grid of varying blue and adds
-			# the "corr" legend on the right, and adds a dark grey grid.
-	# geom_point(aes(size=p.value,
-	# 			   colour=cut(abs(corr), c(0, 0.01, 0.05, 1),
-	# 			   		   include.lowest=TRUE)), pch=15) +
-	geom_text(aes(label = sprintf("%1.2f", corr)), # add correlation values
-			  position = position_nudge(y = 0.2), # position in the square for values
-			  size = 1.5, # size of text
-			  colour = "black") + # color of text
-	geom_text(aes(label=paste0("(",sprintf("%1.2f", p.value),")")), # adds p-value to square
-			  position=position_nudge(y=-0.2), # positions p-value
-			  size=1.5, colour="black")  + # color of text
-	scale_fill_gradient2(low="red", mid="yellow2", high="blue", # color scale for color bar
-						 midpoint=0, limits=c(-1,1)) + # range of values for color bar
-	scale_size_continuous(range=c(8,12)) + # I am not sure what this line does
-	labs(title = "Healthy control group",
-		 x="",
-		 y="") +
-	scale_x_discrete(guide=guide_axis(n.dodge=2)) +
-	coord_fixed()
-	# theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
-	# theme_classic() +
-	# theme_cleveland() +
-
-```
-
-
-The end of corr plots
-
-
-
-
-
-
-
-
-
-```{r Box-plots, eval=FALSE, echo=FALSE, message=FALSE}
-####		PSQI BOXPLOT		####
-head(dat.bar1a)
-head(bar1a.means)
-ggplot(bar1a.means, aes(x = group, y = mean )) +
-	geom_boxplot() +
-	geom_signif(comparisons = list(c("HC", "CLBP"),
-								   c("HC", "FM"),
-								   c("CLBP", "FM")),
-				 # y_position = c(30, 40, 25),
-				map_signif_level=function(p)sprintf("p = %.2g", p))
-
-
-
-```
-
-
-```{r BOXPLOT-test, eval=TRUE, echo=FALSE, message=FALSE, comment = ""}
-# PERFORMING TEST
-compare_means(mcgill_total ~ group.factor, data = dat1,
-			  ref.group = ".all.", method = "t.test")
-
-
-#		VISUALIZE THE GROUP DIFFERENCES			#
-# 		Pairwise comparison of all agains the grand mean (I think)
-ggboxplot(dat1, x = "group.factor",
-		  y = "mcgill_total",
-		  color = "group.factor",
-		  add = "jitter",
-		  legend = "none") +
-	rotate_x_text(angle = 45) +
-	geom_hline(yintercept = mean(dat1$mcgill_total),
-			   linetype = 2) + # add horizontal line at base mean
-	stat_compare_means(method = "anova", label.y = 80) +
-	stat_compare_means(label = "p.signif",
-					   method = "t.test",
-					   ref.group = ".all.")  
-
-#		VISUALIZE GROUP DIFS WITH SIG LEVELS IN PLOT
-gp_comparisons = list(c("HC", "CLBP"),
-					  c("CLBP", "FM"),
-					  c("HC", "FM"))
-
-ggboxplot(dat1,
-		  x = "group.factor",
-		  y = "mcgill_total",
-		  color =  "group.factor",
-		  palette = "jco") +
-	stat_compare_means(comparisons = gp_comparisons,
-					   label.y = c(45, 55, 65)) +
-	stat_compare_means(label.y = 80)
-
-
-##			END			##
-```
-
-```{r BARPLOT-test, eval=TRUE, echo=FALSE, message=FALSE, comment = ""}
+```{r BARPLOT-test, eval=FALSE, echo=FALSE, message=FALSE, comment = ""}
 
 #		VISUALIZE THE GROUP DIFFERENCES	WITH SIG LEVELS		#
 # Bar plot of mean +/-se
@@ -1586,25 +1371,69 @@ ggplot(bar1a.means, aes(variable, mean)) +
 				aes(x=x,xend=xend, y=y, yend=y,
 					annotation=annotation))
 
+```
 
 
 
-
-
-
-
-
-
-
-
-
-
+## BOX PLOTS
+```{r Box-plots, eval=FALSE, echo=FALSE, message=FALSE}
+####		PSQI BOXPLOT		####
+head(dat.bar1a)
+head(bar1a.means)
+ggplot(bar1a.means, aes(x = group, y = mean )) +
+	geom_boxplot() +
+	geom_signif(comparisons = list(c("HC", "CLBP"),
+								   c("HC", "FM"),
+								   c("CLBP", "FM")),
+				 # y_position = c(30, 40, 25),
+				map_signif_level=function(p)sprintf("p = %.2g", p))
 
 
 
 ```
 
-## ANOVA (Main effect of group)
+
+```{r BOXPLOT-test, eval=FALSE, echo=FALSE, message=FALSE, comment = ""}
+# PERFORMING TEST
+compare_means(mcgill_total ~ group.factor, data = dat1,
+			  ref.group = ".all.", method = "t.test")
+
+
+#		VISUALIZE THE GROUP DIFFERENCES			#
+# 		Pairwise comparison of all agains the grand mean (I think)
+ggboxplot(dat1, x = "group.factor",
+		  y = "mcgill_total",
+		  color = "group.factor",
+		  add = "jitter",
+		  legend = "none") +
+	rotate_x_text(angle = 45) +
+	geom_hline(yintercept = mean(dat1$mcgill_total),
+			   linetype = 2) + # add horizontal line at base mean
+	stat_compare_means(method = "anova", label.y = 80) +
+	stat_compare_means(label = "p.signif",
+					   method = "t.test",
+					   ref.group = ".all.")  
+
+#		VISUALIZE GROUP DIFS WITH SIG LEVELS IN PLOT
+gp_comparisons = list(c("HC", "CLBP"),
+					  c("CLBP", "FM"),
+					  c("HC", "FM"))
+
+ggboxplot(dat1,
+		  x = "group.factor",
+		  y = "mcgill_total",
+		  color =  "group.factor",
+		  palette = "jco") +
+	stat_compare_means(comparisons = gp_comparisons,
+					   label.y = c(45, 55, 65)) +
+	stat_compare_means(label.y = 80)
+
+
+##			END			##
+```
+
+
+# ANOVA (Main effect of group)
 ```{r ANOVA-scaleddata, eval=TRUE, echo=FALSE, message=FALSE}
 # construct anova model for each column of dat1[, my_outcome_variables]
 model_summaries <- dat1[,c("slpQual", "slpLat", "slpDur",
@@ -1660,7 +1489,7 @@ Models2 %>%
 ```
 
 
-```{r ANOVA-rawdata, eval=TRUE, echo=FALSE, message=FALSE}
+```{r ANOVA-rawdata, eval=FALSE, echo=FALSE, message=FALSE}
 #		USING PSQI RAW COMPONENT SCORES
 # construct anova model for each column of dat1[, my_outcome_variables]
 model_summary_raw <- dat1[,c("slpQualraw", "slpLatraw", "slpDurraw",
@@ -1718,7 +1547,7 @@ Models3 %>%
 
 
 ## POSTHOC 
-```{r PostHoc1, eval=TRUE, echo=FALSE, message=FALSE}
+```{r PostHoc-Scaled, eval=TRUE, echo=FALSE, message=FALSE}
 GetTukeys <- function(m) m$tukey
 Tukeys  <- purrr::map(model_summaries, GetTukeys)  %>% 
 	purrr::map_dfr(broom::tidy, .id = "Name")
@@ -1769,7 +1598,7 @@ select(Tukeys, -term, -Var) %>%
 ```
 
 
-```{r PostHoc2, eval=TRUE, echo=FALSE, message=FALSE}
+```{r PostHoc-Raw, eval=FALSE, echo=FALSE, message=FALSE}
 # GetTukeys <- function(m) m$tukey
 Tukeys3  <- purrr::map(model_summary_raw, GetTukeys)  %>% 
 	purrr::map_dfr(broom::tidy, .id = "Name")
@@ -1817,17 +1646,24 @@ select(Tukeys3, -term, -Var) %>%
 
 
 
-```
+```  
 
+***   
 
+***  
+
+**STOP HERE  **
+
+***  
+
+***  
 
 # ISI ANALYSES
 This set of analyses uses a subset of subjects who have completed the ISI
 
 
-
 Also create a dataset of subjects with ISI data (dat.isi).
-```{r ISIsubgroup, eval=TRUE, echo=FALSE, message=FALSE, comment=""}
+```{r ISIsubgroup, eval=FALSE, echo=FALSE, message=FALSE, comment=""}
 #		Subgroup with ISI data
 # 		Getting selected variables
 dat.isi <- dat1 %>% dplyr::select("group.factor",
@@ -1863,9 +1699,9 @@ dat.isi <- dat.isi %>%
 ```
 
 
-## DATA VARIANCE
+## ISI DATA VARIANCE
 The variable(s) in the ISI data with variance issues are:
-```{r QA-ISI-DATA, eval=TRUE, echo=FALSE, comment=""}
+```{r QA-ISI-DATA, eval=FALSE, echo=FALSE, comment=""}
 nearZeroVar(dat.isi,
 			uniqueCut = 2,
 			names = TRUE)
@@ -1873,7 +1709,7 @@ nearZeroVar(dat.isi,
 ```
 
 
-```{r ISI-Drop-corrplot, eval=TRUE, echo=FALSE, message=FALSE}
+```{r ISI-Drop-corrplot, eval=FALSE, echo=FALSE, message=FALSE}
 # dat.isi2 <- dat1 %>% dplyr::select("group.factor",
 # 										"slpQualraw", "slpLatraw", 
 # 										"slpDurraw", "slpEffraw", 
@@ -1923,7 +1759,7 @@ isiCorrPlot <- corr.data(dat.isi2) %>%
 ```
 
 
-```{r ISI-ANOVA, eval=TRUE, echo=FALSE, message=FALSE}
+```{r ISI-ANOVA, eval=FALSE, echo=FALSE, message=FALSE}
 # construct anova model for each column of dat1[, my_outcome_variables]
 isi_model_summaries <- dat.isi[,c("slpQual", "slpLat", "slpDur",
 						   "slpEff", "slpDist","slpMeds",
@@ -1977,7 +1813,8 @@ isi_Models2 %>%
 ##		END		##
 ```
 
-```{r ISI-PostHoc, eval=TRUE, echo=FALSE, message=FALSE}
+
+```{r ISI-PostHoc, eval=FALSE, echo=FALSE, message=FALSE}
 GetTukeys <- function(m) m$tukey
 isi_Tukeys  <- purrr::map(isi_model_summaries, GetTukeys)  %>% 
 	purrr::map_dfr(broom::tidy, .id = "Name")
@@ -3224,3 +3061,139 @@ Content Cell  | Content Cell
 Content Cell  | Content Cell
 ```
 
+
+```{r helper-fcns, eval=FALSE, echo=FALSE, message=FALSE}
+
+####			HELPER FUNCTIONS		####
+#1
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column    
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval: 
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+
+#2
+## Norms the data within specified groups in a data frame; it normalizes each
+## subject (identified by idvar) so that they have the same mean, within each group
+## specified by betweenvars.
+##   data: a data frame.
+##   idvar: the name of a column that identifies each subject (or matched subjects)
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   betweenvars: a vector containing names of columns that are between-subjects variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+    library(plyr)
+
+    # Measure var on left, idvar + between vars on right of formula.
+    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+     .fun = function(xx, col, na.rm) {
+        c(subjMean = mean(xx[,col], na.rm=na.rm))
+      },
+      measurevar,
+      na.rm
+    )
+
+    # Put the subject means with original data
+    data <- merge(data, data.subjMean)
+
+    # Get the normalized data in a new column
+    measureNormedVar <- paste(measurevar, "_norm", sep="")
+    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+                               mean(data[,measurevar], na.rm=na.rm)
+
+    # Remove this subject mean column
+    data$subjMean <- NULL
+
+    return(data)
+}
+
+#3
+summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+
+  # Ensure that the betweenvars and withinvars are factors
+  factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+    FUN=is.factor, FUN.VALUE=logical(1))
+
+  if (!all(factorvars)) {
+    nonfactorvars <- names(factorvars)[!factorvars]
+    message("Automatically converting the following non-factors to factors: ",
+            paste(nonfactorvars, collapse = ", "))
+    data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
+  }
+
+  # Get the means from the un-normed data
+  datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                     na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Drop all the unused columns (these will be calculated with normed data)
+  datac$sd <- NULL
+  datac$se <- NULL
+  datac$ci <- NULL
+
+  # Norm each subject's data
+  ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+
+  # This is the name of the new column
+  measurevar_n <- paste(measurevar, "_norm", sep="")
+
+  # Collapse the normed data - now we can treat between and within vars the same
+  ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Apply correction from Morey (2008) to the standard error and confidence interval
+  #  Get the product of the number of conditions of within-S variables
+  nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                           FUN.VALUE=numeric(1)))
+  correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
+
+  # Apply the correction factor
+  ndatac$sd <- ndatac$sd * correctionFactor
+  ndatac$se <- ndatac$se * correctionFactor
+  ndatac$ci <- ndatac$ci * correctionFactor
+
+  # Combine the un-normed means with the normed results
+  merge(datac, ndatac)
+}
+
+
+
+##						END						##
+```
